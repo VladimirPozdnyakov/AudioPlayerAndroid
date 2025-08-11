@@ -36,14 +36,10 @@ fun GlobalPlayerBar(
             modifier = modifier
                 .fillMaxWidth()
                 .height(72.dp),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 20.dp,
-                hoveredElevation = 20.dp
-            ),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
             ),
-            shape = RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp),
+            shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
             border = null
         ) {
             Column(
