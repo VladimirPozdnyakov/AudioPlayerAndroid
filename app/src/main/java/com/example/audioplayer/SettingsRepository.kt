@@ -36,7 +36,13 @@ class SettingsRepository(private val context: Context) {
     val foldersFlow: Flow<List<String>> = context.dataStore.data
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
         .map { prefs ->
-            prefs[KEY_FOLDERS]?.split('|')?.filter { it.isNotBlank() } ?: emptyList()
+            val folders = prefs[KEY_FOLDERS]?.split('|')?.filter { it.isNotBlank() } ?: emptyList()
+            // Если папки не настроены, возвращаем папку Music по умолчанию
+            if (folders.isEmpty()) {
+                listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
+            } else {
+                folders
+            }
         }
 
     val accentFlow: Flow<String> = context.dataStore.data

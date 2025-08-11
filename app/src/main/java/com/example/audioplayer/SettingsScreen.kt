@@ -65,9 +65,11 @@ fun SettingsScreen(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         uri?.let {
-            val flags = (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             try {
-                context.contentResolver.takePersistableUriPermission(it, flags)
+                context.contentResolver.takePersistableUriPermission(
+                    it, 
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
             } catch (_: Throwable) { }
             onAddFolder(it.toString())
         }
@@ -358,22 +360,21 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(vertical = 8.dp),
                         ) {
-                            if (state.folders.isEmpty()) {
-                                item { Text("Папки не выбраны") }
-                            } else {
-                                items(state.folders) { folder ->
-                                    val displayName = remember(folder) { folderDisplayNameFromUriString(folder) }
-                                    SettingItem(
-                                        title = displayName,
-                                        subtitle = "",
-                                        trailing = {
+                            items(state.folders) { folder ->
+                                val displayName = remember(folder) { folderDisplayNameFromUriString(folder) }
+                                val isDefault = folder == "content://com.android.externalstorage.documents/tree/primary%3AMusic"
+                                SettingItem(
+                                    title = if (isDefault) "$displayName (по умолчанию)" else displayName,
+                                    subtitle = if (isDefault) "Папка музыки по умолчанию" else "",
+                                    trailing = {
+                                        if (!isDefault) {
                                             IconButton(onClick = { onRemoveFolder(folder) }) {
                                                 Icon(Icons.Outlined.Delete, contentDescription = "Удалить")
                                             }
-                                        },
-                                        onClick = {}
-                                    )
-                                }
+                                        }
+                                    },
+                                    onClick = {}
+                                )
                             }
                             item {
                                 Spacer(Modifier.height(4.dp))
@@ -419,7 +420,7 @@ private fun SettingItem(
             if (trailing != null) trailing()
         }
     }
-    Divider()
+    HorizontalDivider()
 }
 
 @Composable

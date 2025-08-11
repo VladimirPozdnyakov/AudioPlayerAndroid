@@ -222,8 +222,14 @@ class PlayerViewModel : ViewModel() {
     }
 
     private fun queryDeviceAudio(context: Context, allowedFolders: List<String>): List<Track> {
-        // Если пользователь не выбрал папки, ничего не показываем
-        if (allowedFolders.isEmpty()) return emptyList()
+        // Если папки не настроены, используем папку Music по умолчанию
+        val foldersToScan = if (allowedFolders.isEmpty()) {
+            listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
+        } else {
+            allowedFolders
+        }
+        
+        if (foldersToScan.isEmpty()) return emptyList()
         val tracks = mutableListOf<Track>()
         val collection: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         val projection = buildList {
@@ -262,7 +268,7 @@ class PlayerViewModel : ViewModel() {
                 val contentUri = Uri.withAppendedPath(collection, id.toString())
                 // Filter by chosen folders if any
                 val passesFilter = run {
-                    val chosenRelBases: List<String> = allowedFolders.mapNotNull { folderUriStr ->
+                    val chosenRelBases: List<String> = foldersToScan.mapNotNull { folderUriStr ->
                         try {
                             val u = Uri.parse(folderUriStr)
                             val docId = android.provider.DocumentsContract.getTreeDocumentId(u)
@@ -279,7 +285,7 @@ class PlayerViewModel : ViewModel() {
                         val fullPath = if (dataCol >= 0) it.getString(dataCol) else null
                         if (fullPath == null) false else {
                             // Map primary: to /storage/emulated/0/
-                            val basesFs: List<String> = allowedFolders.mapNotNull { folderUriStr ->
+                            val basesFs: List<String> = foldersToScan.mapNotNull { folderUriStr ->
                                 try {
                                     val u = Uri.parse(folderUriStr)
                                     val docId = android.provider.DocumentsContract.getTreeDocumentId(u)

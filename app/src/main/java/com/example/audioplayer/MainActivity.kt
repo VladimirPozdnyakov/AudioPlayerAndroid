@@ -41,6 +41,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
@@ -54,7 +55,15 @@ class MainActivity : ComponentActivity() {
                 // This is a quick one-shot read; UI will still update via settings screen later
                 lifecycleScope.launch {
                     val folders = settingsRepo.foldersFlow.firstOrNull() ?: emptyList()
-                    runOnUiThread { viewModel.loadTracks(this@MainActivity, folders) }
+                    // Если папки не выбраны, добавляем папку Music по умолчанию
+                    val foldersToUse = if (folders.isEmpty()) {
+                        val defaultFolder = "content://com.android.externalstorage.documents/tree/primary%3AMusic"
+                        settingsRepo.setFolders(listOf(defaultFolder))
+                        listOf(defaultFolder)
+                    } else {
+                        folders
+                    }
+                    runOnUiThread { viewModel.loadTracks(this@MainActivity, foldersToUse) }
                 }
             }
         }
@@ -73,47 +82,56 @@ class MainActivity : ComponentActivity() {
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex) {
                 var selectedTab by remember { mutableStateOf(0) } // 0: Home, 1: Settings
                 val ctx = LocalContext.current
+                val playerUiState by viewModel.uiState.collectAsState()
                 Scaffold(
                     bottomBar = {
-                        NavigationBar(
-                            modifier = Modifier.height(72.dp),
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                            windowInsets = WindowInsets(0)
-                        ) {
-                            NavigationBarItem(
-                                selected = selectedTab == 0,
-                                onClick = { selectedTab = 0 },
-                                icon = { Icon(Icons.Outlined.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
-                                label = { Text("Главная") },
-                                alwaysShowLabel = true,
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                )
+                        Column {
+                            // Глобальный блок управления треком
+                            GlobalPlayerBar(
+                                uiState = playerUiState,
+                                viewModel = viewModel
                             )
-                            NavigationBarItem(
-                                selected = selectedTab == 1,
-                                onClick = { selectedTab = 1 },
-                                icon = { Icon(Icons.Outlined.Settings, contentDescription = "Настройки", modifier = Modifier.size(24.dp)) },
-                                label = { Text("Настройки") },
-                                alwaysShowLabel = true,
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            
+                            NavigationBar(
+                                modifier = Modifier.height(72.dp),
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                windowInsets = WindowInsets(0)
+                            ) {
+                                NavigationBarItem(
+                                    selected = selectedTab == 0,
+                                    onClick = { selectedTab = 0 },
+                                    icon = { Icon(Icons.Outlined.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
+                                    label = { Text("Главная") },
+                                    alwaysShowLabel = true,
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                    )
                                 )
-                            )
+                                NavigationBarItem(
+                                    selected = selectedTab == 1,
+                                    onClick = { selectedTab = 1 },
+                                    icon = { Icon(Icons.Outlined.Settings, contentDescription = "Настройки", modifier = Modifier.size(24.dp)) },
+                                    label = { Text("Настройки") },
+                                    alwaysShowLabel = true,
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                    )
+                                )
+                            }
                         }
                     }
                 ) { innerPadding ->
-                    Surface(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        AnimatedContent(
+                    AnimatedContent(
                             targetState = selectedTab,
+                            modifier = Modifier.fillMaxSize().padding(innerPadding),
                             label = "bottom_nav",
                             transitionSpec = {
                                 if (targetState > initialState) {
@@ -148,13 +166,18 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onRemoveFolder = { folder ->
                                         val updated = settings.folders.filterNot { it == folder }
-                                        settingsViewModel.setFolders(updated)
-                                        viewModel.loadTracks(ctx, updated)
+                                        // Если удаляем все папки, добавляем папку Music по умолчанию
+                                        val finalUpdated = if (updated.isEmpty()) {
+                                            listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
+                                        } else {
+                                            updated
+                                        }
+                                        settingsViewModel.setFolders(finalUpdated)
+                                        viewModel.loadTracks(ctx, finalUpdated)
                                     }
                                 )
                             }
                         }
-                    }
                 }
             }
         }
@@ -220,120 +243,5 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
             }
         }
 
-        // Таймлайн текущего трека и элементы управления
-        if (uiState.currentIndex >= 0) {
-            val pos = uiState.positionMs
-            val dur = uiState.durationMs.takeIf { it > 0 } ?: 1L
-            val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    // Информация о треке
-                    currentTrack?.let { track ->
-                        Text(
-                            text = track.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = track.artist ?: "Неизвестный исполнитель",
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    
-                    // Слайдер прогресса
-                    Slider(
-                        value = pos.toFloat().coerceIn(0f, dur.toFloat()),
-                        onValueChange = { viewModel.seekTo(it.toLong()) },
-                        valueRange = 0f..dur.toFloat()
-                    )
-                    
-                    // Время
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = formatTime(pos),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatTime(dur),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Основные элементы управления
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Previous
-                        IconButton(
-                            onClick = { viewModel.previous() }
-                        ) {
-                            Icon(
-                                Icons.Outlined.SkipPrevious,
-                                contentDescription = "Previous",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                        
-                        // Play/Pause
-                        FloatingActionButton(
-                            onClick = {
-                                if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                            },
-                            modifier = Modifier.size(56.dp)
-                        ) {
-                            Icon(
-                                if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                                contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                        
-                        // Next
-                        IconButton(
-                            onClick = { viewModel.next() }
-                        ) {
-                            Icon(
-                                Icons.Outlined.SkipNext,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun formatTime(millis: Long): String {
-    val seconds = (millis / 1000) % 60
-    val minutes = (millis / (1000 * 60)) % 60
-    val hours = (millis / (1000 * 60 * 60))
-    
-    return if (hours > 0) {
-        "%d:%02d:%02d".format(hours, minutes, seconds)
-    } else {
-        "%d:%02d".format(minutes, seconds)
     }
 }
