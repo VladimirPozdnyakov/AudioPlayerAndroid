@@ -2,9 +2,15 @@
 .gradle/
 app/build/
 
+# Папки сборки
+dist/
+build/
+
 # Локальные настройки IDE (например, IntelliJ IDEA)
 .idea/
 *.iml
+.vscode/
+.cursor/
 
 # Файлы локальных настроек проекта
 local.properties
@@ -18,4 +24,8 @@ gradlew.bat
 
 # Другие временные файлы и папки ОС
 .DS_Store
+Thumbs.db
 *.log
+
+# Конфиденциальные данные
+.env
