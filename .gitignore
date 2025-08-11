@@ -1,0 +1,21 @@
+# Каталоги Gradle сборки
+.gradle/
+build/
+
+# Локальные настройки IDE (например, IntelliJ IDEA)
+.idea/
+*.iml
+
+# Файлы локальных настроек проекта
+local.properties
+
+# Файлы Gradle Wrapper
+gradle/wrapper/gradle-wrapper.jar
+
+# Скрипты Gradle
+gradlew
+gradlew.bat
+
+# Другие временные файлы и папки ОС
+.DS_Store
+*.log
