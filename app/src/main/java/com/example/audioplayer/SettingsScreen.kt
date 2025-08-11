@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -393,11 +394,22 @@ fun SettingsScreen(
                     }
                     SettingsSection.ABOUT -> {
                         Spacer(Modifier.height(12.dp))
-                        ListItem(
-                            leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
-                            headlineContent = { Text("AudioPlayer") },
-                            supportingContent = { Text("Версия: $versionName") }
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ListItem(
+                                leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                                headlineContent = { Text("AudioPlayer") },
+                                supportingContent = { Text("Версия: $versionName") }
+                            )
+                            ListItem(
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/VladimirPozdnyakov/AudioPlayerAndroid"))
+                                    context.startActivity(intent)
+                                },
+                                leadingContent = { Icon(Icons.Outlined.OpenInNew, contentDescription = null) },
+                                headlineContent = { Text("Исходный код") },
+                                supportingContent = { Text("github.com/VladimirPozdnyakov/AudioPlayerAndroid") }
+                            )
+                        }
                     }
                 }
             }
