@@ -1,6 +1,6 @@
 # Каталоги Gradle сборки
 .gradle/
-build/
+app/build/
 
 # Локальные настройки IDE (например, IntelliJ IDEA)
 .idea/
