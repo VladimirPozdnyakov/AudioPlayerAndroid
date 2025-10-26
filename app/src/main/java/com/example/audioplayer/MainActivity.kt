@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
                                 uiState = playerUiState,
                                 viewModel = viewModel
                             )
-                            
+
                             NavigationBar(
                                 modifier = Modifier.height(72.dp),
                                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
@@ -149,11 +149,11 @@ class MainActivity : ComponentActivity() {
                             transitionSpec = {
                                 // Улучшенные анимации перехода между экранами
                                 if (targetState > initialState) {
-                                    // Переход вперед (Home -> Settings)
+                                    // Переход вперёд (Home -> Settings)
                                     slideInHorizontally(
                                         animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                         initialOffsetX = { it }
-                                    ) togetherWith 
+                                    ) togetherWith
                                         slideOutHorizontally(
                                             animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                             targetOffsetX = { -it / 2 }
@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
                                     slideInHorizontally(
                                         animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                         initialOffsetX = { -it }
-                                    ) togetherWith 
+                                    ) togetherWith
                                         slideOutHorizontally(
                                             animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                             targetOffsetX = { it / 2 }
@@ -244,7 +244,7 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
                 ) { track ->
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
                     val isPlaying = isCurrent && uiState.isPlaying
-                    
+
                     // Анимация при нажатии на трек
                     var isSelected by remember { mutableStateOf(false) }
                     val itemScale by animateFloatAsState(
@@ -255,7 +255,7 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
                         ),
                         label = "itemScale"
                     )
-                    
+
                     // Состояние для анимации при клике
                     val itemElevation by animateDpAsState(
                         targetValue = if (isSelected) 4.dp else 0.dp,
@@ -265,7 +265,7 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
                         ),
                         label = "itemElevation"
                     )
-                    
+
                     // Анимация появления элемента при скроллинге
                     val animationItem by animateFloatAsState(
                         targetValue = 1f,
@@ -275,7 +275,7 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
                         ),
                         label = "animationItem"
                     )
-                    
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

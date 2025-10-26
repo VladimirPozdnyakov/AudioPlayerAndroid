@@ -68,7 +68,7 @@ fun SettingsScreen(
         uri?.let {
             try {
                 context.contentResolver.takePersistableUriPermission(
-                    it, 
+                    it,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
             } catch (_: Throwable) { }
@@ -514,7 +514,7 @@ private fun SaturationValuePanel(
             }
         }
     ) {
-        // маркер позиции рисуем на Canvas
+        // Маркер позиции рисуем на Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             val cx = (saturation.coerceIn(0f,1f)) * size.width
             val cy = (1f - value.coerceIn(0f,1f)) * size.height

@@ -47,7 +47,7 @@ fun GlobalPlayerBar(
         val progress = if (uiState.durationMs > 0) {
             (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
         } else 0f
-        
+
         Card(
             modifier = modifier
                 .fillMaxWidth()
@@ -76,7 +76,7 @@ fun GlobalPlayerBar(
                         currentTrack?.let { track ->
                             val currentTrackId by rememberUpdatedState(track.id)
                             val lastTrackId = remember { mutableStateOf(track.id) }
-                            
+
                             // Анимация при смене трека
                             val animatedAlpha by animateFloatAsState(
                                 targetValue = if (currentTrackId != lastTrackId.value) 1f else 0.7f,
@@ -86,13 +86,13 @@ fun GlobalPlayerBar(
                                 ),
                                 label = "alpha"
                             )
-                            
+
                             LaunchedEffect(currentTrackId) {
                                 if (currentTrackId != lastTrackId.value) {
                                     lastTrackId.value = currentTrackId
                                 }
                             }
-                            
+
                             Text(
                                 text = track.title,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -124,15 +124,15 @@ fun GlobalPlayerBar(
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    
+
                     // Элементы управления
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Previous
+                        // Предыдущий
                         val (isPrevPressed, setPrevPressed) = remember { mutableStateOf(false) }
                         val prevScale by animateFloatAsState(
                             targetValue = if (isPrevPressed) 0.8f else 1f,
@@ -142,7 +142,7 @@ fun GlobalPlayerBar(
                             ),
                             label = "prevScale"
                         )
-                        
+
                         IconButton(
                             onClick = { viewModel.previous() },
                             modifier = Modifier
@@ -165,8 +165,8 @@ fun GlobalPlayerBar(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
-                        // Play/Pause
+
+                        // Воспроизведение/Пауза
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
@@ -185,7 +185,7 @@ fun GlobalPlayerBar(
                                 ),
                                 label = "scale"
                             )
-                            
+
                             Icon(
                                 if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
                                 contentDescription = if (uiState.isPlaying) "Pause" else "Play",
@@ -195,8 +195,8 @@ fun GlobalPlayerBar(
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
-                        
-                        // Next
+
+                        // Следующий
                         val (isNextPressed, setNextPressed) = remember { mutableStateOf(false) }
                         val nextScale by animateFloatAsState(
                             targetValue = if (isNextPressed) 0.8f else 1f,
@@ -206,7 +206,7 @@ fun GlobalPlayerBar(
                             ),
                             label = "nextScale"
                         )
-                        
+
                         IconButton(
                             onClick = { viewModel.next() },
                             modifier = Modifier
@@ -229,7 +229,7 @@ fun GlobalPlayerBar(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
+
                         // Режим повтора
                         IconButton(
                             onClick = { viewModel.toggleRepeatMode() },
@@ -254,7 +254,7 @@ fun GlobalPlayerBar(
                                 }
                             )
                         }
-                        
+
                         // Шафл
                         IconButton(
                             onClick = { viewModel.toggleShuffleMode() },
@@ -275,7 +275,7 @@ fun GlobalPlayerBar(
                         }
                     }
                 }
-                
+
                 // Полоса прогресса внизу
                 Box(
                     modifier = Modifier
@@ -308,7 +308,7 @@ private fun formatTime(millis: Long): String {
     val seconds = (millis / 1000) % 60
     val minutes = (millis / (1000 * 60)) % 60
     val hours = (millis / (1000 * 60 * 60))
-    
+
     return if (hours > 0) {
         "%d:%02d:%02d".format(hours, minutes, seconds)
     } else {

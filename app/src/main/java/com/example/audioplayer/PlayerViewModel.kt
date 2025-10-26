@@ -42,7 +42,6 @@ data class PlayerUiState(
 
 class PlayerViewModel : ViewModel() {
     private var player: ExoPlayer? = null
-    private var notificationManager: PlayerNotificationManager? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState
@@ -60,16 +59,25 @@ class PlayerViewModel : ViewModel() {
     }
 
     private fun initializePlayer(context: Context) {
-        player = ExoPlayer.Builder(context)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .build(),
-                true
-            )
-            .setHandleAudioBecomingNoisy(true)
-            .build().apply {
+        // Используем глобальный плеер из Application
+        val globalPlayer = AudioPlayerApplication.mediaSession?.player as? ExoPlayer
+
+        if (globalPlayer != null) {
+            player = globalPlayer
+        } else {
+            player = ExoPlayer.Builder(context)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                        .build(),
+                    true
+                )
+                .setHandleAudioBecomingNoisy(true)
+                .build()
+        }
+
+        player?.apply {
                 addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
@@ -85,68 +93,21 @@ class PlayerViewModel : ViewModel() {
                         val dur = this@apply.duration.coerceAtLeast(0L)
                         _uiState.value = _uiState.value.copy(durationMs = dur)
                     }
-                    
+
                     override fun onRepeatModeChanged(repeatMode: Int) {
                         _uiState.value = _uiState.value.copy(repeatMode = repeatMode)
                     }
-                    
+
                     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                         _uiState.value = _uiState.value.copy(isShuffleModeEnabled = shuffleModeEnabled)
                     }
                 })
             }
-        
-        createNotificationManager(context)
+
+
     }
 
-    private fun createNotificationManager(context: Context) {
-        val p = player ?: return
-        
-        // Создаем канал уведомлений
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel("playback", "Music Playback", NotificationManager.IMPORTANCE_LOW)
-            channel.description = "Media playback controls"
-            nm.createNotificationChannel(channel)
-        }
 
-        notificationManager = PlayerNotificationManager.Builder(context, 1, "playback")
-            .setMediaDescriptionAdapter(object : PlayerNotificationManager.MediaDescriptionAdapter {
-                override fun getCurrentContentTitle(player: Player): CharSequence {
-                    val index = player.currentMediaItemIndex
-                    val track = _uiState.value.tracks.getOrNull(index)
-                    return track?.title ?: "Unknown"
-                }
-
-                override fun createCurrentContentIntent(player: Player): PendingIntent? {
-                    val intent = Intent(context, MainActivity::class.java)
-                    return PendingIntent.getActivity(
-                        context,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    )
-                }
-
-                override fun getCurrentContentText(player: Player): CharSequence? {
-                    val index = player.currentMediaItemIndex
-                    val track = _uiState.value.tracks.getOrNull(index)
-                    return track?.artist ?: "Unknown Artist"
-                }
-
-                override fun getCurrentLargeIcon(
-                    player: Player,
-                    callback: PlayerNotificationManager.BitmapCallback
-                ): android.graphics.Bitmap? = null
-            })
-            .setSmallIconResourceId(android.R.drawable.ic_media_play)
-            .build().apply {
-                setPlayer(p)
-                setUseNextAction(true)
-                setUsePreviousAction(true)
-                setUsePlayPauseActions(true)
-            }
-    }
 
     private fun preparePlaylist() {
         val p = player ?: return
@@ -201,21 +162,35 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
+    fun startPlaybackService(context: Context) {
+        val intent = Intent(context, MediaPlaybackService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    fun stopPlaybackService(context: Context) {
+        val intent = Intent(context, MediaPlaybackService::class.java)
+        context.stopService(intent)
+    }
+
     fun seekTo(positionMs: Long) {
         val p = player ?: return
         // Сохраняем текущее состояние воспроизведения до seekTo
         val wasPlaying = p.isPlaying
         p.seekTo(positionMs.coerceIn(0L, p.duration.coerceAtLeast(0L)))
-        
+
         // Если трек не должен был воспроизводиться, останавливаем его после seekTo
         if (!wasPlaying && p.isPlaying) {
             p.pause()
         }
-        
+
         // Обновляем только позицию, сохраняя текущее состояние воспроизведения
         _uiState.value = _uiState.value.copy(
             positionMs = positionMs,
-            isPlaying = wasPlaying  // используем оригинальное состояние до seekTo
+            isPlaying = wasPlaying  // Используем оригинальное состояние до seekTo
         )
     }
 
@@ -257,10 +232,8 @@ class PlayerViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        notificationManager?.setPlayer(null)
         player?.release()
         player = null
-        notificationManager = null
     }
 
     private fun queryDeviceAudio(context: Context, allowedFolders: List<String>): List<Track> {
@@ -270,7 +243,7 @@ class PlayerViewModel : ViewModel() {
         } else {
             allowedFolders
         }
-        
+
         if (foldersToScan.isEmpty()) return emptyList()
         val tracks = mutableListOf<Track>()
         val collection: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -366,6 +339,22 @@ class PlayerViewModel : ViewModel() {
                 }
                 kotlinx.coroutines.delay(500)
             }
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun createExoPlayerInstance(context: android.content.Context): androidx.media3.exoplayer.ExoPlayer {
+            return androidx.media3.exoplayer.ExoPlayer.Builder(context)
+                .setAudioAttributes(
+                    androidx.media3.common.AudioAttributes.Builder()
+                        .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                        .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                        .build(),
+                    true
+                )
+                .setHandleAudioBecomingNoisy(true)
+                .build()
         }
     }
 }
