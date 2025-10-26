@@ -34,7 +34,10 @@ data class PlayerUiState(
     val isPlaying: Boolean = false,
     val currentIndex: Int = -1,
     val positionMs: Long = 0L,
-    val durationMs: Long = 0L
+    val durationMs: Long = 0L,
+    val isLoading: Boolean = false,
+    val repeatMode: Int = androidx.media3.common.Player.REPEAT_MODE_OFF,
+    val isShuffleModeEnabled: Boolean = false
 )
 
 class PlayerViewModel : ViewModel() {
@@ -46,8 +49,9 @@ class PlayerViewModel : ViewModel() {
 
     fun loadTracks(context: Context, allowedFolders: List<String> = emptyList()) {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             val tracks = queryDeviceAudio(context, allowedFolders)
-            _uiState.value = _uiState.value.copy(tracks = tracks)
+            _uiState.value = _uiState.value.copy(tracks = tracks, isLoading = false)
             if (player == null) {
                 initializePlayer(context)
             }
@@ -80,6 +84,14 @@ class PlayerViewModel : ViewModel() {
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         val dur = this@apply.duration.coerceAtLeast(0L)
                         _uiState.value = _uiState.value.copy(durationMs = dur)
+                    }
+                    
+                    override fun onRepeatModeChanged(repeatMode: Int) {
+                        _uiState.value = _uiState.value.copy(repeatMode = repeatMode)
+                    }
+                    
+                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                        _uiState.value = _uiState.value.copy(isShuffleModeEnabled = shuffleModeEnabled)
                     }
                 })
             }
@@ -191,8 +203,38 @@ class PlayerViewModel : ViewModel() {
 
     fun seekTo(positionMs: Long) {
         val p = player ?: return
+        // Сохраняем текущее состояние воспроизведения до seekTo
+        val wasPlaying = p.isPlaying
         p.seekTo(positionMs.coerceIn(0L, p.duration.coerceAtLeast(0L)))
-        _uiState.value = _uiState.value.copy(positionMs = positionMs)
+        
+        // Если трек не должен был воспроизводиться, останавливаем его после seekTo
+        if (!wasPlaying && p.isPlaying) {
+            p.pause()
+        }
+        
+        // Обновляем только позицию, сохраняя текущее состояние воспроизведения
+        _uiState.value = _uiState.value.copy(
+            positionMs = positionMs,
+            isPlaying = wasPlaying  // используем оригинальное состояние до seekTo
+        )
+    }
+
+    fun toggleRepeatMode() {
+        val p = player ?: return
+        val newMode = when (p.repeatMode) {
+            androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
+            androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
+            else -> androidx.media3.common.Player.REPEAT_MODE_OFF
+        }
+        p.repeatMode = newMode
+        _uiState.value = _uiState.value.copy(repeatMode = newMode)
+    }
+
+    fun toggleShuffleMode() {
+        val p = player ?: return
+        val newState = !p.shuffleModeEnabled
+        p.shuffleModeEnabled = newState
+        _uiState.value = _uiState.value.copy(isShuffleModeEnabled = newState)
     }
 
     fun next() {

@@ -42,6 +42,19 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateContentSize
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
@@ -134,22 +147,27 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize().padding(innerPadding),
                             label = "bottom_nav",
                             transitionSpec = {
+                                // Улучшенные анимации перехода между экранами
                                 if (targetState > initialState) {
+                                    // Переход вперед (Home -> Settings)
                                     slideInHorizontally(
-                                        animationSpec = tween(200),
+                                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                         initialOffsetX = { it }
-                                    ) togetherWith slideOutHorizontally(
-                                        animationSpec = tween(200),
-                                        targetOffsetX = { -it / 2 }
-                                    )
+                                    ) togetherWith 
+                                        slideOutHorizontally(
+                                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                                            targetOffsetX = { -it / 2 }
+                                        )
                                 } else {
+                                    // Переход назад (Settings -> Home)
                                     slideInHorizontally(
-                                        animationSpec = tween(200),
+                                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                                         initialOffsetX = { -it }
-                                    ) togetherWith slideOutHorizontally(
-                                        animationSpec = tween(200),
-                                        targetOffsetX = { it / 2 }
-                                    )
+                                    ) togetherWith 
+                                        slideOutHorizontally(
+                                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                                            targetOffsetX = { it / 2 }
+                                        )
                                 }
                             }
                         ) { tab ->
@@ -205,39 +223,104 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
         Text(text = "Аудиофайлы", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(12.dp))
 
-        if (uiState.tracks.isEmpty()) {
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                // Анимированный индикатор загрузки
+                CircularProgressIndicator(
+                    modifier = Modifier.size(50.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 4.dp
+                )
+            }
+        } else if (uiState.tracks.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Нет треков (попробуйте добавить папки в настройках)")
             }
         } else {
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(uiState.tracks) { track ->
+                items(
+                    items = uiState.tracks,
+                    key = { track -> track.id }
+                ) { track ->
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
                     val isPlaying = isCurrent && uiState.isPlaying
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            if (isCurrent) {
-                                if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                            } else {
-                                viewModel.play(track)
+                    
+                    // Анимация при нажатии на трек
+                    var isSelected by remember { mutableStateOf(false) }
+                    val itemScale by animateFloatAsState(
+                        targetValue = if (isSelected) 0.95f else 1f,
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        ),
+                        label = "itemScale"
+                    )
+                    
+                    // Состояние для анимации при клике
+                    val itemElevation by animateDpAsState(
+                        targetValue = if (isSelected) 4.dp else 0.dp,
+                        animationSpec = tween(
+                            durationMillis = 150,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        ),
+                        label = "itemElevation"
+                    )
+                    
+                    // Анимация появления элемента при скроллинге
+                    val animationItem by animateFloatAsState(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        ),
+                        label = "animationItem"
+                    )
+                    
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                            .scale(itemScale)
+                            .graphicsLayer {
+                                alpha = animationItem
+                                translationY = if (animationItem == 1f) 0f else 50f
                             }
-                        },
-                        headlineContent = { Text(track.title, maxLines = 1) },
-                        supportingContent = { Text(track.artist ?: "Неизвестен") },
-                        trailingContent = {
-                            if (isCurrent) {
-                                if (isPlaying) {
-                                    IconButton(onClick = { viewModel.pause() }) {
-                                        Icon(Icons.Outlined.Pause, contentDescription = "Pause")
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onPress = {
+                                        isSelected = true
+                                        tryAwaitRelease()
+                                        isSelected = false
                                     }
+                                )
+                            },
+                        elevation = CardDefaults.cardElevation(defaultElevation = itemElevation)
+                    ) {
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                if (isCurrent) {
+                                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                                 } else {
-                                    IconButton(onClick = { viewModel.resume() }) {
-                                        Icon(Icons.Outlined.PlayArrow, contentDescription = "Resume")
+                                    viewModel.play(track)
+                                }
+                            },
+                            headlineContent = { Text(track.title, maxLines = 1) },
+                            supportingContent = { Text(track.artist ?: "Неизвестен") },
+                            trailingContent = {
+                                if (isCurrent) {
+                                    if (isPlaying) {
+                                        IconButton(onClick = { viewModel.pause() }) {
+                                            Icon(Icons.Outlined.Pause, contentDescription = "Pause")
+                                        }
+                                    } else {
+                                        IconButton(onClick = { viewModel.resume() }) {
+                                            Icon(Icons.Outlined.PlayArrow, contentDescription = "Resume")
+                                        }
                                     }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                     HorizontalDivider()
                 }
             }
