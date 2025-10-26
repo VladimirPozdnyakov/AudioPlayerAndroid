@@ -11,6 +11,8 @@ build/
 *.iml
 .vscode/
 .cursor/
+QWEN.md
+ToDo.txt
 
 # Файлы локальных настроек проекта
 local.properties
