@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -22,12 +23,17 @@ import androidx.compose.material.icons.outlined.SkipPrevious
 import androidx.compose.material.icons.outlined.Shuffle
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.RepeatOne
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -254,10 +260,41 @@ fun PlayerScreen(
     onTrackClick: (Track) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "Аудиофайлы", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(12.dp))
+
+        // Search bar
+        TextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Поиск...") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp), // Fully rounded corners
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            leadingIcon = {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                    contentDescription = "Search"
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Outlined.Clear,
+                            contentDescription = "Clear"
+                        )
+                    }
+                }
+            }
+        )
 
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -273,9 +310,19 @@ fun PlayerScreen(
                 Text("Нет треков (попробуйте добавить папки в настройках)")
             }
         } else {
+            // Filter tracks based on search query
+            val filteredTracks = if (searchQuery.isEmpty()) {
+                uiState.tracks
+            } else {
+                uiState.tracks.filter { track ->
+                    track.title.contains(searchQuery, ignoreCase = true) ||
+                    (track.artist?.contains(searchQuery, ignoreCase = true) == true)
+                }
+            }
+
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(
-                    items = uiState.tracks,
+                    items = filteredTracks,
                     key = { track -> track.id }
                 ) { track ->
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
