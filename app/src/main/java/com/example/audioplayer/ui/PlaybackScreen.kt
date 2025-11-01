@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -166,6 +167,7 @@ fun TrackInfo(uiState: PlayerUiState) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 4, // Увеличил лимит с 2 до 4 строк
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center, // Центрируем текст
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
