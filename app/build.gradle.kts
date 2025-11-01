@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.audioplayer"
+    namespace = "com.foxelectronic.audioplayer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.audioplayer"
+        applicationId = "com.foxelectronic.audioplayer"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "0.2b"
+        versionName = "0.3b"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -77,7 +77,7 @@ dependencies {
 
     // Accompanist permissions
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
-    
+
     // Image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
 

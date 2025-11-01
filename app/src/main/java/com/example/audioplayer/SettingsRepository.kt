@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences

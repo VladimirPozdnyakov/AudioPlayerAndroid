@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import android.Manifest
 import android.os.Build
@@ -32,9 +32,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.audioplayer.ui.PlaybackScreen
-import com.example.audioplayer.ui.theme.AudioPlayerTheme
-import com.example.audioplayer.ui.theme.ThemeMode
+import com.foxelectronic.audioplayer.ui.PlaybackScreen
+import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
+import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.lifecycle.lifecycleScope
@@ -99,12 +99,12 @@ class MainActivity : ComponentActivity() {
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex) {
                 val navController = rememberNavController()
                 val playerUiState by viewModel.uiState.collectAsState()
-                
+
                 NavHost(
                     navController = navController,
                     startDestination = "main"
                 ) {
-                    composable("main") { 
+                    composable("main") {
                         MainScreen(
                             viewModel = viewModel,
                             settings = settings,
@@ -114,7 +114,8 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("playback") {
                         PlaybackScreen(
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            onBackClick = { navController.popBackStack() }
                         )
                     }
                 }
@@ -146,7 +147,7 @@ fun MainScreen(
     var selectedTab by remember { mutableStateOf(0) } // 0: Home, 1: Settings
     val ctx = LocalContext.current
     val playerUiState by viewModel.uiState.collectAsState()
-    
+
     Scaffold(
         bottomBar = {
             Column {
@@ -228,8 +229,8 @@ fun MainScreen(
                         viewModel = viewModel,
                         onTrackClick = { track ->
                             // Play the track if needed, but don't navigate to playback screen
-                            if (playerUiState.currentIndex >= 0 && 
-                                playerUiState.tracks.isNotEmpty() && 
+                            if (playerUiState.currentIndex >= 0 &&
+                                playerUiState.tracks.isNotEmpty() &&
                                 playerUiState.tracks[playerUiState.currentIndex].id != track.id) {
                                 viewModel.play(track)
                             }

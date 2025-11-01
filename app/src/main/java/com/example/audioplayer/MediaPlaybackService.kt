@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService

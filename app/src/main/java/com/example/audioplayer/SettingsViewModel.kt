@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

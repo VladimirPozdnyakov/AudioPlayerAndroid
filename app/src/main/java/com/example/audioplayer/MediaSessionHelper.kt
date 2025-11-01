@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import android.content.Context
 import android.content.Intent
@@ -11,13 +11,13 @@ class MediaSessionHelper {
         @Volatile
         private var mediaSession: MediaSession? = null
         private var serviceStarted = false
-        
+
         fun setMediaSession(session: MediaSession) {
             mediaSession = session
         }
-        
+
         fun getMediaSession(): MediaSession? = mediaSession
-        
+
         fun startService(context: Context) {
             if (!serviceStarted) {
                 val intent = Intent(context, MediaPlaybackService::class.java)
@@ -29,7 +29,7 @@ class MediaSessionHelper {
                 serviceStarted = true
             }
         }
-        
+
         fun stopService(context: Context) {
             if (serviceStarted) {
                 val intent = Intent(context, MediaPlaybackService::class.java)

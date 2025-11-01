@@ -1,4 +1,4 @@
-package com.example.audioplayer.ui
+package com.foxelectronic.audioplayer.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.animation.core.animateFloatAsState
@@ -32,44 +34,66 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImagePainter
+import androidx.compose.ui.unit.Dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
-import com.example.audioplayer.PlayerViewModel
-import com.example.audioplayer.PlayerUiState
-import com.example.audioplayer.Track
+import com.foxelectronic.audioplayer.PlayerViewModel
+import com.foxelectronic.audioplayer.PlayerUiState
+import com.foxelectronic.audioplayer.Track
 
 @Composable
 fun PlaybackScreen(
     viewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {} // Функция, вызываемая при нажатии на кнопку "назад"
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Album Art
-        AlbumArt(uiState = uiState)
+        // Основная колонка с контентом
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Album Art
+            AlbumArt(uiState = uiState)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Track Information
-        TrackInfo(uiState = uiState)
+            // Track Information
+            TrackInfo(uiState = uiState)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Progress Slider with Time Labels
-        ProgressSlider(uiState = uiState, viewModel = viewModel)
+            // Progress Slider with Time Labels
+            ProgressSlider(uiState = uiState, viewModel = viewModel)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Playback Controls
-        PlaybackControls(uiState = uiState, viewModel = viewModel)
+            // Playback Controls
+            PlaybackControls(uiState = uiState, viewModel = viewModel)
+        }
+
+        // Кнопка «назад» в верхнем левом углу
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier
+                .padding(start = 16.dp, top = 48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Назад",
+                tint = MaterialTheme.colorScheme.onBackground
+            )
+        }
     }
 }
 
@@ -140,7 +164,7 @@ fun TrackInfo(uiState: PlayerUiState) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
+            maxLines = 4, // Увеличил лимит с 2 до 4 строк
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -206,14 +230,19 @@ fun ProgressSlider(
                 thumb = {
                     Box(
                         modifier = Modifier
-                            .size(width = 24.dp, height = 24.dp)
-                            .padding(horizontal = 4.dp),
+                            .size(width = 19.dp, height = 24.dp)
+                            .padding(horizontal = 4.dp)
+                            .clip(RoundedCornerShape(12.dp)) // Увеличиваем скругление для большего эффекта
+                            .border(
+                                width = 2.5.dp,
+                                color = MaterialTheme.colorScheme.background
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(width = 4.dp, height = 20.dp)
-                                .clip(RoundedCornerShape(2.dp))
+                                .size(width = 6.dp, height = 20.dp) // Увеличиваем ширину внутреннего элемента
+                                .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.primary)
                         )
                     }
@@ -273,12 +302,12 @@ fun PlaybackControls(
         // Previous Button
         IconButton(
             onClick = { viewModel.previous() },
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(72.dp)
         ) {
             Icon(
                 imageVector = Icons.Outlined.SkipPrevious,
                 contentDescription = "Previous",
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(36.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -316,12 +345,12 @@ fun PlaybackControls(
         // Next Button
         IconButton(
             onClick = { viewModel.next() },
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(72.dp)
         ) {
             Icon(
                 imageVector = Icons.Outlined.SkipNext,
                 contentDescription = "Next",
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(36.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }

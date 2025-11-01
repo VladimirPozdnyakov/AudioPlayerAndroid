@@ -1,4 +1,4 @@
-package com.example.audioplayer
+package com.foxelectronic.audioplayer
 
 import android.content.Context
 import android.os.Build
@@ -321,7 +321,7 @@ class PlayerViewModel : ViewModel() {
                     // Get album art path if available
                     val albumId = it.getLong(albumIdCol)
                     val albumArtUri = getAlbumArtUri(albumId)
-                    
+
                     tracks += Track(
                         id = id,
                         uri = contentUri,
