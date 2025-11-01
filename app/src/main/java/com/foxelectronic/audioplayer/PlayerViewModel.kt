@@ -20,6 +20,8 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 data class Track(
@@ -43,11 +45,13 @@ data class PlayerUiState(
 
 class PlayerViewModel : ViewModel() {
     private var player: ExoPlayer? = null
+    private var settingsRepository: SettingsRepository? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState
 
-    fun loadTracks(context: Context, allowedFolders: List<String> = emptyList()) {
+    fun loadTracks(context: Context, settingsRepo: SettingsRepository, allowedFolders: List<String> = emptyList()) {
+        this.settingsRepository = settingsRepo
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val tracks = queryDeviceAudio(context, allowedFolders)
@@ -56,6 +60,10 @@ class PlayerViewModel : ViewModel() {
                 initializePlayer(context)
             }
             preparePlaylist()
+            
+            // Try to restore the last played track after a short delay to ensure playlist is fully loaded
+            kotlinx.coroutines.delay(100) // Small delay to ensure playlist is ready
+            restoreLastPlayedTrack() // This is now a suspend function
         }
     }
 
@@ -88,6 +96,14 @@ class PlayerViewModel : ViewModel() {
                         val index = this@apply.currentMediaItemIndex
                         val dur = this@apply.duration.coerceAtLeast(0L)
                         _uiState.value = _uiState.value.copy(currentIndex = index, durationMs = dur)
+                        
+                        // Save the current track ID when transitioning to a new track, but not during restoration
+                        if (!isRestoringTrack && index >= 0 && _uiState.value.tracks.getOrNull(index) != null) {
+                            val currentTrack = _uiState.value.tracks[index]
+                            viewModelScope.launch {
+                                settingsRepository?.setLastPlayedTrackId(currentTrack.id.toString())
+                            }
+                        }
                     }
 
                     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -110,6 +126,8 @@ class PlayerViewModel : ViewModel() {
 
 
 
+    private var isRestoringTrack = false
+
     private fun preparePlaylist() {
         val p = player ?: return
         p.clearMediaItems()
@@ -126,6 +144,8 @@ class PlayerViewModel : ViewModel() {
         }
         p.setMediaItems(items)
         p.prepare()
+        // Ensure that the player does not auto-play after preparing
+        p.playWhenReady = false
     }
 
     fun play(track: Track) {
@@ -136,6 +156,11 @@ class PlayerViewModel : ViewModel() {
             p.playWhenReady = true
             p.play()
             _uiState.value = _uiState.value.copy(isPlaying = true, currentIndex = index)
+            
+            // Save the current track ID when playing
+            viewModelScope.launch {
+                settingsRepository?.setLastPlayedTrackId(track.id.toString())
+            }
         }
     }
 
@@ -175,6 +200,28 @@ class PlayerViewModel : ViewModel() {
     fun stopPlaybackService(context: Context) {
         val intent = Intent(context, MediaPlaybackService::class.java)
         context.stopService(intent)
+    }
+
+    private suspend fun restoreLastPlayedTrack() {
+        isRestoringTrack = true
+        val lastPlayedId = settingsRepository?.lastPlayedTrackIdFlow?.firstOrNull()
+        if (!lastPlayedId.isNullOrEmpty()) {
+            val trackId = lastPlayedId.toLongOrNull()
+            if (trackId != null) {
+                val trackIndex = _uiState.value.tracks.indexOfFirst { it.id == trackId }
+                if (trackIndex >= 0) {
+                    val p = player ?: return
+                    // Only restore if the player is not already playing another track
+                    if (_uiState.value.currentIndex == -1 || _uiState.value.currentIndex != trackIndex) {
+                        p.seekTo(trackIndex, 0)
+                        _uiState.value = _uiState.value.copy(currentIndex = trackIndex)
+                    }
+                }
+            }
+        }
+        // Reset the flag after a short delay to allow for proper initialization
+        kotlinx.coroutines.delay(200)
+        isRestoringTrack = false
     }
 
     fun seekTo(positionMs: Long) {

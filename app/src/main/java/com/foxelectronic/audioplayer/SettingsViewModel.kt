@@ -17,6 +17,8 @@ data class SettingsUiState(
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val repo = SettingsRepository(application)
+    val settingsRepository: SettingsRepository
+        get() = repo
 
     val uiState: StateFlow<SettingsUiState> = combine(
         repo.themeFlow,

@@ -20,6 +20,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_THEME = stringPreferencesKey("theme")
         private val KEY_FOLDERS = stringPreferencesKey("folders")
         private val KEY_ACCENT = stringPreferencesKey("accent_hex")
+        private val KEY_LAST_PLAYED_TRACK_ID = stringPreferencesKey("last_played_track_id")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
@@ -66,6 +67,22 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAccent(hex: String) {
         context.dataStore.edit { prefs ->
             prefs[KEY_ACCENT] = hex
+        }
+    }
+
+    val lastPlayedTrackIdFlow: Flow<String?> = context.dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            prefs[KEY_LAST_PLAYED_TRACK_ID]
+        }
+
+    suspend fun setLastPlayedTrackId(id: String?) {
+        context.dataStore.edit { prefs ->
+            if (id != null) {
+                prefs[KEY_LAST_PLAYED_TRACK_ID] = id
+            } else {
+                prefs.remove(KEY_LAST_PLAYED_TRACK_ID)
+            }
         }
     }
 }

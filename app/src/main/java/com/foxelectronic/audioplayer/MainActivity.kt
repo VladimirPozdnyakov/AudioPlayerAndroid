@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                     } else {
                         folders
                     }
-                    runOnUiThread { viewModel.loadTracks(this@MainActivity, foldersToUse) }
+                    runOnUiThread { viewModel.loadTracks(this@MainActivity, settingsRepo, foldersToUse) }
                 }
             }
         }
@@ -235,7 +235,7 @@ fun MainScreen(
                         onAddFolder = { newFolder ->
                             val updated = (settings.folders + newFolder).distinct()
                             settingsViewModel.setFolders(updated)
-                            viewModel.loadTracks(ctx, updated)
+                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, updated)
                         },
                         onRemoveFolder = { folder ->
                             val updated = settings.folders.filterNot { it == folder }
@@ -246,7 +246,7 @@ fun MainScreen(
                                 updated
                             }
                             settingsViewModel.setFolders(finalUpdated)
-                            viewModel.loadTracks(ctx, finalUpdated)
+                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, finalUpdated)
                         }
                     )
                 }
