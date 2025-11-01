@@ -26,7 +26,8 @@ data class Track(
     val id: Long,
     val uri: Uri,
     val title: String,
-    val artist: String?
+    val artist: String?,
+    val albumArtPath: String? = null
 )
 
 data class PlayerUiState(
@@ -251,6 +252,7 @@ class PlayerViewModel : ViewModel() {
             add(MediaStore.Audio.Media._ID)
             add(MediaStore.Audio.Media.TITLE)
             add(MediaStore.Audio.Media.ARTIST)
+            add(MediaStore.Audio.Media.ALBUM_ID) // Add album ID to fetch album art
             if (Build.VERSION.SDK_INT >= 29) {
                 add(MediaStore.Audio.Media.RELATIVE_PATH)
             } else {
@@ -273,6 +275,7 @@ class PlayerViewModel : ViewModel() {
             val idCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val artistCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val albumIdCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val relPathCol = if (Build.VERSION.SDK_INT >= 29) it.getColumnIndex(MediaStore.Audio.Media.RELATIVE_PATH) else -1
             @Suppress("DEPRECATION")
             val dataCol = if (Build.VERSION.SDK_INT < 29) it.getColumnIndex(MediaStore.Audio.Media.DATA) else -1
@@ -315,16 +318,30 @@ class PlayerViewModel : ViewModel() {
                     }
                 }
                 if (passesFilter) {
+                    // Get album art path if available
+                    val albumId = it.getLong(albumIdCol)
+                    val albumArtUri = getAlbumArtUri(albumId)
+                    
                     tracks += Track(
                         id = id,
                         uri = contentUri,
                         title = title,
-                        artist = artist
+                        artist = artist,
+                        albumArtPath = albumArtUri?.toString()
                     )
                 }
             }
         }
         return tracks
+    }
+
+    private fun getAlbumArtUri(albumId: Long): Uri? {
+        return try {
+            val sArtworkUri = Uri.parse("content://media/external/audio/albumart")
+            Uri.withAppendedPath(sArtworkUri, albumId.toString())
+        } catch (e: Exception) {
+            null
+        }
     }
 
     init {

@@ -29,6 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.audioplayer.ui.PlaybackScreen
 import com.example.audioplayer.ui.theme.AudioPlayerTheme
 import com.example.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 // This is a quick one-shot read; UI will still update via settings screen later
                 lifecycleScope.launch {
                     val folders = settingsRepo.foldersFlow.firstOrNull() ?: emptyList()
-                    // Если папки не выбраны, добавляем папку Music по умолчанию
+                    // Если папки не выбаны, добавляем папку Music по умолчанию
                     val foldersToUse = if (folders.isEmpty()) {
                         val defaultFolder = "content://com.android.externalstorage.documents/tree/primary%3AMusic"
                         settingsRepo.setFolders(listOf(defaultFolder))
@@ -93,109 +97,26 @@ class MainActivity : ComponentActivity() {
                 AppTheme.DARK -> ThemeMode.DARK
             }
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex) {
-                var selectedTab by remember { mutableStateOf(0) } // 0: Home, 1: Settings
-                val ctx = LocalContext.current
+                val navController = rememberNavController()
                 val playerUiState by viewModel.uiState.collectAsState()
-                Scaffold(
-                    bottomBar = {
-                        Column {
-                            // Глобальный блок управления треком
-                            GlobalPlayerBar(
-                                uiState = playerUiState,
-                                viewModel = viewModel
-                            )
-
-                            NavigationBar(
-                                modifier = Modifier.height(72.dp),
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                windowInsets = WindowInsets(0)
-                            ) {
-                                NavigationBarItem(
-                                    selected = selectedTab == 0,
-                                    onClick = { selectedTab = 0 },
-                                    icon = { Icon(Icons.Outlined.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
-                                    label = { Text("Главная") },
-                                    alwaysShowLabel = true,
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                    )
-                                )
-                                NavigationBarItem(
-                                    selected = selectedTab == 1,
-                                    onClick = { selectedTab = 1 },
-                                    icon = { Icon(Icons.Outlined.Settings, contentDescription = "Настройки", modifier = Modifier.size(24.dp)) },
-                                    label = { Text("Настройки") },
-                                    alwaysShowLabel = true,
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                    )
-                                )
-                            }
-                        }
+                
+                NavHost(
+                    navController = navController,
+                    startDestination = "main"
+                ) {
+                    composable("main") { 
+                        MainScreen(
+                            viewModel = viewModel,
+                            settings = settings,
+                            settingsViewModel = settingsViewModel,
+                            navController = navController
+                        )
                     }
-                ) { innerPadding ->
-                    AnimatedContent(
-                            targetState = selectedTab,
-                            modifier = Modifier.fillMaxSize().padding(innerPadding),
-                            label = "bottom_nav",
-                            transitionSpec = {
-                                // Улучшенные анимации перехода между экранами
-                                if (targetState > initialState) {
-                                    // Переход вперёд (Home -> Settings)
-                                    slideInHorizontally(
-                                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                        initialOffsetX = { it }
-                                    ) togetherWith
-                                        slideOutHorizontally(
-                                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                            targetOffsetX = { -it / 2 }
-                                        )
-                                } else {
-                                    // Переход назад (Settings -> Home)
-                                    slideInHorizontally(
-                                        animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                        initialOffsetX = { -it }
-                                    ) togetherWith
-                                        slideOutHorizontally(
-                                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                            targetOffsetX = { it / 2 }
-                                        )
-                                }
-                            }
-                        ) { tab ->
-                            when (tab) {
-                                0 -> PlayerScreen(viewModel = viewModel)
-                                else -> SettingsScreen(
-                                    state = settings,
-                                    onThemeChange = settingsViewModel::setTheme,
-                                    onAccentChange = settingsViewModel::setAccent,
-                                    onAddFolder = { newFolder ->
-                                        val updated = (settings.folders + newFolder).distinct()
-                                        settingsViewModel.setFolders(updated)
-                                        viewModel.loadTracks(ctx, updated)
-                                    },
-                                    onRemoveFolder = { folder ->
-                                        val updated = settings.folders.filterNot { it == folder }
-                                        // Если удаляем все папки, добавляем папку Music по умолчанию
-                                        val finalUpdated = if (updated.isEmpty()) {
-                                            listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
-                                        } else {
-                                            updated
-                                        }
-                                        settingsViewModel.setFolders(finalUpdated)
-                                        viewModel.loadTracks(ctx, finalUpdated)
-                                    }
-                                )
-                            }
-                        }
+                    composable("playback") {
+                        PlaybackScreen(
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
         }
@@ -216,7 +137,135 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PlayerScreen(viewModel: PlayerViewModel) {
+fun MainScreen(
+    viewModel: PlayerViewModel,
+    settings: SettingsUiState,
+    settingsViewModel: SettingsViewModel,
+    navController: androidx.navigation.NavController
+) {
+    var selectedTab by remember { mutableStateOf(0) } // 0: Home, 1: Settings
+    val ctx = LocalContext.current
+    val playerUiState by viewModel.uiState.collectAsState()
+    
+    Scaffold(
+        bottomBar = {
+            Column {
+                // Глобальный блок управления треком
+                GlobalPlayerBar(
+                    uiState = playerUiState,
+                    viewModel = viewModel,
+                    onMiniPlayerClick = { navController.navigate("playback") }
+                )
+
+                NavigationBar(
+                    modifier = Modifier.height(72.dp),
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    windowInsets = WindowInsets(0)
+                ) {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Icon(Icons.Outlined.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
+                        label = { Text("Главная") },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Icon(Icons.Outlined.Settings, contentDescription = "Настройки", modifier = Modifier.size(24.dp)) },
+                        label = { Text("Настройки") },
+                        alwaysShowLabel = true,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        )
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        AnimatedContent(
+                targetState = selectedTab,
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                label = "bottom_nav",
+                transitionSpec = {
+                    // Улучшенные анимации перехода между экранами
+                    if (targetState > initialState) {
+                        // Переход вперёд (Home -> Settings)
+                        slideInHorizontally(
+                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                            initialOffsetX = { it }
+                        ) togetherWith
+                            slideOutHorizontally(
+                                animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                                targetOffsetX = { -it / 2 }
+                            )
+                    } else {
+                        // Переход назад (Settings -> Home)
+                        slideInHorizontally(
+                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                            initialOffsetX = { -it }
+                        ) togetherWith
+                            slideOutHorizontally(
+                                animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                                targetOffsetX = { it / 2 }
+                            )
+                    }
+                }
+            ) { tab ->
+                when (tab) {
+                    0 -> PlayerScreen(
+                        viewModel = viewModel,
+                        onTrackClick = { track ->
+                            // Play the track if needed, but don't navigate to playback screen
+                            if (playerUiState.currentIndex >= 0 && 
+                                playerUiState.tracks.isNotEmpty() && 
+                                playerUiState.tracks[playerUiState.currentIndex].id != track.id) {
+                                viewModel.play(track)
+                            }
+                        }
+                    )
+                    else -> SettingsScreen(
+                        state = settings,
+                        onThemeChange = settingsViewModel::setTheme,
+                        onAccentChange = settingsViewModel::setAccent,
+                        onAddFolder = { newFolder ->
+                            val updated = (settings.folders + newFolder).distinct()
+                            settingsViewModel.setFolders(updated)
+                            viewModel.loadTracks(ctx, updated)
+                        },
+                        onRemoveFolder = { folder ->
+                            val updated = settings.folders.filterNot { it == folder }
+                            // Если удаляем все папки, добавляем папку Music по умолчанию
+                            val finalUpdated = if (updated.isEmpty()) {
+                                listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
+                            } else {
+                                updated
+                            }
+                            settingsViewModel.setFolders(finalUpdated)
+                            viewModel.loadTracks(ctx, finalUpdated)
+                        }
+                    )
+                }
+            }
+    }
+}
+
+@Composable
+fun PlayerScreen(
+    viewModel: PlayerViewModel,
+    onTrackClick: (Track) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -303,6 +352,7 @@ fun PlayerScreen(viewModel: PlayerViewModel) {
                                 } else {
                                     viewModel.play(track)
                                 }
+                                onTrackClick(track) // Navigate to playback screen
                             },
                             headlineContent = { Text(track.title, maxLines = 1) },
                             supportingContent = { Text(track.artist ?: "Неизвестен") },

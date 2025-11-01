@@ -40,6 +40,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 fun GlobalPlayerBar(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel,
+    onMiniPlayerClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
@@ -51,7 +52,8 @@ fun GlobalPlayerBar(
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .height(72.dp),
+                .height(72.dp)
+                .clickable { onMiniPlayerClick() }, // Make the entire bar clickable to go to full screen playback
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
             ),
@@ -132,6 +134,25 @@ fun GlobalPlayerBar(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Шафл
+                        IconButton(
+                            onClick = { viewModel.toggleShuffleMode() },
+                            modifier = Modifier
+                                .size(36.dp),
+                            enabled = uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE
+                        ) {
+                            Icon(
+                                Icons.Outlined.Shuffle,
+                                contentDescription = "Shuffle",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (uiState.isShuffleModeEnabled && uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+
                         // Предыдущий
                         val (isPrevPressed, setPrevPressed) = remember { mutableStateOf(false) }
                         val prevScale by animateFloatAsState(
@@ -254,50 +275,18 @@ fun GlobalPlayerBar(
                                 }
                             )
                         }
-
-                        // Шафл
-                        IconButton(
-                            onClick = { viewModel.toggleShuffleMode() },
-                            modifier = Modifier
-                                .size(36.dp),
-                            enabled = uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE
-                        ) {
-                            Icon(
-                                Icons.Outlined.Shuffle,
-                                contentDescription = "Shuffle",
-                                modifier = Modifier.size(20.dp),
-                                tint = if (uiState.isShuffleModeEnabled && uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        }
                     }
                 }
 
                 // Полоса прогресса внизу
-                Box(
+                LinearProgressIndicator(
+                    progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(3.dp)
-                        .pointerInput(Unit) {
-                            detectTapGestures { offset ->
-                                val newProgress = (offset.x / size.width).coerceIn(0f, 1f)
-                                val newPosition = (newProgress * uiState.durationMs).toLong()
-                                viewModel.seekTo(newPosition)
-                            }
-                        }
-                ) {
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    )
-                }
+                        .height(3.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                )
             }
         }
     }
