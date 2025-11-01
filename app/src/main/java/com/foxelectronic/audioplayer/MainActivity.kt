@@ -44,6 +44,8 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.animateDpAsState
@@ -196,8 +198,16 @@ fun MainScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 label = "bottom_nav",
                 transitionSpec = {
-                    // Простое затухание для анимации перехода
-                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                    // Плавные анимации перелистывания влево и вправо
+                    if (targetState > initialState) {
+                        // Переход вправо (с Главной на Настройки)
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { -it })
+                    } else {
+                        // Переход влево (с Настроек на Главную)
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { it })
+                    }
                 }
             ) { tab ->
                 when (tab) {

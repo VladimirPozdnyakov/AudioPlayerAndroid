@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import android.os.Build
 import android.content.pm.PackageManager
 import android.provider.DocumentsContract
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -97,6 +98,11 @@ fun SettingsScreen(
     var section by remember { mutableStateOf(SettingsSection.MENU) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAccentDialog by remember { mutableStateOf(false) }
+
+    // Handle back navigation when in sub-sections
+    BackHandler(enabled = section != SettingsSection.MENU) {
+        section = SettingsSection.MENU
+    }
 
     Scaffold(
         topBar = {

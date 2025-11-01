@@ -33,7 +33,7 @@ fun GlobalPlayerBar(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel,
     onMiniPlayerClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier.height(72.dp)
 ) {
     if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
         val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
@@ -43,8 +43,8 @@ fun GlobalPlayerBar(
 
         Card(
             modifier = modifier
-                .fillMaxWidth()
-                .height(72.dp)
+                .wrapContentWidth()
+                .wrapContentHeight()
                 .clickable { onMiniPlayerClick() }, // Делает мини-плеер кликабельным для открытия полноэкранного плеера
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
