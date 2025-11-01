@@ -45,12 +45,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Card
@@ -100,7 +95,6 @@ class MainActivity : ComponentActivity() {
             }
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex) {
                 val navController = rememberNavController()
-                val playerUiState by viewModel.uiState.collectAsState()
 
                 NavHost(
                     navController = navController,

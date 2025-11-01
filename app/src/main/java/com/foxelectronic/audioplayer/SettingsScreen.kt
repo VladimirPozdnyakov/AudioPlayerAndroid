@@ -8,12 +8,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -527,21 +526,43 @@ private fun HueBar(
         Color.Magenta,
         Color.Red
     )
+    
+    var heightPx by remember { mutableStateOf(0f) }
+    
     Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .background(Brush.verticalGradient(colors))
-            .pointerInput(Unit) {
-                detectDragGestures { change, _ ->
-                    val h = (change.position.y / size.height).coerceIn(0f, 1f) * 360f
-                    onChange(h)
+        modifier = modifier.onSizeChanged {
+            heightPx = it.height.toFloat()
+        }
+    ) {
+        // Основная полоса оттенков
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(MaterialTheme.shapes.small)
+                .background(Brush.verticalGradient(colors))
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        val h = (change.position.y / size.height).coerceIn(0f, 1f) * 360f
+                        onChange(h)
+                    }
                 }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures { pos ->
-                    val h = (pos.y / size.height).coerceIn(0f, 1f) * 360f
-                    onChange(h)
+                .pointerInput(Unit) {
+                    detectTapGestures { pos ->
+                        val h = (pos.y / size.height).coerceIn(0f, 1f) * 360f
+                        onChange(h)
+                    }
                 }
-            }
-    )
+        )
+        
+        // Индикатор текущего значения hue
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .offset(y = (hue / 360f * heightPx).dp)
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(Color.White.copy(alpha = 0.8f))
+                .clip(RoundedCornerShape(2.dp))
+        )
+    }
 }
