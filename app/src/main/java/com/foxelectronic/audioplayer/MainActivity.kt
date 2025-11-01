@@ -42,6 +42,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -200,28 +202,8 @@ fun MainScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 label = "bottom_nav",
                 transitionSpec = {
-                    // Улучшенные анимации перехода между экранами
-                    if (targetState > initialState) {
-                        // Переход вперёд (Главная -> Настройки)
-                        slideInHorizontally(
-                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                            initialOffsetX = { it }
-                        ) togetherWith
-                            slideOutHorizontally(
-                                animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                targetOffsetX = { -it / 2 }
-                            )
-                    } else {
-                        // Переход назад (Настройки -> Главная)
-                        slideInHorizontally(
-                            animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                            initialOffsetX = { -it }
-                        ) togetherWith
-                            slideOutHorizontally(
-                                animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                targetOffsetX = { it / 2 }
-                            )
-                    }
+                    // Простое затухание для анимации перехода
+                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
                 }
             ) { tab ->
                 when (tab) {

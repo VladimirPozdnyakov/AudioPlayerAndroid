@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -141,23 +143,8 @@ fun SettingsScreen(
             targetState = section,
             label = "settings_sections",
             transitionSpec = {
-                if (targetState.ordinal > initialState.ordinal || initialState == SettingsSection.MENU) {
-                    slideInHorizontally(
-                        animationSpec = tween(220),
-                        initialOffsetX = { it }
-                    ) togetherWith slideOutHorizontally(
-                        animationSpec = tween(220),
-                        targetOffsetX = { -it / 2 }
-                    )
-                } else {
-                    slideInHorizontally(
-                        animationSpec = tween(220),
-                        initialOffsetX = { -it }
-                    ) togetherWith slideOutHorizontally(
-                        animationSpec = tween(220),
-                        targetOffsetX = { it / 2 }
-                    )
-                }
+                // Простое затухание для анимации перехода
+                fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
             }
             ) { current ->
                 when (current) {
