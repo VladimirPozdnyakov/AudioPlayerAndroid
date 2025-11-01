@@ -53,7 +53,7 @@ fun GlobalPlayerBar(
             modifier = modifier
                 .fillMaxWidth()
                 .height(72.dp)
-                .clickable { onMiniPlayerClick() }, // Make the entire bar clickable to go to full screen playback
+                .clickable { onMiniPlayerClick() }, // Делает мини-плеер кликабельным для открытия полноэкранного плеера
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
             ),
@@ -134,7 +134,7 @@ fun GlobalPlayerBar(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Шафл
+                        // Режим перемешивания
                         IconButton(
                             onClick = { viewModel.toggleShuffleMode() },
                             modifier = Modifier

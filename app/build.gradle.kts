@@ -67,7 +67,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Navigation
+    // Навигация
     implementation("androidx.navigation:navigation-compose:2.8.2")
 
     // Media3 (ExoPlayer)
@@ -78,7 +78,7 @@ dependencies {
     // Accompanist permissions
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
-    // Image loading
+    // Загрузка изображения
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     testImplementation("junit:junit:4.13.2")

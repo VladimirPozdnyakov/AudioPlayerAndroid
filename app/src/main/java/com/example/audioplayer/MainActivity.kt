@@ -67,12 +67,12 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val granted = permissions.values.any { it }
             if (granted) {
-                // Load with saved folders
+                // Загрузка с сохранёнными папками
                 val settingsRepo = SettingsRepository(this)
                 // This is a quick one-shot read; UI will still update via settings screen later
                 lifecycleScope.launch {
                     val folders = settingsRepo.foldersFlow.firstOrNull() ?: emptyList()
-                    // Если папки не выбаны, добавляем папку Music по умолчанию
+                    // Если папки не выбраны, добавляется папка Music по умолчанию
                     val foldersToUse = if (folders.isEmpty()) {
                         val defaultFolder = "content://com.android.externalstorage.documents/tree/primary%3AMusic"
                         settingsRepo.setFolders(listOf(defaultFolder))
@@ -144,7 +144,7 @@ fun MainScreen(
     settingsViewModel: SettingsViewModel,
     navController: androidx.navigation.NavController
 ) {
-    var selectedTab by remember { mutableStateOf(0) } // 0: Home, 1: Settings
+    var selectedTab by remember { mutableStateOf(0) } // 0: Главная, 1: Настройки
     val ctx = LocalContext.current
     val playerUiState by viewModel.uiState.collectAsState()
 
@@ -202,7 +202,7 @@ fun MainScreen(
                 transitionSpec = {
                     // Улучшенные анимации перехода между экранами
                     if (targetState > initialState) {
-                        // Переход вперёд (Home -> Settings)
+                        // Переход вперёд (Главная -> Настройки)
                         slideInHorizontally(
                             animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                             initialOffsetX = { it }
@@ -212,7 +212,7 @@ fun MainScreen(
                                 targetOffsetX = { -it / 2 }
                             )
                     } else {
-                        // Переход назад (Settings -> Home)
+                        // Переход назад (Настройки -> Главная)
                         slideInHorizontally(
                             animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                             initialOffsetX = { -it }
@@ -247,7 +247,7 @@ fun MainScreen(
                         },
                         onRemoveFolder = { folder ->
                             val updated = settings.folders.filterNot { it == folder }
-                            // Если удаляем все папки, добавляем папку Music по умолчанию
+                            // Если удаляем все папки, добавляется папка Music по умолчанию
                             val finalUpdated = if (updated.isEmpty()) {
                                 listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
                             } else {
