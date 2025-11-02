@@ -618,14 +618,24 @@ private fun HueBar(
         )
 
         // Индикатор текущего значения hue
-        Box(
+        Canvas(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(y = (hue / 360f * heightPx).dp)
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(Color.White.copy(alpha = 0.8f))
-                .clip(RoundedCornerShape(2.dp))
-        )
+                .fillMaxSize()
+        ) {
+            val y = (hue / 360f) * size.height
+            // Draw a horizontal indicator line across the hue bar
+            drawLine(
+                color = Color.Black,
+                start = Offset(0f, y),
+                end = Offset(size.width, y),
+                strokeWidth = 6f
+            )
+            drawLine(
+                color = Color.White,
+                start = Offset(3f, y),
+                end = Offset(size.width - 3f, y),
+                strokeWidth = 4f
+            )
+        }
     }
 }
