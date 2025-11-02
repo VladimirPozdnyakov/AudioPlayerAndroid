@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val theme: AppTheme = AppTheme.SYSTEM,
     val folders: List<String> = emptyList(),
-    val accentHex: String = "#6750A4"
+    val accentHex: String = "#6750A4",
+    val fontType: FontType = FontType.JETBRAINS_MONO
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,9 +24,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val uiState: StateFlow<SettingsUiState> = combine(
         repo.themeFlow,
         repo.foldersFlow,
-        repo.accentFlow
-    ) { theme, folders, accent ->
-        SettingsUiState(theme, folders, accent)
+        repo.accentFlow,
+        repo.fontTypeFlow
+    ) { theme, folders, accent, fontType ->
+        SettingsUiState(theme, folders, accent, fontType)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SettingsUiState())
 
     fun setTheme(theme: AppTheme) {
@@ -38,5 +40,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setAccent(hex: String) {
         viewModelScope.launch { repo.setAccent(hex) }
+    }
+
+    fun setFontType(fontType: FontType) {
+        viewModelScope.launch { repo.setFontType(fontType) }
     }
 }

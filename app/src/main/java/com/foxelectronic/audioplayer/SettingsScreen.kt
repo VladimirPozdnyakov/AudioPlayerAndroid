@@ -60,6 +60,7 @@ fun SettingsScreen(
     state: SettingsUiState,
     onThemeChange: (AppTheme) -> Unit,
     onAccentChange: (String) -> Unit,
+    onFontTypeChange: (FontType) -> Unit,
     onAddFolder: (String) -> Unit,
     onRemoveFolder: (String) -> Unit
 ) {
@@ -98,6 +99,7 @@ fun SettingsScreen(
     var section by remember { mutableStateOf(SettingsSection.MENU) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAccentDialog by remember { mutableStateOf(false) }
+    var showFontDialog by remember { mutableStateOf(false) }
 
     // Handle back navigation when in sub-sections
     BackHandler(enabled = section != SettingsSection.MENU) {
@@ -249,6 +251,17 @@ fun SettingsScreen(
                                     onClick = { showAccentDialog = true }
                                 )
                             }
+                            item {
+                                val fontLabel = when (state.fontType) {
+                                    FontType.SYSTEM -> "Как в системе"
+                                    FontType.JETBRAINS_MONO -> "JetBrains Mono"
+                                }
+                                SettingItem(
+                                    title = "Шрифт",
+                                    subtitle = fontLabel,
+                                    onClick = { showFontDialog = true }
+                                )
+                            }
                         }
 
                         if (showThemeDialog) {
@@ -346,6 +359,38 @@ fun SettingsScreen(
                                 }
                             )
                         }
+
+                        // Font selection dialog
+                        if (showFontDialog) {
+                            var selectedFontType by remember { mutableStateOf(state.fontType) }
+                            AlertDialog(
+                                onDismissRequest = { showFontDialog = false },
+                                title = { Text("Выберите шрифт") },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        FontOptionRow(
+                                            label = "Как в системе",
+                                            selected = selectedFontType == FontType.SYSTEM,
+                                            onSelect = { selectedFontType = FontType.SYSTEM }
+                                        )
+                                        FontOptionRow(
+                                            label = "JetBrains Mono (по умолчанию)",
+                                            selected = selectedFontType == FontType.JETBRAINS_MONO,
+                                            onSelect = { selectedFontType = FontType.JETBRAINS_MONO }
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        onFontTypeChange(selectedFontType)
+                                        showFontDialog = false
+                                    }) { Text("Готово") }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showFontDialog = false }) { Text("Отмена") }
+                                }
+                            )
+                        }
                     }
                     SettingsSection.FOLDERS -> {
                         Spacer(Modifier.height(4.dp))
@@ -429,6 +474,18 @@ private fun SettingItem(
 
 @Composable
 private fun ThemeOptionRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { onSelect() }.padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Spacer(Modifier.width(12.dp))
+        Text(label)
+    }
+}
+
+@Composable
+private fun FontOptionRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().clickable { onSelect() }.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -532,9 +589,9 @@ private fun HueBar(
         Color.Magenta,
         Color.Red
     )
-    
+
     var heightPx by remember { mutableStateOf(0f) }
-    
+
     Box(
         modifier = modifier.onSizeChanged {
             heightPx = it.height.toFloat()
@@ -559,7 +616,7 @@ private fun HueBar(
                     }
                 }
         )
-        
+
         // Индикатор текущего значения hue
         Box(
             modifier = Modifier

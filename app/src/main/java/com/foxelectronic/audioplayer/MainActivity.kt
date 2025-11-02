@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 AppTheme.LIGHT -> ThemeMode.LIGHT
                 AppTheme.DARK -> ThemeMode.DARK
             }
-            AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex) {
+            AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex, fontType = settings.fontType) {
                 val navController = rememberNavController()
 
                 NavHost(
@@ -231,6 +231,7 @@ fun MainScreen(
                         state = settings,
                         onThemeChange = settingsViewModel::setTheme,
                         onAccentChange = settingsViewModel::setAccent,
+                        onFontTypeChange = settingsViewModel::setFontType,
                         onAddFolder = { newFolder ->
                             val updated = (settings.folders + newFolder).distinct()
                             settingsViewModel.setFolders(updated)

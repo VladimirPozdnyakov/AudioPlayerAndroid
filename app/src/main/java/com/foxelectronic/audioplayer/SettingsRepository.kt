@@ -13,6 +13,8 @@ import java.io.IOException
 
 enum class AppTheme { SYSTEM, LIGHT, DARK }
 
+enum class FontType { SYSTEM, JETBRAINS_MONO }
+
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsRepository(private val context: Context) {
@@ -21,6 +23,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_FOLDERS = stringPreferencesKey("folders")
         private val KEY_ACCENT = stringPreferencesKey("accent_hex")
         private val KEY_LAST_PLAYED_TRACK_ID = stringPreferencesKey("last_played_track_id")
+        private val KEY_FONT_TYPE = stringPreferencesKey("font_type")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
@@ -50,6 +53,15 @@ class SettingsRepository(private val context: Context) {
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
         .map { prefs ->
             prefs[KEY_ACCENT] ?: DEFAULT_ACCENT
+        }
+
+    val fontTypeFlow: Flow<FontType> = context.dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            when (prefs[KEY_FONT_TYPE]) {
+                FontType.SYSTEM.name -> FontType.SYSTEM
+                else -> FontType.JETBRAINS_MONO  // Default to JetBrains Mono font
+            }
         }
 
     suspend fun setTheme(theme: AppTheme) {
@@ -83,6 +95,12 @@ class SettingsRepository(private val context: Context) {
             } else {
                 prefs.remove(KEY_LAST_PLAYED_TRACK_ID)
             }
+        }
+    }
+
+    suspend fun setFontType(fontType: FontType) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_FONT_TYPE] = fontType.name
         }
     }
 }
