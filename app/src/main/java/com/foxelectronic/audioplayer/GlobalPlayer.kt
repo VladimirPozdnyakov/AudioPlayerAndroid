@@ -90,7 +90,7 @@ fun GlobalPlayerBar(
                             Text(
                                 text = track.title,
                                 style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.graphicsLayer(alpha = animatedAlpha)

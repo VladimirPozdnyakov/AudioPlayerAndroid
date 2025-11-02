@@ -165,7 +165,7 @@ fun TrackInfo(uiState: PlayerUiState) {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 4, // Увеличил лимит с 2 до 4 строк
+            maxLines = 4,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center, // Центрируем текст
             modifier = Modifier.padding(horizontal = 16.dp)

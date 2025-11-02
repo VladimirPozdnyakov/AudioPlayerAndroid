@@ -388,7 +388,13 @@ fun PlayerScreen(
                                 }
                                 onTrackClick(track) // Navigate to playback screen
                             },
-                            headlineContent = { Text(track.title, maxLines = 1) },
+                            headlineContent = { 
+                                Text(
+                                    track.title, 
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                ) 
+                            },
                             supportingContent = { Text(track.artist ?: "Неизвестен") },
                             trailingContent = {
                                 if (isCurrent) {
