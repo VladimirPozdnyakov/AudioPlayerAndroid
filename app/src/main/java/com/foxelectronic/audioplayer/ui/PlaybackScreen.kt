@@ -340,7 +340,7 @@ fun PlaybackControls(
                 modifier = Modifier
                     .size(32.dp)
                     .scale(scale),
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = MaterialTheme.colorScheme.onSurface
             )
         }
 

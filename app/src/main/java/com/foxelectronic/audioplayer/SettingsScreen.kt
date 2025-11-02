@@ -420,7 +420,13 @@ fun SettingsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Button(onClick = { folderPicker.launch(null) }) {
+                                    Button(
+                                        onClick = { folderPicker.launch(null) },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                            contentColor = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    ) {
                                         Icon(Icons.Outlined.Add, contentDescription = null)
                                         Spacer(Modifier.width(8.dp))
                                         Text("Добавить папку")

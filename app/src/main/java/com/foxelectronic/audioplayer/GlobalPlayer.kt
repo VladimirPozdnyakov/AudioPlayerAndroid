@@ -205,7 +205,7 @@ fun GlobalPlayerBar(
                                 modifier = Modifier
                                     .size(20.dp)
                                     .scale(scale),
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
 

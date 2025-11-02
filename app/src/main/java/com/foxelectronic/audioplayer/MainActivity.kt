@@ -295,7 +295,9 @@ fun PlayerScreen(
                 shape = RoundedCornerShape(24.dp), // Fully rounded corners
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 ),
                 leadingIcon = {
                     Icon(
@@ -439,7 +441,7 @@ fun PlayerScreen(
                             },
                         elevation = CardDefaults.cardElevation(defaultElevation = itemElevation),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha =0.1f)
                         )
                     ) {
                         // Custom layout with album art, title, artist, and play/pause button
@@ -493,7 +495,7 @@ fun PlayerScreen(
                                             .size(36.dp)
                                             .align(Alignment.Center)
                                             .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f))
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                                             .clickable {
                                                 if (isPlaying) {
                                                     viewModel.pause()
