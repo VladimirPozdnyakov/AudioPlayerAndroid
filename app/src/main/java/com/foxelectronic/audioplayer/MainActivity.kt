@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.RepeatOne
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material.icons.outlined.SortByAlpha
+import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Search
@@ -69,6 +70,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateContentSize
+import coil.compose.AsyncImage
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.background
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
@@ -306,7 +314,7 @@ fun PlayerScreen(
                     }
                 }
             )
-            
+
             IconButton(
                 onClick = { viewModel.toggleSortMode() },
                 modifier = Modifier.size(48.dp)
@@ -356,7 +364,7 @@ fun PlayerScreen(
                     (track.artist?.contains(searchQuery, ignoreCase = true) == true)
                 }
             }
-            
+
             // Apply sorting to filtered tracks
             val sortedFilteredTracks = if (searchQuery.isEmpty()) {
                 // If no search query, use the current sort mode from UI state
@@ -429,39 +437,104 @@ fun PlayerScreen(
                                     }
                                 )
                             },
-                        elevation = CardDefaults.cardElevation(defaultElevation = itemElevation)
+                        elevation = CardDefaults.cardElevation(defaultElevation = itemElevation),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                        )
                     ) {
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                if (isCurrent) {
-                                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                                } else {
-                                    viewModel.play(track)
-                                }
-                                onTrackClick(track) // Navigate to playback screen
-                            },
-                            headlineContent = { 
-                                Text(
-                                    track.title, 
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                ) 
-                            },
-                            supportingContent = { Text(track.artist ?: "Неизвестен") },
-                            trailingContent = {
-                                if (isCurrent) {
-                                    if (isPlaying) {
-                                        IconButton(onClick = { viewModel.pause() }) {
-                                            Icon(Icons.Outlined.Pause, contentDescription = "Pause")
-                                        }
+                        // Custom layout with album art, title, artist, and play/pause button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (isCurrent) {
+                                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                                     } else {
-                                        IconButton(onClick = { viewModel.resume() }) {
-                                            Icon(Icons.Outlined.PlayArrow, contentDescription = "Resume")
-                                        }
+                                        viewModel.play(track)
+                                    }
+                                    onTrackClick(track) // Navigate to playback screen
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Album art
+                            Box {
+                                if (track.albumArtPath != null) {
+                                    AsyncImage(
+                                        model = track.albumArtPath,
+                                        contentDescription = "Album Art",
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(RoundedCornerShape(8.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    // Fallback: Display music note icon in a colored container
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.MusicNote,
+                                            contentDescription = "No Album Art",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                }
+
+                                // Play/pause button overlay
+                                if (isCurrent) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .align(Alignment.Center)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f))
+                                            .clickable {
+                                                if (isPlaying) {
+                                                    viewModel.pause()
+                                                } else {
+                                                    viewModel.resume()
+                                                }
+                                            }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                            contentDescription = if (isPlaying) "Pause" else "Play",
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .align(Alignment.Center),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     }
                                 }
                             }
-                        )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Track info (title and artist)
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = track.title,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = track.artist ?: "Неизвестен",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                     HorizontalDivider()
                 }
