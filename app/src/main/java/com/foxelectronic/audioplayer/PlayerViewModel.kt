@@ -36,8 +36,14 @@ data class PlayerUiState(
     val durationMs: Long = 0L,
     val isLoading: Boolean = false,
     val repeatMode: Int = androidx.media3.common.Player.REPEAT_MODE_OFF,
-    val isShuffleModeEnabled: Boolean = false
+    val isShuffleModeEnabled: Boolean = false,
+    val sortMode: SortMode = SortMode.ALPHABETICAL_AZ
 )
+
+enum class SortMode {
+    ALPHABETICAL_AZ,    // A-Z
+    ALPHABETICAL_ZA     // Z-A
+}
 
 class PlayerViewModel : ViewModel() {
     private var player: ExoPlayer? = null
@@ -51,7 +57,8 @@ class PlayerViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val tracks = queryDeviceAudio(context, allowedFolders)
-            _uiState.value = _uiState.value.copy(tracks = tracks, isLoading = false)
+            val sortedTracks = applySorting(tracks, _uiState.value.sortMode)
+            _uiState.value = _uiState.value.copy(tracks = sortedTracks, isLoading = false)
             if (player == null) {
                 initializePlayer(context)
             }
@@ -406,6 +413,53 @@ class PlayerViewModel : ViewModel() {
                 }
                 kotlinx.coroutines.delay(500)
             }
+        }
+    }
+
+    fun toggleSortMode() {
+        val currentTrackId = if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.isNotEmpty()) {
+            _uiState.value.tracks[_uiState.value.currentIndex].id
+        } else null
+        
+        val currentPosition = player?.currentPosition ?: 0L
+        val isPlaying = _uiState.value.isPlaying
+
+        val newSortMode = when (_uiState.value.sortMode) {
+            SortMode.ALPHABETICAL_AZ -> SortMode.ALPHABETICAL_ZA
+            SortMode.ALPHABETICAL_ZA -> SortMode.ALPHABETICAL_AZ
+        }
+        
+        // Update the UI state with the new sort mode and sorted tracks
+        val sortedTracks = applySorting(_uiState.value.tracks, newSortMode)
+        val newCurrentIndex = currentTrackId?.let { id ->
+            sortedTracks.indexOfFirst { it.id == id }
+        } ?: -1
+
+        _uiState.value = _uiState.value.copy(
+            sortMode = newSortMode, 
+            tracks = sortedTracks, 
+            currentIndex = newCurrentIndex
+        )
+        
+        // Update the player's playlist but preserve current state
+        player?.let { 
+            preparePlaylist()
+            if (newCurrentIndex >= 0) {
+                // Seek to the same track at its new position and preserve the playback position
+                it.seekTo(newCurrentIndex, currentPosition)
+                if (isPlaying) {
+                    it.play()
+                } else {
+                    it.pause()
+                }
+            }
+        }
+    }
+
+    private fun applySorting(tracks: List<Track>, sortMode: SortMode): List<Track> {
+        return when (sortMode) {
+            SortMode.ALPHABETICAL_AZ -> tracks.sortedBy { it.title.lowercase() }
+            SortMode.ALPHABETICAL_ZA -> tracks.sortedByDescending { it.title.lowercase() }
         }
     }
 

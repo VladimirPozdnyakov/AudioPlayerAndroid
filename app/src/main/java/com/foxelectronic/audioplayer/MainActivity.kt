@@ -24,6 +24,10 @@ import androidx.compose.material.icons.outlined.Shuffle
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.RepeatOne
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Sort
+import androidx.compose.material.icons.outlined.SortByAlpha
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -42,6 +46,7 @@ import com.foxelectronic.audioplayer.ui.PlaybackScreen
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.foxelectronic.audioplayer.SortMode
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -265,36 +270,68 @@ fun PlayerScreen(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
 
         // Search bar
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text("Поиск...") },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp), // Fully rounded corners
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-            ),
-            leadingIcon = {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Search,
-                    contentDescription = "Search"
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Outlined.Clear,
-                            contentDescription = "Clear"
-                        )
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Поиск...") },
+                modifier = Modifier
+                    .weight(1f),
+                singleLine = true,
+                shape = RoundedCornerShape(24.dp), // Fully rounded corners
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                ),
+                leadingIcon = {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Outlined.Clear,
+                                contentDescription = "Clear"
+                            )
+                        }
                     }
                 }
+            )
+            
+            IconButton(
+                onClick = { viewModel.toggleSortMode() },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.SortByAlpha,
+                        contentDescription = null, // Description is provided by parent
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Icon(
+                        imageVector = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) {
+                            Icons.Filled.ArrowDropDown
+                        } else {
+                            Icons.Filled.ArrowDropUp
+                        },
+                        contentDescription = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) "По алфавиту (А-Я)" else "По алфавиту (Я-А)",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
-        )
+        }
 
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -319,10 +356,25 @@ fun PlayerScreen(
                     (track.artist?.contains(searchQuery, ignoreCase = true) == true)
                 }
             }
+            
+            // Apply sorting to filtered tracks
+            val sortedFilteredTracks = if (searchQuery.isEmpty()) {
+                // If no search query, use the current sort mode from UI state
+                when (uiState.sortMode) {
+                    SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
+                    SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
+                }
+            } else {
+                // When searching, apply the same sorting to search results
+                when (uiState.sortMode) {
+                    SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
+                    SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
+                }
+            }
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(
-                    items = filteredTracks,
+                    items = sortedFilteredTracks,
                     key = { track -> track.id }
                 ) { track ->
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
