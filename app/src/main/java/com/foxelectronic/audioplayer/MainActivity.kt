@@ -133,7 +133,6 @@ class MainActivity : ComponentActivity() {
         val permissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= 33) {
             permissions += Manifest.permission.READ_MEDIA_AUDIO
-            permissions += Manifest.permission.POST_NOTIFICATIONS
         } else {
             permissions += Manifest.permission.READ_EXTERNAL_STORAGE
         }

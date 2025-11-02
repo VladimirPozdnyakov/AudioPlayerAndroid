@@ -27,15 +27,9 @@ class AudioPlayerApplication : Application() {
                 )
             )
             .build()
-
-        // Инициализируем уведомления
-        if (mediaSession != null) {
-            NotificationController.initNotification(this, mediaSession!!)
-        }
     }
 
     override fun onTerminate() {
-        NotificationController.release()
         mediaSession?.run {
             if (player.isPlaying) {
                 player.pause()

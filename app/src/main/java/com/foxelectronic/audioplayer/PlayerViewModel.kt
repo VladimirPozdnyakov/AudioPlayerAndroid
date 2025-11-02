@@ -11,11 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerNotificationManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Intent
-import android.app.PendingIntent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import kotlinx.coroutines.flow.MutableStateFlow
