@@ -246,7 +246,14 @@ class PlayerViewModel : ViewModel() {
             else -> androidx.media3.common.Player.REPEAT_MODE_OFF
         }
         p.repeatMode = newMode
-        _uiState.value = _uiState.value.copy(repeatMode = newMode)
+        
+        // When enabling single track repeat, turn off shuffle mode
+        if (newMode == androidx.media3.common.Player.REPEAT_MODE_ONE && p.shuffleModeEnabled) {
+            p.shuffleModeEnabled = false
+            _uiState.value = _uiState.value.copy(repeatMode = newMode, isShuffleModeEnabled = false)
+        } else {
+            _uiState.value = _uiState.value.copy(repeatMode = newMode)
+        }
     }
 
     fun toggleShuffleMode() {
