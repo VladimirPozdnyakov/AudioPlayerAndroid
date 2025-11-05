@@ -47,7 +47,7 @@ fun GlobalPlayerBar(
                 .wrapContentHeight()
                 .clickable { onMiniPlayerClick() }, // Делает мини-плеер кликабельным для открытия полноэкранного плеера
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
             ),
             shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
             border = null
@@ -193,7 +193,7 @@ fun GlobalPlayerBar(
                                 ),
                                 label = "cornerRadius"
                             )
-                            
+
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
