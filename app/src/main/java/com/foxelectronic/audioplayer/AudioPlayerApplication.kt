@@ -2,8 +2,12 @@ package com.foxelectronic.audioplayer
 
 import android.app.Application
 import androidx.media3.session.MediaSession
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 
-class AudioPlayerApplication : Application() {
+class AudioPlayerApplication : Application(), ImageLoaderFactory {
     companion object {
         @Volatile
         var mediaSession: MediaSession? = null
@@ -26,6 +30,23 @@ class AudioPlayerApplication : Application() {
                     android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
+            .build()
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.25) // Use 25% of available memory for the cache
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .maxSizePercent(0.02) // Use 2% of available disk space for disk cache
+                    .build()
+            }
+            .respectCacheHeaders(false) // Don't use HTTP cache headers to determine cache
             .build()
     }
 

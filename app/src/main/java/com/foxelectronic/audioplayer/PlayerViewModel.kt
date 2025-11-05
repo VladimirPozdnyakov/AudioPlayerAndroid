@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import com.foxelectronic.audioplayer.repository.TrackCacheRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -56,17 +57,63 @@ class PlayerViewModel : ViewModel() {
         this.settingsRepository = settingsRepo
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val tracks = queryDeviceAudio(context, allowedFolders)
-            val sortedTracks = applySorting(tracks, _uiState.value.sortMode)
-            _uiState.value = _uiState.value.copy(tracks = sortedTracks, isLoading = false)
+            
+            // Store the last played track ID before updating anything
+            val lastPlayedTrackId = settingsRepository?.lastPlayedTrackIdFlow?.firstOrNull()?.toLongOrNull()
+            
+            // Store current playback state to restore later
+            val wasPlaying = _uiState.value.isPlaying
+            
+            // Get cached tracks to show immediately (for better UX)
+            val trackCacheRepository = TrackCacheRepository(context)
+            var tracks = trackCacheRepository.getTracksFromCache()
+            
+            // If we have cached tracks, show them immediately while scanning in background
+            if (tracks.isNotEmpty()) {
+                val sortedTracks = applySorting(tracks, _uiState.value.sortMode)
+                _uiState.value = _uiState.value.copy(tracks = sortedTracks, isLoading = true)
+                
+                if (player == null) {
+                    initializePlayer(context)
+                }
+                preparePlaylist()
+            }
+            
+            // Always scan for new tracks in the background to ensure we have all available tracks for search
+            val freshTracks = queryDeviceAudio(context, allowedFolders)
+            
+            // Update cache with fresh results
+            trackCacheRepository.saveTracksToCache(freshTracks)
+            
+            // Update the UI with the fresh track list
+            val sortedFreshTracks = applySorting(freshTracks, _uiState.value.sortMode)
+            _uiState.value = _uiState.value.copy(tracks = sortedFreshTracks, isLoading = false)
+            
             if (player == null) {
                 initializePlayer(context)
             }
             preparePlaylist()
             
-            // Try to restore the last played track after a short delay to ensure playlist is fully loaded
-            kotlinx.coroutines.delay(100) // Small delay to ensure playlist is ready
-            restoreLastPlayedTrack() // This is now a suspend function
+            // Restore the last played track if it exists in the new track list
+            if (lastPlayedTrackId != null) {
+                val trackIndex = sortedFreshTracks.indexOfFirst { it.id == lastPlayedTrackId }
+                if (trackIndex >= 0) {
+                    // Add a small delay to ensure the player is properly initialized
+                    kotlinx.coroutines.delay(100)
+                    val p = player ?: return@launch
+                    p.seekTo(trackIndex, 0)
+                    _uiState.value = _uiState.value.copy(currentIndex = trackIndex)
+                    
+                    // Resume playback if it was playing before
+                    if (wasPlaying) {
+                        p.play()
+                        _uiState.value = _uiState.value.copy(isPlaying = true)
+                    } else {
+                        p.pause()
+                        _uiState.value = _uiState.value.copy(isPlaying = false)
+                    }
+                }
+            }
         }
     }
 

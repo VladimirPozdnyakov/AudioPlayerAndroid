@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import coil.request.ImageRequest
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Settings
@@ -426,28 +428,32 @@ fun PlayerScreen(
                 Text("Нет треков (попробуйте добавить папки в настройках)")
             }
         } else {
-            // Filter tracks based on search query
-            val filteredTracks = if (searchQuery.isEmpty()) {
-                uiState.tracks
-            } else {
-                uiState.tracks.filter { track ->
-                    track.title.contains(searchQuery, ignoreCase = true) ||
-                    (track.artist?.contains(searchQuery, ignoreCase = true) == true)
-                }
-            }
+            // Memoize the filtered and sorted tracks to avoid unnecessary recomputations
+            val sortedFilteredTracks by remember(uiState.tracks, searchQuery, uiState.sortMode) {
+                derivedStateOf {
+                    val filteredTracks = if (searchQuery.isEmpty()) {
+                        uiState.tracks
+                    } else {
+                        uiState.tracks.filter { track ->
+                            track.title.contains(searchQuery, ignoreCase = true) ||
+                            (track.artist?.contains(searchQuery, ignoreCase = true) == true)
+                        }
+                    }
 
-            // Apply sorting to filtered tracks
-            val sortedFilteredTracks = if (searchQuery.isEmpty()) {
-                // If no search query, use the current sort mode from UI state
-                when (uiState.sortMode) {
-                    SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
-                    SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
-                }
-            } else {
-                // When searching, apply the same sorting to search results
-                when (uiState.sortMode) {
-                    SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
-                    SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
+                    // Apply sorting to filtered tracks
+                    if (searchQuery.isEmpty()) {
+                        // If no search query, use the current sort mode from UI state
+                        when (uiState.sortMode) {
+                            SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
+                            SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
+                        }
+                    } else {
+                        // When searching, apply the same sorting to search results
+                        when (uiState.sortMode) {
+                            SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
+                            SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
+                        }
+                    }
                 }
             }
 
@@ -508,7 +514,12 @@ fun PlayerScreen(
                             ) {
                                 if (track.albumArtPath != null) {
                                     AsyncImage(
-                                        model = track.albumArtPath,
+                                        model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                            .data(track.albumArtPath)
+                                            .size(256, 256) // Limit the image size to save memory
+                                            .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                            .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                            .build(),
                                         contentDescription = "Album Art",
                                         modifier = Modifier
                                             .fillMaxSize()
