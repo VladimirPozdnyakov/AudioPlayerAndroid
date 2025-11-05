@@ -317,31 +317,46 @@ fun PlaybackControls(
         // Play/Pause Button (main)
         Box(
             modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable {
-                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                },
+                .size(72.dp),
             contentAlignment = Alignment.Center
         ) {
-            val scale by animateFloatAsState(
-                targetValue = if (uiState.isPlaying) 1.2f else 1f,
+            val cornerRadius by animateFloatAsState(
+                targetValue = if (uiState.isPlaying) 18f else 36f, // 36f approximates a circle (72dp/2)
                 animationSpec = tween(
                     durationMillis = 300,
                     easing = androidx.compose.animation.core.FastOutSlowInEasing
                 ),
-                label = "scale"
+                label = "cornerRadius"
             )
-
-            Icon(
-                imageVector = if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+            
+            Box(
                 modifier = Modifier
-                    .size(32.dp)
-                    .scale(scale),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(cornerRadius.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable {
+                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                val scale by animateFloatAsState(
+                    targetValue = if (uiState.isPlaying) 1.2f else 1f,
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    ),
+                    label = "scale"
+                )
+
+                Icon(
+                    imageVector = if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .scale(scale),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
         // Next Button

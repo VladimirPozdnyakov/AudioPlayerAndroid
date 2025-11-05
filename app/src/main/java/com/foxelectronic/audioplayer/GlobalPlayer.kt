@@ -182,31 +182,46 @@ fun GlobalPlayerBar(
                         // Воспроизведение/Пауза
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable {
-                                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                                },
+                                .size(40.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            val scale by animateFloatAsState(
-                                targetValue = if (uiState.isPlaying) 1.2f else 1f,
+                            val cornerRadius by animateFloatAsState(
+                                targetValue = if (uiState.isPlaying) 12f else 20f, // 20f approximates a circle (40dp/2)
                                 animationSpec = tween(
                                     durationMillis = 300,
                                     easing = androidx.compose.animation.core.FastOutSlowInEasing
                                 ),
-                                label = "scale"
+                                label = "cornerRadius"
                             )
-
-                            Icon(
-                                if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                                contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                            
+                            Box(
                                 modifier = Modifier
-                                    .size(20.dp)
-                                    .scale(scale),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(cornerRadius.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .clickable {
+                                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val scale by animateFloatAsState(
+                                    targetValue = if (uiState.isPlaying) 1.2f else 1f,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    ),
+                                    label = "scale"
+                                )
+
+                                Icon(
+                                    if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .scale(scale),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
 
                         // Следующий

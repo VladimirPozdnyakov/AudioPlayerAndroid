@@ -498,13 +498,16 @@ fun PlayerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Album art
-                            Box {
+                            Box(
+                                modifier = Modifier.size(56.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 if (track.albumArtPath != null) {
                                     AsyncImage(
                                         model = track.albumArtPath,
                                         contentDescription = "Album Art",
                                         modifier = Modifier
-                                            .size(56.dp)
+                                            .fillMaxSize()
                                             .clip(RoundedCornerShape(8.dp)),
                                         contentScale = ContentScale.Crop
                                     )
@@ -512,7 +515,7 @@ fun PlayerScreen(
                                     // Fallback: Display music note icon in a colored container
                                     Box(
                                         modifier = Modifier
-                                            .size(56.dp)
+                                            .fillMaxSize()
                                             .clip(RoundedCornerShape(8.dp))
                                             .background(MaterialTheme.colorScheme.primaryContainer),
                                         contentAlignment = Alignment.Center
@@ -530,26 +533,50 @@ fun PlayerScreen(
                                 if (isCurrent) {
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
-                                            .align(Alignment.Center)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
-                                            .clickable {
-                                                if (isPlaying) {
-                                                    viewModel.pause()
-                                                } else {
-                                                    viewModel.resume()
-                                                }
-                                            }
+                                            .size(36.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                                            contentDescription = if (isPlaying) "Pause" else "Play",
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .align(Alignment.Center),
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        val cornerRadius by animateFloatAsState(
+                                            targetValue = if (isPlaying) 9f else 18f, // 18f approximates a circle (36dp/2)
+                                            animationSpec = tween(
+                                                durationMillis = 300,
+                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                            ),
+                                            label = "cornerRadius"
                                         )
+                                        
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(RoundedCornerShape(cornerRadius.dp))
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                                                .clickable {
+                                                    if (isPlaying) {
+                                                        viewModel.pause()
+                                                    } else {
+                                                        viewModel.resume()
+                                                    }
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            val scale by animateFloatAsState(
+                                                targetValue = if (isPlaying) 1.2f else 1f,
+                                                animationSpec = tween(
+                                                    durationMillis = 300,
+                                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                                ),
+                                                label = "scale"
+                                            )
+
+                                            Icon(
+                                                imageVector = if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                                modifier = Modifier
+                                                    .size(20.dp)
+                                                    .scale(scale),
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
                                     }
                                 }
                             }
