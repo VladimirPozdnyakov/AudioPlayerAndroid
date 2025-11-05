@@ -313,7 +313,7 @@ fun TrackProgressBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(88.dp)
+            .height(100.dp)
     ) {
         // Background of the progress bar (showing total duration)
         Box(
@@ -493,6 +493,7 @@ fun PlayerScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(100.dp)
                             .padding(vertical = 2.dp)
                             .scale(itemScale)
                             .graphicsLayer {
@@ -534,6 +535,7 @@ fun PlayerScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .fillMaxHeight()
                                     .clickable {
                                         if (isCurrent) {
                                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
