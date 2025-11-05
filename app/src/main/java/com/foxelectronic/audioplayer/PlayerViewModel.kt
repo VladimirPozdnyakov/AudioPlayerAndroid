@@ -98,10 +98,13 @@ class PlayerViewModel : ViewModel() {
             if (lastPlayedTrackId != null) {
                 val trackIndex = sortedFreshTracks.indexOfFirst { it.id == lastPlayedTrackId }
                 if (trackIndex >= 0) {
+                    // Get the saved position before restoring
+                    val lastPlayedPosition = settingsRepository?.lastPlayedPositionFlow?.firstOrNull() ?: 0L
+                    
                     // Add a small delay to ensure the player is properly initialized
                     kotlinx.coroutines.delay(100)
                     val p = player ?: return@launch
-                    p.seekTo(trackIndex, 0)
+                    p.seekTo(trackIndex, lastPlayedPosition)
                     _uiState.value = _uiState.value.copy(currentIndex = trackIndex)
                     
                     // Resume playback if it was playing before
@@ -147,11 +150,13 @@ class PlayerViewModel : ViewModel() {
                         val dur = this@apply.duration.coerceAtLeast(0L)
                         _uiState.value = _uiState.value.copy(currentIndex = index, durationMs = dur)
                         
-                        // Save the current track ID when transitioning to a new track, but not during restoration
+                        // Save the current track ID and position when transitioning to a new track, but not during restoration
                         if (!isRestoringTrack && index >= 0 && _uiState.value.tracks.getOrNull(index) != null) {
                             val currentTrack = _uiState.value.tracks[index]
+                            val currentPosition = this@apply.currentPosition.coerceAtLeast(0L)
                             viewModelScope.launch {
                                 settingsRepository?.setLastPlayedTrackId(currentTrack.id.toString())
+                                settingsRepository?.setLastPlayedPosition(currentPosition)
                             }
                         }
                     }
@@ -207,9 +212,10 @@ class PlayerViewModel : ViewModel() {
             p.play()
             _uiState.value = _uiState.value.copy(isPlaying = true, currentIndex = index)
             
-            // Save the current track ID when playing
+            // Save the current track ID and position when playing
             viewModelScope.launch {
                 settingsRepository?.setLastPlayedTrackId(track.id.toString())
+                settingsRepository?.setLastPlayedPosition(0L) // Starting from beginning
             }
         }
     }
@@ -225,8 +231,14 @@ class PlayerViewModel : ViewModel() {
 
     fun pause() {
         val p = player ?: return
+        val currentPosition = p.currentPosition.coerceAtLeast(0L)
         p.pause()
         _uiState.value = _uiState.value.copy(isPlaying = false)
+        
+        // Save the current position when pausing
+        viewModelScope.launch {
+            settingsRepository?.setLastPlayedPosition(currentPosition)
+        }
     }
 
     fun resume() {
@@ -255,6 +267,7 @@ class PlayerViewModel : ViewModel() {
     private suspend fun restoreLastPlayedTrack() {
         isRestoringTrack = true
         val lastPlayedId = settingsRepository?.lastPlayedTrackIdFlow?.firstOrNull()
+        val lastPlayedPosition = settingsRepository?.lastPlayedPositionFlow?.firstOrNull() ?: 0L
         if (!lastPlayedId.isNullOrEmpty()) {
             val trackId = lastPlayedId.toLongOrNull()
             if (trackId != null) {
@@ -263,7 +276,7 @@ class PlayerViewModel : ViewModel() {
                     val p = player ?: return
                     // Only restore if the player is not already playing another track
                     if (_uiState.value.currentIndex == -1 || _uiState.value.currentIndex != trackIndex) {
-                        p.seekTo(trackIndex, 0)
+                        p.seekTo(trackIndex, lastPlayedPosition)
                         _uiState.value = _uiState.value.copy(currentIndex = trackIndex)
                     }
                 }
@@ -290,6 +303,11 @@ class PlayerViewModel : ViewModel() {
             positionMs = positionMs,
             isPlaying = wasPlaying  // Используем оригинальное состояние до seekTo
         )
+        
+        // Save this position to settings as well
+        viewModelScope.launch {
+            settingsRepository?.setLastPlayedPosition(positionMs)
+        }
     }
 
     fun toggleRepeatMode() {
@@ -457,6 +475,13 @@ class PlayerViewModel : ViewModel() {
                     val pos = p.currentPosition.coerceAtLeast(0L)
                     val dur = p.duration.coerceAtLeast(0L)
                     _uiState.value = _uiState.value.copy(positionMs = pos, durationMs = dur)
+                    
+                    // Save the playback position periodically if there's a current track
+                    if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.getOrNull(_uiState.value.currentIndex) != null) {
+                        viewModelScope.launch {
+                            settingsRepository?.setLastPlayedPosition(pos)
+                        }
+                    }
                 }
                 kotlinx.coroutines.delay(500)
             }

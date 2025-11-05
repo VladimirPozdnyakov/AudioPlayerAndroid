@@ -359,7 +359,6 @@ fun PlayerScreen(
             TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Поиск...") },
                 modifier = Modifier
                     .weight(1f),
                 singleLine = true,

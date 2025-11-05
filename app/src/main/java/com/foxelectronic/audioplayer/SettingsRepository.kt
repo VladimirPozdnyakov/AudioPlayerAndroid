@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_FOLDERS = stringPreferencesKey("folders")
         private val KEY_ACCENT = stringPreferencesKey("accent_hex")
         private val KEY_LAST_PLAYED_TRACK_ID = stringPreferencesKey("last_played_track_id")
+        private val KEY_LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
         private val KEY_FONT_TYPE = stringPreferencesKey("font_type")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
@@ -88,6 +90,12 @@ class SettingsRepository(private val context: Context) {
             prefs[KEY_LAST_PLAYED_TRACK_ID]
         }
 
+    val lastPlayedPositionFlow: Flow<Long> = context.dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            prefs[KEY_LAST_PLAYED_POSITION] ?: 0L
+        }
+
     suspend fun setLastPlayedTrackId(id: String?) {
         context.dataStore.edit { prefs ->
             if (id != null) {
@@ -95,6 +103,12 @@ class SettingsRepository(private val context: Context) {
             } else {
                 prefs.remove(KEY_LAST_PLAYED_TRACK_ID)
             }
+        }
+    }
+
+    suspend fun setLastPlayedPosition(position: Long) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LAST_PLAYED_POSITION] = position
         }
     }
 
