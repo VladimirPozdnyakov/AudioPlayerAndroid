@@ -71,16 +71,6 @@ fun GlobalPlayerBar(
                             val currentTrackId by rememberUpdatedState(track.id)
                             val lastTrackId = remember { mutableStateOf(track.id) }
 
-                            // Анимация при смене трека
-                            val animatedAlpha by animateFloatAsState(
-                                targetValue = if (currentTrackId != lastTrackId.value) 1f else 0.7f,
-                                animationSpec = tween(
-                                    durationMillis = 500,
-                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                ),
-                                label = "alpha"
-                            )
-
                             LaunchedEffect(currentTrackId) {
                                 if (currentTrackId != lastTrackId.value) {
                                     lastTrackId.value = currentTrackId
@@ -92,8 +82,7 @@ fun GlobalPlayerBar(
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.graphicsLayer(alpha = animatedAlpha)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

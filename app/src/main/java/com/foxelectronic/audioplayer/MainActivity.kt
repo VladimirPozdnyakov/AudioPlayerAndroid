@@ -459,57 +459,11 @@ fun PlayerScreen(
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
                     val isPlaying = isCurrent && uiState.isPlaying
 
-                    // Анимация при нажатии на трек
-                    var isSelected by remember { mutableStateOf(false) }
-                    val itemScale by animateFloatAsState(
-                        targetValue = if (isSelected) 0.95f else 1f,
-                        animationSpec = tween(
-                            durationMillis = 150,
-                            easing = androidx.compose.animation.core.FastOutSlowInEasing
-                        ),
-                        label = "itemScale"
-                    )
-
-                    // Состояние для анимации при клике
-                    val itemElevation by animateDpAsState(
-                        targetValue = if (isSelected) 4.dp else 0.dp,
-                        animationSpec = tween(
-                            durationMillis = 150,
-                            easing = androidx.compose.animation.core.FastOutSlowInEasing
-                        ),
-                        label = "itemElevation"
-                    )
-
-                    // Анимация появления элемента при скроллинге
-                    val animationItem by animateFloatAsState(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = 500,
-                            easing = androidx.compose.animation.core.FastOutSlowInEasing
-                        ),
-                        label = "animationItem"
-                    )
-
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp)
-                            .padding(vertical = 2.dp)
-                            .scale(itemScale)
-                            .graphicsLayer {
-                                alpha = animationItem
-                                translationY = if (animationItem == 1f) 0f else 50f
-                            }
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onPress = {
-                                        isSelected = true
-                                        tryAwaitRelease()
-                                        isSelected = false
-                                    }
-                                )
-                            },
-                        elevation = CardDefaults.cardElevation(defaultElevation = itemElevation),
+                            .padding(vertical = 2.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha =0.1f)
                         )
