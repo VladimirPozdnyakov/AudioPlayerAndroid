@@ -77,6 +77,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.graphics.graphicsLayer
+
+
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
@@ -196,7 +202,39 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Outlined.Settings, contentDescription = "Настройки", modifier = Modifier.size(24.dp)) },
+                        icon = {
+                            var rotationState by remember { mutableStateOf(0f) }
+                            
+                            // Trigger rotation only when navigating to settings (from 0 to 1)
+                            LaunchedEffect(selectedTab) {
+                                if (selectedTab == 1) {
+                                    rotationState += 360f
+                                }
+                            }
+                            
+                            val rotation by animateFloatAsState(
+                                targetValue = rotationState,
+                                animationSpec = tween(durationMillis = 500),
+                                label = "rotationAnimation"
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Settings,
+                                    contentDescription = "Настройки",
+                                    modifier = Modifier
+                                        .graphicsLayer {
+                                            rotationZ = rotation
+                                        }
+                                        .fillMaxSize(),
+                                    tint = if (selectedTab == 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
                         label = { Text("Настройки") },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
