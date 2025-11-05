@@ -204,20 +204,20 @@ fun MainScreen(
                         onClick = { selectedTab = 1 },
                         icon = {
                             var rotationState by remember { mutableStateOf(0f) }
-                            
+
                             // Trigger rotation only when navigating to settings (from 0 to 1)
                             LaunchedEffect(selectedTab) {
                                 if (selectedTab == 1) {
                                     rotationState += 360f
                                 }
                             }
-                            
+
                             val rotation by animateFloatAsState(
                                 targetValue = rotationState,
                                 animationSpec = tween(durationMillis = 500),
                                 label = "rotationAnimation"
                             )
-                            
+
                             Box(
                                 modifier = Modifier
                                     .size(24.dp),
@@ -302,6 +302,37 @@ fun MainScreen(
                     )
                 }
             }
+    }
+}
+
+@Composable
+fun TrackProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(88.dp)
+    ) {
+        // Background of the progress bar (showing total duration)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0f)
+                )  // More opaque background
+        )
+        // Progress portion of the bar
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(progress.coerceIn(0f, 1f))  // Ensure progress is between 0 and 1
+                .background(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                )  // More opaque primary color for progress
+        )
     }
 }
 
@@ -483,20 +514,37 @@ fun PlayerScreen(
                         )
                     ) {
                         // Custom layout with album art, title, artist, and play/pause button
-                        Row(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    if (isCurrent) {
-                                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                                    } else {
-                                        viewModel.play(track)
-                                    }
-                                    onTrackClick(track) // Navigate to playback screen
-                                }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Add progress bar as a background for the entire card for currently playing track
+                            if (isCurrent) {
+                                val progress = if (uiState.durationMs > 0) {
+                                    uiState.positionMs.toFloat() / uiState.durationMs.toFloat()
+                                } else 0f
+                                TrackProgressBar(
+                                    progress = progress,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (isCurrent) {
+                                            if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                                        } else {
+                                            viewModel.play(track)
+                                        }
+                                        onTrackClick(track) // Navigate to playback screen
+                                    }
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                             // Album art
                             Box(
                                 modifier = Modifier.size(56.dp),
@@ -544,7 +592,7 @@ fun PlayerScreen(
                                             ),
                                             label = "cornerRadius"
                                         )
-                                        
+
                                         Box(
                                             modifier = Modifier
                                                 .size(36.dp)
@@ -603,6 +651,7 @@ fun PlayerScreen(
                             }
                         }
                     }
+                }
                 }
             }
         }
