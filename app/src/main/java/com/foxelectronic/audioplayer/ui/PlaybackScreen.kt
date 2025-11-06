@@ -58,33 +58,6 @@ fun PlaybackScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Основная колонка с контентом
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Album Art
-            AlbumArt(uiState = uiState)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Track Information
-            TrackInfo(uiState = uiState, viewModel = viewModel)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Progress Slider with Time Labels
-            ProgressSlider(uiState = uiState, viewModel = viewModel)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Playback Controls
-            PlaybackControls(uiState = uiState, viewModel = viewModel)
-        }
-
         // Кнопка «назад» в верхнем левом углу
         IconButton(
             onClick = onBackClick,
@@ -96,6 +69,42 @@ fun PlaybackScreen(
                 contentDescription = "Назад",
                 tint = MaterialTheme.colorScheme.onBackground
             )
+        }
+
+        // Основной контент с альбомом и информацией о треке по центру
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(top = 110.dp)
+                .align(Alignment.TopCenter),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Album Art
+            AlbumArt(uiState = uiState)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Track Information
+            TrackInfo(uiState = uiState, viewModel = viewModel)
+        }
+
+        // Прогресс бар и элементы управления чуть выше нижнего края
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 30.dp)
+                .align(Alignment.BottomCenter),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Progress Slider with Time Labels
+            ProgressSlider(uiState = uiState, viewModel = viewModel)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Playback Controls
+            PlaybackControls(uiState = uiState, viewModel = viewModel)
         }
     }
 }
@@ -164,7 +173,7 @@ fun TrackInfo(uiState: PlayerUiState, viewModel: PlayerViewModel) {
         // Track Title
         Text(
             text = currentTrack?.title ?: "No Track Playing",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 4,
@@ -317,7 +326,7 @@ fun PlaybackControls(
                     ),
                     label = "cornerRadius"
                 )
-                
+
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -394,7 +403,7 @@ fun PlaybackControls(
 
             if (currentTrack != null) {
                 IconButton(
-                    onClick = { 
+                    onClick = {
                         viewModel.toggleFavorite(currentTrack)
                     },
                     modifier = Modifier.size(48.dp)
