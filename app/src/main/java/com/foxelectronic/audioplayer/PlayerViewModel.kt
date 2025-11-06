@@ -20,13 +20,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
 
 data class Track(
     val id: Long,
     val uri: Uri,
     val title: String,
     val artist: String?,
-    val albumArtPath: String? = null
+    val albumArtPath: String? = null,
+    val isFavorite: Boolean = false
 )
 
 data class PlayerUiState(
@@ -49,12 +51,14 @@ enum class SortMode {
 class PlayerViewModel : ViewModel() {
     private var player: ExoPlayer? = null
     private var settingsRepository: SettingsRepository? = null
+    private var favoriteDao: FavoriteDao? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState
 
     fun loadTracks(context: Context, settingsRepo: SettingsRepository, allowedFolders: List<String> = emptyList()) {
         this.settingsRepository = settingsRepo
+        this.favoriteDao = FavoriteDatabase.getDatabase(context).favoriteDao()
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
@@ -70,7 +74,8 @@ class PlayerViewModel : ViewModel() {
             
             // If we have cached tracks, show them immediately while scanning in background
             if (tracks.isNotEmpty()) {
-                val sortedTracks = applySorting(tracks, _uiState.value.sortMode)
+                val tracksWithFavorites = updateFavoritesInTracks(tracks)
+                val sortedTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
                 _uiState.value = _uiState.value.copy(tracks = sortedTracks, isLoading = true)
                 
                 if (player == null) {
@@ -85,13 +90,18 @@ class PlayerViewModel : ViewModel() {
             // Update cache with fresh results
             trackCacheRepository.saveTracksToCache(freshTracks)
             
-            // Update the UI with the fresh track list
-            val sortedFreshTracks = applySorting(freshTracks, _uiState.value.sortMode)
-            _uiState.value = _uiState.value.copy(tracks = sortedFreshTracks, isLoading = false)
-            
             if (player == null) {
                 initializePlayer(context)
             }
+            
+            // Update the UI with the fresh track list with favorite information
+            val tracksWithFavorites = updateFavoritesInTracks(freshTracks)
+            val sortedFreshTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
+            
+            // Update UI state first
+            _uiState.value = _uiState.value.copy(tracks = sortedFreshTracks, isLoading = false)
+            
+            // Prepare the playlist with updated tracks
             preparePlaylist()
             
             // Restore the last played track if it exists in the new track list
@@ -528,10 +538,47 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
+    private suspend fun updateFavoritesInTracks(tracks: List<Track>): List<Track> {
+        val favoriteTrackIds = favoriteDao?.getAllFavorites()?.first()?.map { it.trackId } ?: emptyList()
+        return tracks.map { track ->
+            track.copy(isFavorite = track.id in favoriteTrackIds)
+        }
+    }
+
     private fun applySorting(tracks: List<Track>, sortMode: SortMode): List<Track> {
         return when (sortMode) {
             SortMode.ALPHABETICAL_AZ -> tracks.sortedBy { it.title.lowercase() }
             SortMode.ALPHABETICAL_ZA -> tracks.sortedByDescending { it.title.lowercase() }
+        }
+    }
+
+    fun toggleFavorite(track: Track) {
+        viewModelScope.launch {
+            val favoriteTrack = FavoriteTrack(
+                trackId = track.id,
+                uri = track.uri.toString(),
+                title = track.title,
+                artist = track.artist ?: "",
+                albumArtPath = track.albumArtPath
+            )
+            
+            if (track.isFavorite) {
+                // Remove from favorites
+                favoriteDao?.deleteFavoriteById(track.id)
+            } else {
+                // Add to favorites
+                favoriteDao?.insertFavorite(favoriteTrack)
+            }
+            
+            // Update the track list with the new favorite status
+            val updatedTracks = _uiState.value.tracks.map { t ->
+                if (t.id == track.id) {
+                    t.copy(isFavorite = !t.isFavorite)
+                } else {
+                    t
+                }
+            }
+            _uiState.value = _uiState.value.copy(tracks = updatedTracks)
         }
     }
 

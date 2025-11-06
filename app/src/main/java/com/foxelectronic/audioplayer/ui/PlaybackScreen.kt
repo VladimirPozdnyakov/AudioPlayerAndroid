@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -70,7 +72,7 @@ fun PlaybackScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Track Information
-            TrackInfo(uiState = uiState)
+            TrackInfo(uiState = uiState, viewModel = viewModel)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -151,7 +153,7 @@ fun AlbumArt(uiState: PlayerUiState) {
 }
 
 @Composable
-fun TrackInfo(uiState: PlayerUiState) {
+fun TrackInfo(uiState: PlayerUiState, viewModel: PlayerViewModel) {
     val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
         uiState.tracks[uiState.currentIndex]
     } else null
@@ -182,6 +184,25 @@ fun TrackInfo(uiState: PlayerUiState) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Favorite button
+        if (currentTrack != null) {
+            IconButton(
+                onClick = { 
+                    viewModel.toggleFavorite(currentTrack)
+                },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (currentTrack.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (currentTrack.isFavorite) "Удалить из избранного" else "Добавить в избранное",
+                    tint = if (currentTrack.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
     }
 }
 
