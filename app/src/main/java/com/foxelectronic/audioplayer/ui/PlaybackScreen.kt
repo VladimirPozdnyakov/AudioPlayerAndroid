@@ -184,25 +184,6 @@ fun TrackInfo(uiState: PlayerUiState, viewModel: PlayerViewModel) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Favorite button
-        if (currentTrack != null) {
-            IconButton(
-                onClick = { 
-                    viewModel.toggleFavorite(currentTrack)
-                },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = if (currentTrack.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = if (currentTrack.isFavorite) "Удалить из избранного" else "Добавить в избранное",
-                    tint = if (currentTrack.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        }
     }
 }
 
@@ -300,121 +281,159 @@ fun PlaybackControls(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Shuffle Button
-        IconButton(
-            onClick = { viewModel.toggleShuffleMode() },
-            modifier = Modifier.size(48.dp)
+        // Main playback controls row (Previous, Play/Pause, Next)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Shuffle,
-                contentDescription = "Shuffle",
-                modifier = Modifier.size(24.dp),
-                tint = if (uiState.isShuffleModeEnabled) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
+            // Previous Button
+            IconButton(
+                onClick = { viewModel.previous() },
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.SkipPrevious,
+                    contentDescription = "Previous",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
-        // Previous Button
-        IconButton(
-            onClick = { viewModel.previous() },
-            modifier = Modifier.size(72.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.SkipPrevious,
-                contentDescription = "Previous",
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        // Play/Pause Button (main)
-        Box(
-            modifier = Modifier
-                .size(72.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            val cornerRadius by animateFloatAsState(
-                targetValue = if (uiState.isPlaying) 18f else 36f, // 36f approximates a circle (72dp/2)
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                ),
-                label = "cornerRadius"
-            )
-            
+            // Play/Pause Button (main)
             Box(
                 modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(cornerRadius.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable {
-                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                    },
+                    .size(72.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val scale by animateFloatAsState(
-                    targetValue = if (uiState.isPlaying) 1.2f else 1f,
+                val cornerRadius by animateFloatAsState(
+                    targetValue = if (uiState.isPlaying) 18f else 36f, // 36f approximates a circle (72dp/2)
                     animationSpec = tween(
                         durationMillis = 300,
                         easing = androidx.compose.animation.core.FastOutSlowInEasing
                     ),
-                    label = "scale"
+                    label = "cornerRadius"
                 )
-
-                Icon(
-                    imageVector = if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                
+                Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .scale(scale),
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(cornerRadius.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable {
+                            if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    val scale by animateFloatAsState(
+                        targetValue = if (uiState.isPlaying) 1.2f else 1f,
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            easing = androidx.compose.animation.core.FastOutSlowInEasing
+                        ),
+                        label = "scale"
+                    )
+
+                    Icon(
+                        imageVector = if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                        contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .scale(scale),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            // Next Button
+            IconButton(
+                onClick = { viewModel.next() },
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.SkipNext,
+                    contentDescription = "Next",
+                    modifier = Modifier.size(36.dp),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
 
-        // Next Button
-        IconButton(
-            onClick = { viewModel.next() },
-            modifier = Modifier.size(72.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.SkipNext,
-                contentDescription = "Next",
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        // Secondary controls row (Shuffle, Favorite, Repeat)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Repeat Button
-        IconButton(
-            onClick = { viewModel.toggleRepeatMode() },
-            modifier = Modifier.size(48.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = when (uiState.repeatMode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Outlined.Repeat
-                    androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Outlined.Repeat
-                    else -> Icons.Outlined.RepeatOne
-                },
-                contentDescription = when (uiState.repeatMode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> "Repeat off"
-                    androidx.media3.common.Player.REPEAT_MODE_ALL -> "Repeat all"
-                    else -> "Repeat one"
-                },
-                modifier = Modifier.size(24.dp),
-                tint = when (uiState.repeatMode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> MaterialTheme.colorScheme.onSurfaceVariant
-                    else -> MaterialTheme.colorScheme.primary
+            // Shuffle Button
+            IconButton(
+                onClick = { viewModel.toggleShuffleMode() },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Shuffle,
+                    contentDescription = "Shuffle",
+                    modifier = Modifier.size(24.dp),
+                    tint = if (uiState.isShuffleModeEnabled) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+
+            // Favorite button
+            val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+                uiState.tracks[uiState.currentIndex]
+            } else null
+
+            if (currentTrack != null) {
+                IconButton(
+                    onClick = { 
+                        viewModel.toggleFavorite(currentTrack)
+                    },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = if (currentTrack.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (currentTrack.isFavorite) "Удалить из избранного" else "Добавить в избранное",
+                        tint = if (currentTrack.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
-            )
+            } else {
+                // Empty space to maintain alignment when no track is playing
+                Spacer(modifier = Modifier.size(48.dp))
+            }
+
+            // Repeat Button
+            IconButton(
+                onClick = { viewModel.toggleRepeatMode() },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = when (uiState.repeatMode) {
+                        androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Outlined.Repeat
+                        androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Outlined.Repeat
+                        else -> Icons.Outlined.RepeatOne
+                    },
+                    contentDescription = when (uiState.repeatMode) {
+                        androidx.media3.common.Player.REPEAT_MODE_OFF -> "Repeat off"
+                        androidx.media3.common.Player.REPEAT_MODE_ALL -> "Repeat all"
+                        else -> "Repeat one"
+                    },
+                    modifier = Modifier.size(24.dp),
+                    tint = when (uiState.repeatMode) {
+                        androidx.media3.common.Player.REPEAT_MODE_OFF -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.primary
+                    }
+                )
+            }
         }
     }
 }
