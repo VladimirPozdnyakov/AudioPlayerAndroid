@@ -40,6 +40,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -347,6 +348,7 @@ fun PlayerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var selectedTab by remember { mutableStateOf(0) } // 0: Все, 1: Любимые
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
 
@@ -415,6 +417,49 @@ fun PlayerScreen(
             }
         }
 
+        // Tabs: All and Favorites
+        TabRow(
+            selectedTabIndex = selectedTab,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            divider = { },
+            tabs = {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(2.dp),
+                    selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    Text(
+                        text = "Все",
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = if (selectedTab == 0) MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.titleMedium
+                    )
+                }
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(2.dp),
+                    selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    Text(
+                        text = "Любимые",
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = if (selectedTab == 1) MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        )
+
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // Анимированный индикатор загрузки
@@ -429,38 +474,40 @@ fun PlayerScreen(
                 Text("Нет треков (попробуйте добавить папки в настройках)")
             }
         } else {
-            // Memoize the filtered and sorted tracks to avoid unnecessary recomputations
-            val sortedFilteredTracks by remember(uiState.tracks, searchQuery, uiState.sortMode) {
+            // Filter tracks based on selected tab and search query
+            val filteredTracks = remember(uiState.tracks, selectedTab, searchQuery) {
                 derivedStateOf {
-                    val filteredTracks = if (searchQuery.isEmpty()) {
-                        uiState.tracks
+                    val tracks = when (selectedTab) {
+                        0 -> uiState.tracks // All tracks
+                        1 -> uiState.tracks.filter { it.isFavorite } // Favorites only
+                        else -> uiState.tracks
+                    }
+                    
+                    // Apply search filter
+                    if (searchQuery.isEmpty()) {
+                        tracks
                     } else {
-                        uiState.tracks.filter { track ->
+                        tracks.filter { track ->
                             track.title.contains(searchQuery, ignoreCase = true) ||
                             (track.artist?.contains(searchQuery, ignoreCase = true) == true)
                         }
                     }
+                }
+            }
 
-                    // Apply sorting to filtered tracks
-                    if (searchQuery.isEmpty()) {
-                        // If no search query, use the current sort mode from UI state
-                        when (uiState.sortMode) {
-                            SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
-                            SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
-                        }
-                    } else {
-                        // When searching, apply the same sorting to search results
-                        when (uiState.sortMode) {
-                            SortMode.ALPHABETICAL_AZ -> filteredTracks.sortedBy { it.title.lowercase() }
-                            SortMode.ALPHABETICAL_ZA -> filteredTracks.sortedByDescending { it.title.lowercase() }
-                        }
+            // Apply sorting to the filtered tracks
+            val sortedFilteredTracks = remember(filteredTracks.value, uiState.sortMode) {
+                derivedStateOf {
+                    when (uiState.sortMode) {
+                        SortMode.ALPHABETICAL_AZ -> filteredTracks.value.sortedBy { it.title.lowercase() }
+                        SortMode.ALPHABETICAL_ZA -> filteredTracks.value.sortedByDescending { it.title.lowercase() }
                     }
                 }
             }
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(
-                    items = sortedFilteredTracks,
+                    items = sortedFilteredTracks.value,
                     key = { track -> track.id }
                 ) { track ->
                     val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
