@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +32,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import android.os.Build
@@ -448,7 +450,12 @@ fun SettingsScreen(
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/VladimirPozdnyakov/AudioPlayerAndroid"))
                                     context.startActivity(intent)
                                 },
-                                leadingContent = { Icon(Icons.Rounded.OpenInNew, contentDescription = null) },
+                                leadingContent = {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_github),
+                                        contentDescription = null
+                                    )
+                                },
                                 headlineContent = { Text("Исходный код") },
                                 supportingContent = { Text("github.com/VladimirPozdnyakov/AudioPlayerAndroid") }
                             )
