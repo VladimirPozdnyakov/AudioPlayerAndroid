@@ -16,9 +16,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import coil.request.ImageRequest
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.material.icons.outlined.Pause
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -26,22 +26,22 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Path
 import android.graphics.Paint
 import android.graphics.Path as AndroidPath
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.SkipNext
-import androidx.compose.material.icons.outlined.SkipPrevious
-import androidx.compose.material.icons.outlined.Shuffle
-import androidx.compose.material.icons.outlined.Repeat
-import androidx.compose.material.icons.outlined.RepeatOne
-import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.icons.outlined.Sort
-import androidx.compose.material.icons.outlined.SortByAlpha
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.SortByAlpha
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.ArrowDropUp
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -200,7 +200,7 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Outlined.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
+                        icon = { Icon(Icons.Rounded.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
                         label = { Text("Главная") },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
@@ -236,7 +236,7 @@ fun MainScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Outlined.Settings,
+                                    imageVector = Icons.Rounded.Settings,
                                     contentDescription = "Настройки",
                                     modifier = Modifier
                                         .graphicsLayer {
@@ -382,7 +382,7 @@ fun PlayerScreen(
                 ),
                 leadingIcon = {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.Search,
                         contentDescription = "Search"
                     )
                 },
@@ -390,7 +390,7 @@ fun PlayerScreen(
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
                             Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Outlined.Clear,
+                                imageVector = androidx.compose.material.icons.Icons.Rounded.Clear,
                                 contentDescription = "Clear"
                             )
                         }
@@ -407,15 +407,15 @@ fun PlayerScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.SortByAlpha,
+                        imageVector = Icons.Rounded.SortByAlpha,
                         contentDescription = null, // Description is provided by parent
                         modifier = Modifier.size(20.dp)
                     )
                     Icon(
                         imageVector = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) {
-                            Icons.Filled.ArrowDropDown
+                            Icons.Rounded.ArrowDropDown
                         } else {
-                            Icons.Filled.ArrowDropUp
+                            Icons.Rounded.ArrowDropUp
                         },
                         contentDescription = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) "По алфавиту (А-Я)" else "По алфавиту (Я-А)",
                         modifier = Modifier.size(20.dp)
@@ -615,7 +615,7 @@ fun PlayerScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Outlined.MusicNote,
+                                            imageVector = Icons.Rounded.MusicNote,
                                             contentDescription = "No Album Art",
                                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                             modifier = Modifier.size(32.dp)
@@ -663,7 +663,7 @@ fun PlayerScreen(
                                             )
 
                                             Icon(
-                                                imageVector = if (isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                                 contentDescription = if (isPlaying) "Pause" else "Play",
                                                 modifier = Modifier
                                                     .size(20.dp)
@@ -704,7 +704,7 @@ fun PlayerScreen(
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
-                                    imageVector = if (track.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                    imageVector = if (track.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                                     contentDescription = if (track.isFavorite) "Удалить из избранного" else "Добавить в избранное",
                                     tint = if (track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )

@@ -6,13 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Pause
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.SkipNext
-import androidx.compose.material.icons.outlined.SkipPrevious
-import androidx.compose.material.icons.outlined.Repeat
-import androidx.compose.material.icons.outlined.RepeatOne
-import androidx.compose.material.icons.outlined.Shuffle
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -123,7 +123,7 @@ fun GlobalPlayerBar(
                             enabled = uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE
                         ) {
                             Icon(
-                                Icons.Outlined.Shuffle,
+                                Icons.Rounded.Shuffle,
                                 contentDescription = "Shuffle",
                                 modifier = Modifier.size(20.dp),
                                 tint = if (uiState.isShuffleModeEnabled && uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE) {
@@ -161,7 +161,7 @@ fun GlobalPlayerBar(
                                 }
                         ) {
                             Icon(
-                                Icons.Outlined.SkipPrevious,
+                                Icons.Rounded.SkipPrevious,
                                 contentDescription = "Previous",
                                 modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -203,7 +203,7 @@ fun GlobalPlayerBar(
                                 )
 
                                 Icon(
-                                    if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                    if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                     contentDescription = if (uiState.isPlaying) "Pause" else "Play",
                                     modifier = Modifier
                                         .size(20.dp)
@@ -240,7 +240,7 @@ fun GlobalPlayerBar(
                                 }
                         ) {
                             Icon(
-                                Icons.Outlined.SkipNext,
+                                Icons.Rounded.SkipNext,
                                 contentDescription = "Next",
                                 modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -255,9 +255,9 @@ fun GlobalPlayerBar(
                         ) {
                             Icon(
                                 when (uiState.repeatMode) {
-                                    androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Outlined.Repeat
-                                    androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Outlined.Repeat
-                                    else -> Icons.Outlined.RepeatOne
+                                    androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Rounded.Repeat
+                                    androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Rounded.Repeat
+                                    else -> Icons.Rounded.RepeatOne
                                 },
                                 contentDescription = when (uiState.repeatMode) {
                                     androidx.media3.common.Player.REPEAT_MODE_OFF -> "Repeat off"

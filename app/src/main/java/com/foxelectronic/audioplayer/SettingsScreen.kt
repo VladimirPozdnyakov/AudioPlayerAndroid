@@ -16,14 +16,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Palette
 // Reuse Palette icon to avoid missing icon on some devices
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -117,7 +117,7 @@ fun SettingsScreen(
                         title = { Text("Интерфейс") },
                         navigationIcon = {
                             IconButton(onClick = { section = SettingsSection.MENU }) {
-                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
                             }
                         }
                     )
@@ -127,7 +127,7 @@ fun SettingsScreen(
                         title = { Text("Папки") },
                         navigationIcon = {
                             IconButton(onClick = { section = SettingsSection.MENU }) {
-                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
                             }
                         }
                     )
@@ -137,7 +137,7 @@ fun SettingsScreen(
                         title = { Text("О приложении") },
                         navigationIcon = {
                             IconButton(onClick = { section = SettingsSection.MENU }) {
-                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Назад")
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
                             }
                         }
                     )
@@ -166,7 +166,7 @@ fun SettingsScreen(
                                 )
                             ) {
                                 Icon(
-                                    Icons.Outlined.Palette,
+                                    Icons.Rounded.Palette,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -182,7 +182,7 @@ fun SettingsScreen(
                                 )
                             ) {
                                 Icon(
-                                    Icons.Outlined.Folder,
+                                    Icons.Rounded.Folder,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -198,7 +198,7 @@ fun SettingsScreen(
                                 )
                             ) {
                                 Icon(
-                                    Icons.Outlined.Info,
+                                    Icons.Rounded.Info,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -407,7 +407,7 @@ fun SettingsScreen(
                                     trailing = {
                                         if (!isDefault) {
                                             IconButton(onClick = { onRemoveFolder(folder) }) {
-                                                Icon(Icons.Outlined.Delete, contentDescription = "Удалить")
+                                                Icon(Icons.Rounded.Delete, contentDescription = "Удалить")
                                             }
                                         }
                                     },
@@ -427,7 +427,7 @@ fun SettingsScreen(
                                             contentColor = MaterialTheme.colorScheme.onSurface
                                         )
                                     ) {
-                                        Icon(Icons.Outlined.Add, contentDescription = null)
+                                        Icon(Icons.Rounded.Add, contentDescription = null)
                                         Spacer(Modifier.width(8.dp))
                                         Text("Добавить папку")
                                     }
@@ -439,7 +439,7 @@ fun SettingsScreen(
                         Spacer(Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             ListItem(
-                                leadingContent = { Icon(Icons.Outlined.Info, contentDescription = null) },
+                                leadingContent = { Icon(Icons.Rounded.Info, contentDescription = null) },
                                 headlineContent = { Text("AudioPlayer") },
                                 supportingContent = { Text("Версия: $versionName") }
                             )
@@ -448,7 +448,7 @@ fun SettingsScreen(
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/VladimirPozdnyakov/AudioPlayerAndroid"))
                                     context.startActivity(intent)
                                 },
-                                leadingContent = { Icon(Icons.Outlined.OpenInNew, contentDescription = null) },
+                                leadingContent = { Icon(Icons.Rounded.OpenInNew, contentDescription = null) },
                                 headlineContent = { Text("Исходный код") },
                                 supportingContent = { Text("github.com/VladimirPozdnyakov/AudioPlayerAndroid") }
                             )

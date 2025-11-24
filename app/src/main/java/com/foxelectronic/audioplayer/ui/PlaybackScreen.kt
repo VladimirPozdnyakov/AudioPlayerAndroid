@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -65,7 +65,7 @@ fun PlaybackScreen(
                 .padding(start = 16.dp, top = 48.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                 contentDescription = "Назад",
                 tint = MaterialTheme.colorScheme.onBackground
             )
@@ -150,7 +150,7 @@ fun AlbumArt(uiState: PlayerUiState) {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.MusicNote,
+                        imageVector = Icons.Rounded.MusicNote,
                         contentDescription = "Album Art",
                         modifier = Modifier.size(80.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -305,7 +305,7 @@ fun PlaybackControls(
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.SkipPrevious,
+                    imageVector = Icons.Rounded.SkipPrevious,
                     contentDescription = "Previous",
                     modifier = Modifier.size(36.dp),
                     tint = MaterialTheme.colorScheme.onSurface
@@ -347,7 +347,7 @@ fun PlaybackControls(
                     )
 
                     Icon(
-                        imageVector = if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                        imageVector = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         contentDescription = if (uiState.isPlaying) "Pause" else "Play",
                         modifier = Modifier
                             .size(32.dp)
@@ -363,7 +363,7 @@ fun PlaybackControls(
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.SkipNext,
+                    imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "Next",
                     modifier = Modifier.size(36.dp),
                     tint = MaterialTheme.colorScheme.onSurface
@@ -385,7 +385,7 @@ fun PlaybackControls(
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Shuffle,
+                    imageVector = Icons.Rounded.Shuffle,
                     contentDescription = "Shuffle",
                     modifier = Modifier.size(24.dp),
                     tint = if (uiState.isShuffleModeEnabled) {
@@ -409,7 +409,7 @@ fun PlaybackControls(
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
-                        imageVector = if (currentTrack.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        imageVector = if (currentTrack.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                         contentDescription = if (currentTrack.isFavorite) "Удалить из избранного" else "Добавить в избранное",
                         tint = if (currentTrack.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
@@ -427,9 +427,9 @@ fun PlaybackControls(
             ) {
                 Icon(
                     imageVector = when (uiState.repeatMode) {
-                        androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Outlined.Repeat
-                        androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Outlined.Repeat
-                        else -> Icons.Outlined.RepeatOne
+                        androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Rounded.Repeat
+                        androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Rounded.Repeat
+                        else -> Icons.Rounded.RepeatOne
                     },
                     contentDescription = when (uiState.repeatMode) {
                         androidx.media3.common.Player.REPEAT_MODE_OFF -> "Repeat off"
