@@ -44,6 +44,11 @@ import coil.size.Size
 import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlayerUiState
 import com.foxelectronic.audioplayer.Track
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateTo
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 
 @Composable
 fun PlaybackScreen(
@@ -402,19 +407,11 @@ fun PlaybackControls(
             } else null
 
             if (currentTrack != null) {
-                IconButton(
-                    onClick = {
-                        viewModel.toggleFavorite(currentTrack)
-                    },
+                AnimatedFavoriteButton(
+                    isFavorite = currentTrack.isFavorite,
+                    onToggleFavorite = { viewModel.toggleFavorite(currentTrack) },
                     modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (currentTrack.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                        contentDescription = if (currentTrack.isFavorite) "Удалить из избранного" else "Добавить в избранное",
-                        tint = if (currentTrack.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
+                )
             } else {
                 // Empty space to maintain alignment when no track is playing
                 Spacer(modifier = Modifier.size(48.dp))
@@ -457,5 +454,48 @@ private fun formatTime(millis: Long): String {
         "%d:%02d:%02d".format(hours, minutes, seconds)
     } else {
         "%d:%02d".format(minutes, seconds)
+    }
+}
+
+@Composable
+fun AnimatedFavoriteButton(
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var scale by remember { mutableStateOf(1f) }
+    val targetScale = 1f
+
+    IconButton(
+        onClick = {
+            onToggleFavorite()
+            scale = 1.2f // Initial scale for bounce effect
+        },
+        modifier = modifier
+    ) {
+        val currentScale by animateFloatAsState(
+            targetValue = scale,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "scaleAnimation"
+        )
+
+        Icon(
+            imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+            contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .scale(currentScale)
+        )
+    }
+
+    // Reset scale after animation completes
+    LaunchedEffect(scale) {
+        if (scale != targetScale) {
+            delay(200) // Wait for animation to complete
+            scale = targetScale
+        }
     }
 }

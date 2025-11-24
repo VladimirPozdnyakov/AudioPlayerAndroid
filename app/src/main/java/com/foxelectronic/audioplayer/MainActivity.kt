@@ -93,6 +93,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.animateTo
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 
 
 
@@ -697,18 +703,11 @@ fun PlayerScreen(
                             }
 
                             // Favorite button
-                            IconButton(
-                                onClick = { 
-                                    viewModel.toggleFavorite(track)
-                                },
+                            AnimatedFavoriteButton(
+                                isFavorite = track.isFavorite,
+                                onToggleFavorite = { viewModel.toggleFavorite(track) },
                                 modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (track.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                    contentDescription = if (track.isFavorite) "Удалить из избранного" else "Добавить в избранное",
-                                    tint = if (track.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            )
                         }
                     }
                 }
@@ -716,5 +715,48 @@ fun PlayerScreen(
             }
         }
 
+    }
+}
+
+@Composable
+fun AnimatedFavoriteButton(
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var scale by remember { mutableStateOf(1f) }
+    val targetScale = 1f
+
+    IconButton(
+        onClick = {
+            onToggleFavorite()
+            scale = 1.2f // Initial scale for bounce effect
+        },
+        modifier = modifier
+    ) {
+        val currentScale by animateFloatAsState(
+            targetValue = scale,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "scaleAnimation"
+        )
+
+        Icon(
+            imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+            contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .scale(currentScale)
+        )
+    }
+
+    // Reset scale after animation completes
+    LaunchedEffect(scale) {
+        if (scale != targetScale) {
+            delay(200) // Wait for animation to complete
+            scale = targetScale
+        }
     }
 }
