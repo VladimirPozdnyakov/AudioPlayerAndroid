@@ -12,6 +12,7 @@ build/
 .vscode/
 .cursor/
 QWEN.md
+CLAUDE.md
 ToDo.txt
 
 # Файлы локальных настроек проекта
@@ -31,3 +32,34 @@ Thumbs.db
 
 # Конфиденциальные данные
 .env
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+
+# Сгенерированные файлы
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Нативные библиотеки
+*.so
+.cxx/
+.externalNativeBuild/
+
+# Тестовые отчёты
+app/src/androidTest/
+test-results/
+test-output/
+
+# Профилирование и отладка
+*.hprof
+captures/
+
+# Kotlin
+*.kotlin_module
+
+# Резервные копии
+*.bak
+*~
