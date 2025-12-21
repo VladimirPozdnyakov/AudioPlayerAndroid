@@ -15,7 +15,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "0.6b"
+        versionName = "0.7b"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -86,7 +86,7 @@ dependencies {
 
     // Загрузка изображения
     implementation("io.coil-kt:coil-compose:2.6.0")
-    
+
     // Room database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
