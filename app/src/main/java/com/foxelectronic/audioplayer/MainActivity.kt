@@ -364,8 +364,11 @@ fun PlayerScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(0) } // 0: Все, 1: Любимые
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+    ) {
         // Search bar
         Row(
             modifier = Modifier
