@@ -82,7 +82,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateContentSize
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Image
@@ -601,37 +602,49 @@ fun PlayerScreen(
                                 modifier = Modifier.size(56.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (track.albumArtPath != null) {
-                                    AsyncImage(
-                                        model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                            .data(track.albumArtPath)
-                                            .size(256, 256) // Limit the image size to save memory
-                                            .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
-                                            .diskCachePolicy(coil.request.CachePolicy.ENABLED)
-                                            .build(),
-                                        contentDescription = "Album Art",
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    // Fallback: Display music note icon in a colored container
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.primaryContainer),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.MusicNote,
-                                            contentDescription = "No Album Art",
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.size(32.dp)
-                                        )
+                                SubcomposeAsyncImage(
+                                    model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                        .data(track.albumArtPath)
+                                        .size(256, 256)
+                                        .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                        .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                        .build(),
+                                    contentDescription = "Album Art",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.MusicNote,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+                                    },
+                                    error = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.MusicNote,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
                                     }
-                                }
+                                )
 
                                 // Play/pause button overlay
                                 if (isCurrent) {
