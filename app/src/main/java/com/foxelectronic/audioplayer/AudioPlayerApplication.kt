@@ -6,31 +6,25 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
+@HiltAndroidApp
 class AudioPlayerApplication : Application(), ImageLoaderFactory {
+
+    @Inject
+    lateinit var mediaSession: MediaSession
+
     companion object {
         @Volatile
-        var mediaSession: MediaSession? = null
+        var globalMediaSession: MediaSession? = null
             private set
     }
 
     override fun onCreate() {
         super.onCreate()
-
-        // Создаём ExoPlayer и MediaSession при запуске приложения
-        val player = PlayerViewModel.createExoPlayerInstance(this)
-        mediaSession = MediaSession.Builder(this, player)
-            .setSessionActivity(
-                android.app.PendingIntent.getActivity(
-                    this,
-                    0,
-                    android.content.Intent(this, MainActivity::class.java).apply {
-                        flags = android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    },
-                    android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-            .build()
+        // MediaSession теперь инжектится через Hilt
+        globalMediaSession = mediaSession
     }
 
     override fun newImageLoader(): ImageLoader {
@@ -51,13 +45,13 @@ class AudioPlayerApplication : Application(), ImageLoaderFactory {
     }
 
     override fun onTerminate() {
-        mediaSession?.run {
+        globalMediaSession?.run {
             if (player.isPlaying) {
                 player.pause()
             }
             release()
         }
-        mediaSession = null
+        globalMediaSession = null
         super.onTerminate()
     }
 }

@@ -98,10 +98,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateTo
 import androidx.compose.runtime.LaunchedEffect
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerViewModel by viewModels()
 

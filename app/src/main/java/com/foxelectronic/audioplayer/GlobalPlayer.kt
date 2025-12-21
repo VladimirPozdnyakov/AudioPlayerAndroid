@@ -1,32 +1,21 @@
 package com.foxelectronic.audioplayer
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.media3.common.Player
+import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
+import com.foxelectronic.audioplayer.ui.components.AnimatedSkipButton
+import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
+import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
+import com.foxelectronic.audioplayer.ui.components.SkipDirection
+import com.foxelectronic.audioplayer.ui.components.toTimeString
 
 @Composable
 fun GlobalPlayerBar(
@@ -45,7 +34,7 @@ fun GlobalPlayerBar(
             modifier = modifier
                 .wrapContentWidth()
                 .wrapContentHeight()
-                .clickable { onMiniPlayerClick() }, // Делает мини-плеер кликабельным для открытия полноэкранного плеера
+                .clickable { onMiniPlayerClick() },
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
             ),
@@ -68,15 +57,6 @@ fun GlobalPlayerBar(
                         verticalArrangement = Arrangement.Center
                     ) {
                         currentTrack?.let { track ->
-                            val currentTrackId by rememberUpdatedState(track.id)
-                            val lastTrackId = remember { mutableStateOf(track.id) }
-
-                            LaunchedEffect(currentTrackId) {
-                                if (currentTrackId != lastTrackId.value) {
-                                    lastTrackId.value = currentTrackId
-                                }
-                            }
-
                             Text(
                                 text = track.title,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -97,9 +77,8 @@ fun GlobalPlayerBar(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f)
                                 )
-                                // Таймер трека
                                 Text(
-                                    text = "${formatTime(uiState.positionMs)} / ${formatTime(uiState.durationMs)}",
+                                    text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(start = 8.dp)
@@ -115,162 +94,33 @@ fun GlobalPlayerBar(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Режим перемешивания
-                        IconButton(
-                            onClick = { viewModel.toggleShuffleMode() },
-                            modifier = Modifier
-                                .size(36.dp),
-                            enabled = uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE
-                        ) {
-                            Icon(
-                                Icons.Rounded.Shuffle,
-                                contentDescription = "Shuffle",
-                                modifier = Modifier.size(20.dp),
-                                tint = if (uiState.isShuffleModeEnabled && uiState.repeatMode != androidx.media3.common.Player.REPEAT_MODE_ONE) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        }
-
-                        // Предыдущий
-                        val (isPrevPressed, setPrevPressed) = remember { mutableStateOf(false) }
-                        val prevScale by animateFloatAsState(
-                            targetValue = if (isPrevPressed) 0.8f else 1f,
-                            animationSpec = tween(
-                                durationMillis = 200,
-                                easing = androidx.compose.animation.core.LinearEasing
-                            ),
-                            label = "prevScale"
+                        ShuffleModeButton(
+                            isEnabled = uiState.isShuffleModeEnabled,
+                            onToggle = { viewModel.toggleShuffleMode() },
+                            enabled = uiState.repeatMode != Player.REPEAT_MODE_ONE
                         )
 
-                        IconButton(
-                            onClick = { viewModel.previous() },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .scale(prevScale)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onPress = {
-                                            setPrevPressed(true)
-                                            tryAwaitRelease()
-                                            setPrevPressed(false)
-                                        }
-                                    )
-                                }
-                        ) {
-                            Icon(
-                                Icons.Rounded.SkipPrevious,
-                                contentDescription = "Previous",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        // Воспроизведение/Пауза
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val cornerRadius by animateFloatAsState(
-                                targetValue = if (uiState.isPlaying) 12f else 20f, // 20f approximates a circle (40dp/2)
-                                animationSpec = tween(
-                                    durationMillis = 300,
-                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                ),
-                                label = "cornerRadius"
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(cornerRadius.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .clickable {
-                                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val scale by animateFloatAsState(
-                                    targetValue = if (uiState.isPlaying) 1.2f else 1f,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                    ),
-                                    label = "scale"
-                                )
-
-                                Icon(
-                                    if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .scale(scale),
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-
-                        // Следующий
-                        val (isNextPressed, setNextPressed) = remember { mutableStateOf(false) }
-                        val nextScale by animateFloatAsState(
-                            targetValue = if (isNextPressed) 0.8f else 1f,
-                            animationSpec = tween(
-                                durationMillis = 200,
-                                easing = androidx.compose.animation.core.LinearEasing
-                            ),
-                            label = "nextScale"
+                        AnimatedSkipButton(
+                            direction = SkipDirection.Previous,
+                            onClick = { viewModel.previous() }
                         )
 
-                        IconButton(
-                            onClick = { viewModel.next() },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .scale(nextScale)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onPress = {
-                                            setNextPressed(true)
-                                            tryAwaitRelease()
-                                            setNextPressed(false)
-                                        }
-                                    )
-                                }
-                        ) {
-                            Icon(
-                                Icons.Rounded.SkipNext,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        AnimatedPlayPauseButton(
+                            isPlaying = uiState.isPlaying,
+                            onToggle = { if (uiState.isPlaying) viewModel.pause() else viewModel.resume() },
+                            size = 40.dp,
+                            iconSize = 20.dp
+                        )
 
-                        // Режим повтора
-                        IconButton(
-                            onClick = { viewModel.toggleRepeatMode() },
-                            modifier = Modifier
-                                .size(36.dp)
-                        ) {
-                            Icon(
-                                when (uiState.repeatMode) {
-                                    androidx.media3.common.Player.REPEAT_MODE_OFF -> Icons.Rounded.Repeat
-                                    androidx.media3.common.Player.REPEAT_MODE_ALL -> Icons.Rounded.Repeat
-                                    else -> Icons.Rounded.RepeatOne
-                                },
-                                contentDescription = when (uiState.repeatMode) {
-                                    androidx.media3.common.Player.REPEAT_MODE_OFF -> "Repeat off"
-                                    androidx.media3.common.Player.REPEAT_MODE_ALL -> "Repeat all"
-                                    else -> "Repeat one"
-                                },
-                                modifier = Modifier.size(20.dp),
-                                tint = when (uiState.repeatMode) {
-                                    androidx.media3.common.Player.REPEAT_MODE_OFF -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    else -> MaterialTheme.colorScheme.primary
-                                }
-                            )
-                        }
+                        AnimatedSkipButton(
+                            direction = SkipDirection.Next,
+                            onClick = { viewModel.next() }
+                        )
+
+                        RepeatModeButton(
+                            repeatMode = uiState.repeatMode,
+                            onToggle = { viewModel.toggleRepeatMode() }
+                        )
                     }
                 }
 
@@ -285,18 +135,5 @@ fun GlobalPlayerBar(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun formatTime(millis: Long): String {
-    val seconds = (millis / 1000) % 60
-    val minutes = (millis / (1000 * 60)) % 60
-    val hours = (millis / (1000 * 60 * 60))
-
-    return if (hours > 0) {
-        "%d:%02d:%02d".format(hours, minutes, seconds)
-    } else {
-        "%d:%02d".format(minutes, seconds)
     }
 }

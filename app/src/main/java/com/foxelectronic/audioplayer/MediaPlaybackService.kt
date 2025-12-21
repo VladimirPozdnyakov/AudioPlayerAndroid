@@ -6,6 +6,6 @@ import androidx.media3.session.MediaSessionService
 class MediaPlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         // Используем глобальную сессию из приложения
-        return AudioPlayerApplication.mediaSession
+        return AudioPlayerApplication.globalMediaSession
     }
 }

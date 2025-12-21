@@ -132,7 +132,7 @@ class PlayerViewModel : ViewModel() {
 
     private fun initializePlayer(context: Context) {
         // Используем глобальный плеер из Application
-        val globalPlayer = AudioPlayerApplication.mediaSession?.player as? ExoPlayer
+        val globalPlayer = AudioPlayerApplication.globalMediaSession?.player as? ExoPlayer
 
         if (globalPlayer != null) {
             player = globalPlayer
