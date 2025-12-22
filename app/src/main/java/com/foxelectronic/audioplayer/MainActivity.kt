@@ -60,6 +60,7 @@ import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.foxelectronic.audioplayer.SortMode
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -99,6 +100,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateTo
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
@@ -289,6 +293,7 @@ fun MainScreen(
                 when (tab) {
                     0 -> PlayerScreen(
                         viewModel = viewModel,
+                        settingsRepository = settingsViewModel.settingsRepository,
                         onTrackClick = { track ->
                             // Play the track if needed, but don't navigate to playback screen
                             if (playerUiState.currentIndex >= 0 &&
@@ -359,11 +364,59 @@ fun TrackProgressBar(
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
+    settingsRepository: SettingsRepository? = null,
     onTrackClick: (Track) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf(0) } // 0: Все, 1: Любимые
+    val coroutineScope = rememberCoroutineScope()
+
+    // Загружаем сохранённую вкладку синхронно при первом запуске
+    val initialTab = remember {
+        kotlinx.coroutines.runBlocking {
+            settingsRepository?.selectedTabFlow?.first() ?: 0
+        }
+    }
+    val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
+
+    // Сохраняем вкладку при изменении
+    LaunchedEffect(pagerState.currentPage) {
+        settingsRepository?.setSelectedTab(pagerState.currentPage)
+    }
+
+    // Все треки (для вкладки "Все")
+    val allTracks = remember(uiState.allTracks, searchQuery, uiState.sortMode) {
+        val filtered = if (searchQuery.isEmpty()) {
+            uiState.allTracks
+        } else {
+            uiState.allTracks.filter { track ->
+                track.title.contains(searchQuery, ignoreCase = true) ||
+                (track.artist?.contains(searchQuery, ignoreCase = true) == true)
+            }
+        }
+        when (uiState.sortMode) {
+            SortMode.ALPHABETICAL_AZ -> filtered.sortedBy { it.title.lowercase() }
+            SortMode.ALPHABETICAL_ZA -> filtered.sortedByDescending { it.title.lowercase() }
+        }
+    }
+
+    // Любимые треки (для вкладки "Любимые")
+    val favoriteTracks = remember(uiState.allTracks, searchQuery, uiState.sortMode) {
+        val filtered = uiState.allTracks.filter { it.isFavorite }.let { favorites ->
+            if (searchQuery.isEmpty()) {
+                favorites
+            } else {
+                favorites.filter { track ->
+                    track.title.contains(searchQuery, ignoreCase = true) ||
+                    (track.artist?.contains(searchQuery, ignoreCase = true) == true)
+                }
+            }
+        }
+        when (uiState.sortMode) {
+            SortMode.ALPHABETICAL_AZ -> filtered.sortedBy { it.title.lowercase() }
+            SortMode.ALPHABETICAL_ZA -> filtered.sortedByDescending { it.title.lowercase() }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -381,19 +434,18 @@ fun PlayerScreen(
             TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 singleLine = true,
-                shape = RoundedCornerShape(24.dp), // Fully rounded corners
+                shape = RoundedCornerShape(24.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
                     unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                 ),
                 leadingIcon = {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Rounded.Search,
+                        imageVector = Icons.Rounded.Search,
                         contentDescription = "Search"
                     )
                 },
@@ -401,7 +453,7 @@ fun PlayerScreen(
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
                             Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Rounded.Clear,
+                                imageVector = Icons.Rounded.Clear,
                                 contentDescription = "Clear"
                             )
                         }
@@ -419,7 +471,7 @@ fun PlayerScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.SortByAlpha,
-                        contentDescription = null, // Description is provided by parent
+                        contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
                     Icon(
@@ -435,303 +487,310 @@ fun PlayerScreen(
             }
         }
 
-        // Tabs: All and Favorites
+        // Tabs with swipe support
         TabRow(
-            selectedTabIndex = selectedTab,
+            selectedTabIndex = pagerState.currentPage,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
             divider = {
-                // Thin gray border at the bottom
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
                 )
-            },
-            tabs = {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(2.dp),
-                    selectedContentColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Все  ${uiState.tracks.size}", // Two spaces between name and count
-                            style = if (selectedTab == 0) MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.titleMedium,
-                            color = if (selectedTab == 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(2.dp),
-                    selectedContentColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Любимые  ${uiState.tracks.count { it.isFavorite }}", // Two spaces between name and count
-                            style = if (selectedTab == 1) MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.titleMedium,
-                            color = if (selectedTab == 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
-        )
+        ) {
+            Tab(
+                selected = pagerState.currentPage == 0,
+                onClick = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(0)
+                    }
+                },
+                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                Text(
+                    text = "Все  ${allTracks.size}",
+                    style = if (pagerState.currentPage == 0)
+                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    else
+                        MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            }
+            Tab(
+                selected = pagerState.currentPage == 1,
+                onClick = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(1)
+                    }
+                },
+                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                Text(
+                    text = "Любимые  ${favoriteTracks.size}",
+                    style = if (pagerState.currentPage == 1)
+                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    else
+                        MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            }
+        }
 
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                // Анимированный индикатор загрузки
                 CircularProgressIndicator(
                     modifier = Modifier.size(50.dp),
                     color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 4.dp
                 )
             }
-        } else if (uiState.tracks.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Нет треков (попробуйте добавить папки в настройках)")
-            }
         } else {
-            // Filter tracks based on selected tab and search query
-            val filteredTracks = remember(uiState.tracks, selectedTab, searchQuery) {
-                derivedStateOf {
-                    val tracks = when (selectedTab) {
-                        0 -> uiState.tracks // All tracks
-                        1 -> uiState.tracks.filter { it.isFavorite } // Favorites only
-                        else -> uiState.tracks
-                    }
-                    
-                    // Apply search filter
-                    if (searchQuery.isEmpty()) {
-                        tracks
-                    } else {
-                        tracks.filter { track ->
-                            track.title.contains(searchQuery, ignoreCase = true) ||
-                            (track.artist?.contains(searchQuery, ignoreCase = true) == true)
-                        }
-                    }
-                }
-            }
-
-            // Apply sorting to the filtered tracks
-            val sortedFilteredTracks = remember(filteredTracks.value, uiState.sortMode) {
-                derivedStateOf {
-                    when (uiState.sortMode) {
-                        SortMode.ALPHABETICAL_AZ -> filteredTracks.value.sortedBy { it.title.lowercase() }
-                        SortMode.ALPHABETICAL_ZA -> filteredTracks.value.sortedByDescending { it.title.lowercase() }
-                    }
-                }
-            }
-
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(
-                    items = sortedFilteredTracks.value,
-                    key = { track -> track.id }
-                ) { track ->
-                    val isCurrent = uiState.currentIndex >= 0 && uiState.tracks[uiState.currentIndex].id == track.id
-                    val isPlaying = isCurrent && uiState.isPlaying
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(vertical = 2.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha =0.1f)
-                        )
-                    ) {
-                        // Custom layout with album art, title, artist, and play/pause button
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
-                            // Add progress bar as a background for the entire card for currently playing track
-                            if (isCurrent) {
-                                val progress = if (uiState.durationMs > 0) {
-                                    uiState.positionMs.toFloat() / uiState.durationMs.toFloat()
-                                } else 0f
-                                TrackProgressBar(
-                                    progress = progress,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.TopCenter)
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
-                                    .clickable {
-                                        if (isCurrent) {
-                                            if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                                        } else {
-                                            viewModel.play(track)
-                                        }
-                                        onTrackClick(track) // Navigate to playback screen
-                                    }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                            // Album art
-                            Box(
-                                modifier = Modifier.size(56.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                SubcomposeAsyncImage(
-                                    model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                        .data(track.albumArtPath)
-                                        .size(256, 256)
-                                        .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
-                                        .diskCachePolicy(coil.request.CachePolicy.ENABLED)
-                                        .build(),
-                                    contentDescription = "Album Art",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop,
-                                    loading = {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.MusicNote,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
-                                    },
-                                    error = {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.MusicNote,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
-                                    }
-                                )
-
-                                // Play/pause button overlay
-                                if (isCurrent) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        val cornerRadius by animateFloatAsState(
-                                            targetValue = if (isPlaying) 9f else 18f, // 18f approximates a circle (36dp/2)
-                                            animationSpec = tween(
-                                                durationMillis = 300,
-                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                            ),
-                                            label = "cornerRadius"
-                                        )
-
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .clip(RoundedCornerShape(cornerRadius.dp))
-                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
-                                                .clickable {
-                                                    if (isPlaying) {
-                                                        viewModel.pause()
-                                                    } else {
-                                                        viewModel.resume()
-                                                    }
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            val scale by animateFloatAsState(
-                                                targetValue = if (isPlaying) 1.2f else 1f,
-                                                animationSpec = tween(
-                                                    durationMillis = 300,
-                                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                                ),
-                                                label = "scale"
-                                            )
-
-                                            Icon(
-                                                imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                                modifier = Modifier
-                                                    .size(20.dp)
-                                                    .scale(scale),
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            // Track info (title and artist)
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = track.title,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = track.artist ?: "Неизвестен",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            // Favorite button
-                            AnimatedFavoriteButton(
-                                isFavorite = track.isFavorite,
-                                onToggleFavorite = { viewModel.toggleFavorite(track) },
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                    }
-                }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                pageSpacing = 16.dp
+            ) { page ->
+                when (page) {
+                    0 -> TrackList(
+                        tracks = allTracks,
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        isPlaylistMode = false,
+                        onTrackClick = onTrackClick,
+                        emptyMessage = "Нет треков (попробуйте добавить папки в настройках)"
+                    )
+                    1 -> TrackList(
+                        tracks = favoriteTracks,
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        isPlaylistMode = true,
+                        onTrackClick = onTrackClick,
+                        emptyMessage = "Нет любимых треков"
+                    )
                 }
             }
         }
+    }
+}
 
+@Composable
+private fun TrackList(
+    tracks: List<Track>,
+    uiState: PlayerUiState,
+    viewModel: PlayerViewModel,
+    isPlaylistMode: Boolean,
+    onTrackClick: (Track) -> Unit,
+    emptyMessage: String
+) {
+    if (tracks.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(emptyMessage)
+        }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(
+                items = tracks,
+                key = { track -> "${if (isPlaylistMode) "fav" else "all"}_${track.id}" }
+            ) { track ->
+                val isCurrent = uiState.currentIndex >= 0 &&
+                    uiState.tracks.isNotEmpty() &&
+                    uiState.tracks.getOrNull(uiState.currentIndex)?.id == track.id
+                val isPlaying = isCurrent && uiState.isPlaying
+
+                TrackItem(
+                    track = track,
+                    isCurrent = isCurrent,
+                    isPlaying = isPlaying,
+                    uiState = uiState,
+                    onTrackClick = {
+                        if (isCurrent) {
+                            if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                        } else {
+                            if (isPlaylistMode) {
+                                // Воспроизводим из плейлиста любимых
+                                viewModel.playFromPlaylist(track, tracks)
+                            } else {
+                                viewModel.play(track)
+                            }
+                        }
+                        onTrackClick(track)
+                    },
+                    onPlayPauseClick = {
+                        if (isPlaying) viewModel.pause() else viewModel.resume()
+                    },
+                    onFavoriteClick = { viewModel.toggleFavorite(track) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrackItem(
+    track: Track,
+    isCurrent: Boolean,
+    isPlaying: Boolean,
+    uiState: PlayerUiState,
+    onTrackClick: () -> Unit,
+    onPlayPauseClick: () -> Unit,
+    onFavoriteClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(vertical = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        )
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (isCurrent) {
+                val progress = if (uiState.durationMs > 0) {
+                    uiState.positionMs.toFloat() / uiState.durationMs.toFloat()
+                } else 0f
+                TrackProgressBar(
+                    progress = progress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .clickable { onTrackClick() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Album art
+                Box(
+                    modifier = Modifier.size(56.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SubcomposeAsyncImage(
+                        model = coil.request.ImageRequest.Builder(LocalContext.current)
+                            .data(track.albumArtPath)
+                            .size(256, 256)
+                            .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                            .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = "Album Art",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MusicNote,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        },
+                        error = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MusicNote,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    )
+
+                    if (isCurrent) {
+                        Box(
+                            modifier = Modifier.size(36.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val cornerRadius by animateFloatAsState(
+                                targetValue = if (isPlaying) 9f else 18f,
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                ),
+                                label = "cornerRadius"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(cornerRadius.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                                    .clickable { onPlayPauseClick() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val scale by animateFloatAsState(
+                                    targetValue = if (isPlaying) 1.2f else 1f,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    ),
+                                    label = "scale"
+                                )
+
+                                Icon(
+                                    imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                    contentDescription = if (isPlaying) "Pause" else "Play",
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .scale(scale),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = track.title,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = track.artist ?: "Неизвестен",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                AnimatedFavoriteButton(
+                    isFavorite = track.isFavorite,
+                    onToggleFavorite = onFavoriteClick,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
     }
 }
 

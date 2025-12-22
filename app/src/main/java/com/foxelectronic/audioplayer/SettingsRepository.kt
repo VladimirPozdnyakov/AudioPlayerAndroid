@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,6 +27,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_LAST_PLAYED_TRACK_ID = stringPreferencesKey("last_played_track_id")
         private val KEY_LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
         private val KEY_FONT_TYPE = stringPreferencesKey("font_type")
+        private val KEY_SELECTED_TAB = intPreferencesKey("selected_tab")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
@@ -115,6 +117,18 @@ class SettingsRepository(private val context: Context) {
     suspend fun setFontType(fontType: FontType) {
         context.dataStore.edit { prefs ->
             prefs[KEY_FONT_TYPE] = fontType.name
+        }
+    }
+
+    val selectedTabFlow: Flow<Int> = context.dataStore.data
+        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+        .map { prefs ->
+            prefs[KEY_SELECTED_TAB] ?: 0
+        }
+
+    suspend fun setSelectedTab(tab: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_SELECTED_TAB] = tab
         }
     }
 }

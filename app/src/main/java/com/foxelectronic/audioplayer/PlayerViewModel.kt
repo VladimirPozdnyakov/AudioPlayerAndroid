@@ -32,7 +32,8 @@ data class Track(
 )
 
 data class PlayerUiState(
-    val tracks: List<Track> = emptyList(),
+    val allTracks: List<Track> = emptyList(),  // Все треки (для отображения)
+    val tracks: List<Track> = emptyList(),      // Текущий плейлист плеера
     val isPlaying: Boolean = false,
     val currentIndex: Int = -1,
     val positionMs: Long = 0L,
@@ -76,7 +77,7 @@ class PlayerViewModel : ViewModel() {
             if (tracks.isNotEmpty()) {
                 val tracksWithFavorites = updateFavoritesInTracks(tracks)
                 val sortedTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
-                _uiState.value = _uiState.value.copy(tracks = sortedTracks, isLoading = true)
+                _uiState.value = _uiState.value.copy(allTracks = sortedTracks, tracks = sortedTracks, isLoading = true)
                 
                 if (player == null) {
                     initializePlayer(context)
@@ -97,9 +98,9 @@ class PlayerViewModel : ViewModel() {
             // Update the UI with the fresh track list with favorite information
             val tracksWithFavorites = updateFavoritesInTracks(freshTracks)
             val sortedFreshTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
-            
+
             // Update UI state first
-            _uiState.value = _uiState.value.copy(tracks = sortedFreshTracks, isLoading = false)
+            _uiState.value = _uiState.value.copy(allTracks = sortedFreshTracks, tracks = sortedFreshTracks, isLoading = false)
             
             // Prepare the playlist with updated tracks
             preparePlaylist()
@@ -221,13 +222,103 @@ class PlayerViewModel : ViewModel() {
             p.playWhenReady = true
             p.play()
             _uiState.value = _uiState.value.copy(isPlaying = true, currentIndex = index)
-            
+
             // Save the current track ID and position when playing
             viewModelScope.launch {
                 settingsRepository?.setLastPlayedTrackId(track.id.toString())
                 settingsRepository?.setLastPlayedPosition(0L) // Starting from beginning
             }
         }
+    }
+
+    fun playFromPlaylist(track: Track, playlist: List<Track>) {
+        val p = player ?: return
+
+        // Сохраняем текущий трек
+        val currentTrackId = if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.isNotEmpty()) {
+            _uiState.value.tracks[_uiState.value.currentIndex].id
+        } else null
+
+        // Очищаем плеер и добавляем треки из плейлиста
+        p.clearMediaItems()
+        val items = playlist.map { t ->
+            MediaItem.Builder()
+                .setUri(t.uri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(t.title)
+                        .setArtist(t.artist)
+                        .build()
+                )
+                .build()
+        }
+        p.setMediaItems(items)
+        p.prepare()
+
+        // Находим индекс трека в плейлисте
+        val index = playlist.indexOfFirst { it.id == track.id }
+        if (index >= 0) {
+            p.seekTo(index, 0)
+            p.playWhenReady = true
+            p.play()
+
+            // Обновляем состояние с новым плейлистом
+            _uiState.value = _uiState.value.copy(
+                tracks = playlist,
+                isPlaying = true,
+                currentIndex = index
+            )
+
+            viewModelScope.launch {
+                settingsRepository?.setLastPlayedTrackId(track.id.toString())
+                settingsRepository?.setLastPlayedPosition(0L)
+            }
+        }
+    }
+
+    fun restoreFullPlaylist() {
+        val p = player ?: return
+        val fullTracks = _uiState.value.allTracks
+
+        // Сохраняем текущий трек и позицию
+        val currentTrackId = if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.isNotEmpty()) {
+            _uiState.value.tracks[_uiState.value.currentIndex].id
+        } else null
+        val currentPosition = p.currentPosition
+        val wasPlaying = p.isPlaying
+
+        // Восстанавливаем полный плейлист
+        p.clearMediaItems()
+        val items = fullTracks.map { t ->
+            MediaItem.Builder()
+                .setUri(t.uri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(t.title)
+                        .setArtist(t.artist)
+                        .build()
+                )
+                .build()
+        }
+        p.setMediaItems(items)
+        p.prepare()
+
+        // Находим индекс текущего трека в полном плейлисте
+        val newIndex = currentTrackId?.let { id ->
+            fullTracks.indexOfFirst { it.id == id }
+        } ?: -1
+
+        if (newIndex >= 0) {
+            p.seekTo(newIndex, currentPosition)
+            if (wasPlaying) {
+                p.play()
+            }
+        }
+
+        _uiState.value = _uiState.value.copy(
+            tracks = fullTracks,
+            currentIndex = newIndex
+        )
     }
 
     fun toggle() {
@@ -510,16 +601,18 @@ class PlayerViewModel : ViewModel() {
             SortMode.ALPHABETICAL_AZ -> SortMode.ALPHABETICAL_ZA
             SortMode.ALPHABETICAL_ZA -> SortMode.ALPHABETICAL_AZ
         }
-        
+
         // Update the UI state with the new sort mode and sorted tracks
+        val sortedAllTracks = applySorting(_uiState.value.allTracks, newSortMode)
         val sortedTracks = applySorting(_uiState.value.tracks, newSortMode)
         val newCurrentIndex = currentTrackId?.let { id ->
             sortedTracks.indexOfFirst { it.id == id }
         } ?: -1
 
         _uiState.value = _uiState.value.copy(
-            sortMode = newSortMode, 
-            tracks = sortedTracks, 
+            sortMode = newSortMode,
+            allTracks = sortedAllTracks,
+            tracks = sortedTracks,
             currentIndex = newCurrentIndex
         )
         
@@ -570,7 +663,14 @@ class PlayerViewModel : ViewModel() {
                 favoriteDao?.insertFavorite(favoriteTrack)
             }
             
-            // Update the track list with the new favorite status
+            // Update both track lists with the new favorite status
+            val updatedAllTracks = _uiState.value.allTracks.map { t ->
+                if (t.id == track.id) {
+                    t.copy(isFavorite = !t.isFavorite)
+                } else {
+                    t
+                }
+            }
             val updatedTracks = _uiState.value.tracks.map { t ->
                 if (t.id == track.id) {
                     t.copy(isFavorite = !t.isFavorite)
@@ -578,7 +678,7 @@ class PlayerViewModel : ViewModel() {
                     t
                 }
             }
-            _uiState.value = _uiState.value.copy(tracks = updatedTracks)
+            _uiState.value = _uiState.value.copy(allTracks = updatedAllTracks, tracks = updatedTracks)
         }
     }
 
