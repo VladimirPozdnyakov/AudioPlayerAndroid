@@ -160,7 +160,8 @@ private fun TrackInfo(uiState: PlayerUiState) {
     } else null
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = currentTrack?.title ?: "No Track Playing",
@@ -169,7 +170,7 @@ private fun TrackInfo(uiState: PlayerUiState) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 4,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
