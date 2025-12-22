@@ -19,8 +19,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -40,6 +46,7 @@ fun PlaybackScreen(
     onBackClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showFullscreenArt by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -69,7 +76,10 @@ fun PlaybackScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Album Art
-            AlbumArt(uiState = uiState)
+            AlbumArt(
+                uiState = uiState,
+                onArtClick = { showFullscreenArt = true }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -95,32 +105,25 @@ fun PlaybackScreen(
             PlaybackControls(uiState = uiState, viewModel = viewModel)
         }
     }
+
+    // Полноэкранный просмотр обложки
+    if (showFullscreenArt) {
+        FullscreenAlbumArt(
+            uiState = uiState,
+            onDismiss = { showFullscreenArt = false }
+        )
+    }
 }
 
 @Composable
-private fun AlbumArt(uiState: PlayerUiState) {
+private fun AlbumArt(
+    uiState: PlayerUiState,
+    onArtClick: () -> Unit = {}
+) {
     val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
         uiState.tracks[uiState.currentIndex]
     } else null
     val context = LocalContext.current
-
-    // Заглушка для отсутствующей обложки
-    @Composable
-    fun AlbumArtPlaceholder() {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.MusicNote,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(80.dp)
-            )
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -131,7 +134,8 @@ private fun AlbumArt(uiState: PlayerUiState) {
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .clickable { onArtClick() },
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
@@ -146,6 +150,99 @@ private fun AlbumArt(uiState: PlayerUiState) {
                 contentDescription = "Album Art",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
+                loading = { AlbumArtPlaceholder() },
+                error = { AlbumArtPlaceholder() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlbumArtPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.MusicNote,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(80.dp)
+        )
+    }
+}
+
+@Composable
+private fun FullscreenAlbumArt(
+    uiState: PlayerUiState,
+    onDismiss: () -> Unit
+) {
+    val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+        uiState.tracks[uiState.currentIndex]
+    } else null
+    val context = LocalContext.current
+
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    val transformableState = rememberTransformableState { zoomChange, offsetChange, _ ->
+        scale = (scale * zoomChange).coerceIn(1f, 5f)
+        if (scale > 1f) {
+            offset += offsetChange
+        } else {
+            offset = Offset.Zero
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            if (scale > 1f) {
+                                scale = 1f
+                                offset = Offset.Zero
+                            } else {
+                                scale = 2.5f
+                            }
+                        },
+                        onTap = {
+                            if (scale == 1f) {
+                                onDismiss()
+                            }
+                        }
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(currentTrack?.albumArtPath)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = "Album Art Fullscreen",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+                    .transformable(state = transformableState),
                 loading = { AlbumArtPlaceholder() },
                 error = { AlbumArtPlaceholder() }
             )
