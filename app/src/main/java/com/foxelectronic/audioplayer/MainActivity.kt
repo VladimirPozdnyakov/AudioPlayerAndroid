@@ -618,13 +618,13 @@ fun PlayerScreen(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.MusicNote,
                                                 contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(32.dp)
                                             )
                                         }
@@ -633,13 +633,13 @@ fun PlayerScreen(
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.MusicNote,
                                                 contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(32.dp)
                                             )
                                         }

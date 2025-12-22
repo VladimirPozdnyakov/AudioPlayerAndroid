@@ -21,7 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlayerUiState
 import com.foxelectronic.audioplayer.ui.components.AnimatedFavoriteButton
@@ -99,6 +102,25 @@ private fun AlbumArt(uiState: PlayerUiState) {
     val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
         uiState.tracks[uiState.currentIndex]
     } else null
+    val context = LocalContext.current
+
+    // Заглушка для отсутствующей обложки
+    @Composable
+    fun AlbumArtPlaceholder() {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.MusicNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(80.dp)
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -112,33 +134,21 @@ private fun AlbumArt(uiState: PlayerUiState) {
                 .padding(16.dp),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
             )
         ) {
-            if (currentTrack?.albumArtPath != null && currentTrack.albumArtPath.isNotBlank()) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = currentTrack.albumArtPath,
-                        placeholder = null,
-                        error = null
-                    ),
-                    contentDescription = "Album Art",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.MusicNote,
-                        contentDescription = "Album Art",
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(currentTrack?.albumArtPath)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = "Album Art",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                loading = { AlbumArtPlaceholder() },
+                error = { AlbumArtPlaceholder() }
+            )
         }
     }
 }
