@@ -35,6 +35,7 @@ fun GlobalPlayerBar(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .height(72.dp)
                 .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                 .clickable { onMiniPlayerClick() }
@@ -42,7 +43,8 @@ fun GlobalPlayerBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Информация о треке
