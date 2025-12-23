@@ -616,12 +616,8 @@ private fun TrackList(
                         if (isCurrent) {
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         } else {
-                            if (isPlaylistMode) {
-                                // Воспроизводим из плейлиста любимых
-                                viewModel.playFromPlaylist(track, tracks)
-                            } else {
-                                viewModel.play(track)
-                            }
+                            // Воспроизводим из текущего плейлиста (все или любимые)
+                            viewModel.playFromPlaylist(track, tracks)
                         }
                         onTrackClick(track)
                     },
