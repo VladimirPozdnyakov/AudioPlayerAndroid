@@ -1,7 +1,8 @@
 package com.foxelectronic.audioplayer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,6 +10,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -18,6 +20,7 @@ import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
 import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
 import com.foxelectronic.audioplayer.ui.components.SkipDirection
 import com.foxelectronic.audioplayer.ui.components.toTimeString
+import kotlin.math.absoluteValue
 
 @Composable
 fun GlobalPlayerBar(
@@ -32,13 +35,34 @@ fun GlobalPlayerBar(
             (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
         } else 0f
 
+        var totalDragY by remember { mutableFloatStateOf(0f) }
+
         Column(
             modifier = modifier
                 .fillMaxWidth()
                 .height(72.dp)
                 .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                .clickable { onMiniPlayerClick() }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { totalDragY = 0f },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            totalDragY += dragAmount.y
+                        },
+                        onDragEnd = {
+                            // Свайп вверх открывает большой плеер
+                            if (totalDragY < -50f) {
+                                onMiniPlayerClick()
+                            }
+                        }
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onMiniPlayerClick() }
+                    )
+                }
         ) {
             Row(
                 modifier = Modifier

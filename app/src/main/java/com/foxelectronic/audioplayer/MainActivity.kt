@@ -51,12 +51,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.foxelectronic.audioplayer.ui.PlaybackScreen
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.roundToInt
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
+import com.foxelectronic.audioplayer.ui.components.ExpandablePlayer
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.foxelectronic.audioplayer.SortMode
@@ -145,27 +146,11 @@ class MainActivity : ComponentActivity() {
                 AppTheme.DARK -> ThemeMode.DARK
             }
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex, fontType = settings.fontType) {
-                val navController = rememberNavController()
-
-                NavHost(
-                    navController = navController,
-                    startDestination = "main"
-                ) {
-                    composable("main") {
-                        MainScreen(
-                            viewModel = viewModel,
-                            settings = settings,
-                            settingsViewModel = settingsViewModel,
-                            navController = navController
-                        )
-                    }
-                    composable("playback") {
-                        PlaybackScreen(
-                            viewModel = viewModel,
-                            onBackClick = { navController.popBackStack() }
-                        )
-                    }
-                }
+                MainScreen(
+                    viewModel = viewModel,
+                    settings = settings,
+                    settingsViewModel = settingsViewModel
+                )
             }
         }
 
@@ -187,31 +172,94 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     viewModel: PlayerViewModel,
     settings: SettingsUiState,
-    settingsViewModel: SettingsViewModel,
-    navController: androidx.navigation.NavController
+    settingsViewModel: SettingsViewModel
 ) {
     var selectedTab by remember { mutableStateOf(0) } // 0: Главная, 1: Настройки
+    var expandProgress by remember { mutableFloatStateOf(0f) }
     val ctx = LocalContext.current
     val playerUiState by viewModel.uiState.collectAsState()
+    val hasCurrentTrack = playerUiState.currentIndex >= 0 && playerUiState.tracks.isNotEmpty()
 
-    Scaffold(
-        bottomBar = {
-            Column {
-                // Глобальный блок управления треком
-                GlobalPlayerBar(
-                    uiState = playerUiState,
-                    viewModel = viewModel,
-                    onMiniPlayerClick = { navController.navigate("playback") }
-                )
+    val navBarHeight = 72.dp
+    val density = LocalDensity.current
+    val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
-                NavigationBar(
-                    modifier = Modifier.height(72.dp),
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    windowInsets = WindowInsets(0)
-                ) {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
+    // Offset для NavigationBar: уезжает вниз при раскрытии плеера
+    val navBarOffset = (expandProgress * navBarHeightPx).roundToInt()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Основной контент
+        Scaffold(
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            AnimatedContent(
+                targetState = selectedTab,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                label = "bottom_nav",
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { -it })
+                    } else {
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { it })
+                    }
+                }
+            ) { tab ->
+                when (tab) {
+                    0 -> PlayerScreen(
+                        viewModel = viewModel,
+                        settingsRepository = settingsViewModel.settingsRepository,
+                        onTrackClick = { track ->
+                            if (playerUiState.currentIndex >= 0 &&
+                                playerUiState.tracks.isNotEmpty() &&
+                                playerUiState.tracks[playerUiState.currentIndex].id != track.id) {
+                                viewModel.play(track)
+                            } else if (playerUiState.currentIndex < 0) {
+                                viewModel.play(track)
+                            }
+                        }
+                    )
+                    1 -> SettingsScreen(
+                        state = settings,
+                        onThemeChange = settingsViewModel::setTheme,
+                        onAccentChange = settingsViewModel::setAccent,
+                        onFontTypeChange = settingsViewModel::setFontType,
+                        onAddFolder = { newFolder ->
+                            val updated = (settings.folders + newFolder).distinct()
+                            settingsViewModel.setFolders(updated)
+                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, updated)
+                        },
+                        onRemoveFolder = { folder ->
+                            val updated = settings.folders.filterNot { it == folder }
+                            val finalUpdated = if (updated.isEmpty()) {
+                                listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
+                            } else {
+                                updated
+                            }
+                            settingsViewModel.setFolders(finalUpdated)
+                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, finalUpdated)
+                        }
+                    )
+                }
+            }
+        }
+
+        // NavigationBar внизу с анимацией (zIndex выше когда плеер свёрнут)
+        NavigationBar(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(if (expandProgress < 0.5f) 5f else 0f)
+                .height(navBarHeight)
+                .offset { IntOffset(0, navBarOffset) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            windowInsets = WindowInsets(0)
+        ) {
+            NavigationBarItem(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
                         label = { Text("Главная") },
                         alwaysShowLabel = true,
@@ -270,63 +318,17 @@ fun MainScreen(
                         )
                     )
                 }
-            }
+
+        // ExpandablePlayer над NavigationBar (zIndex ниже когда свёрнут)
+        if (hasCurrentTrack) {
+            ExpandablePlayer(
+                uiState = playerUiState,
+                viewModel = viewModel,
+                onExpandProgressChange = { progress -> expandProgress = progress },
+                navBarHeight = navBarHeight,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
-    ) { innerPadding ->
-        AnimatedContent(
-                targetState = selectedTab,
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                label = "bottom_nav",
-                transitionSpec = {
-                    // Плавные анимации перелистывания влево и вправо
-                    if (targetState > initialState) {
-                        // Переход вправо (с Главной на Настройки)
-                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it }) togetherWith
-                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { -it })
-                    } else {
-                        // Переход влево (с Настроек на Главную)
-                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it }) togetherWith
-                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { it })
-                    }
-                }
-            ) { tab ->
-                when (tab) {
-                    0 -> PlayerScreen(
-                        viewModel = viewModel,
-                        settingsRepository = settingsViewModel.settingsRepository,
-                        onTrackClick = { track ->
-                            // Play the track if needed, but don't navigate to playback screen
-                            if (playerUiState.currentIndex >= 0 &&
-                                playerUiState.tracks.isNotEmpty() &&
-                                playerUiState.tracks[playerUiState.currentIndex].id != track.id) {
-                                viewModel.play(track)
-                            }
-                        }
-                    )
-                    else -> SettingsScreen(
-                        state = settings,
-                        onThemeChange = settingsViewModel::setTheme,
-                        onAccentChange = settingsViewModel::setAccent,
-                        onFontTypeChange = settingsViewModel::setFontType,
-                        onAddFolder = { newFolder ->
-                            val updated = (settings.folders + newFolder).distinct()
-                            settingsViewModel.setFolders(updated)
-                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, updated)
-                        },
-                        onRemoveFolder = { folder ->
-                            val updated = settings.folders.filterNot { it == folder }
-                            // Если удаляем все папки, добавляется папка Music по умолчанию
-                            val finalUpdated = if (updated.isEmpty()) {
-                                listOf("content://com.android.externalstorage.documents/tree/primary%3AMusic")
-                            } else {
-                                updated
-                            }
-                            settingsViewModel.setFolders(finalUpdated)
-                            viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, finalUpdated)
-                        }
-                    )
-                }
-            }
     }
 }
 
