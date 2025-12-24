@@ -46,6 +46,7 @@ import coil.request.ImageRequest
 import com.foxelectronic.audioplayer.PlayerUiState
 import com.foxelectronic.audioplayer.PlayerViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -68,11 +69,12 @@ fun ExpandablePlayer(
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
     // Позиция мини-плеера: от низа экрана вверх на navBarHeight + collapsedHeight
-    // expandProgress: 0 = свёрнут (мини-плеер над навбаром), 1 = развёрнут (весь экран)
+    // expandProgress: -1 = скрыт, 0 = свёрнут (мини-плеер над навбаром), 1 = развёрнут (весь экран)
     val coroutineScope = rememberCoroutineScope()
 
-    // animationProgress: 0 = свёрнут, 1 = развёрнут
-    val animationProgress = remember { Animatable(0f) }
+    // animationProgress: -1 = скрыт, 0 = свёрнут, 1 = развёрнут
+    // Начинаем с -1 (скрыт) для плавного появления
+    val animationProgress = remember { Animatable(-1f) }
 
     val expandProgress by remember {
         derivedStateOf { animationProgress.value }
@@ -81,6 +83,17 @@ fun ExpandablePlayer(
     // Уведомляем о изменении expandProgress
     LaunchedEffect(expandProgress) {
         onExpandProgressChange(expandProgress)
+    }
+
+    // Анимация появления при первом рендере
+    LaunchedEffect(Unit) {
+        animationProgress.animateTo(
+            targetValue = 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
     }
 
     // Функции анимации
@@ -108,19 +121,40 @@ fun ExpandablePlayer(
         }
     }
 
+    fun animateToDismissed() {
+        coroutineScope.launch {
+            animationProgress.animateTo(
+                targetValue = -1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+            // После завершения анимации останавливаем воспроизведение
+            viewModel.stopPlayback()
+        }
+    }
+
     // Back handler для развёрнутого плеера
     BackHandler(enabled = expandProgress > 0.5f) {
         animateToCollapsed()
     }
 
     // Расчёт позиций на основе expandProgress
-    // При свёрнутом: мини-плеер внизу экрана над навбаром
-    // При развёрнутом: большой плеер на весь экран, мини-плеер уезжает вверх за экран
+    // expandProgress: -1 = скрыт (уехал вниз), 0 = свёрнут (мини-плеер), 1 = развёрнут (весь экран)
 
-    // Высота: при свёрнутом = collapsedHeight + navBarHeight, при развёрнутом = screenHeight
-    // Это позволяет мини-плееру находиться прямо над NavigationBar
+    // Высота компонента
     val collapsedTotalHeight = collapsedHeightPx + navBarHeightPx
-    val visibleHeight = collapsedTotalHeight + (screenHeightPx - collapsedTotalHeight) * expandProgress
+    val visibleHeight = when {
+        expandProgress >= 0f -> {
+            // От свёрнутого до развёрнутого
+            collapsedTotalHeight + (screenHeightPx - collapsedTotalHeight) * expandProgress
+        }
+        else -> {
+            // При expandProgress < 0 уменьшаем высоту
+            collapsedTotalHeight * (1f + expandProgress)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -139,7 +173,7 @@ fun ExpandablePlayer(
                         // Свайп вверх увеличивает progress, вниз уменьшает
                         val delta = -dragAmount.y / screenHeightPx
                         coroutineScope.launch {
-                            val newProgress = (animationProgress.value + delta).coerceIn(0f, 1f)
+                            val newProgress = (animationProgress.value + delta).coerceIn(-1f, 1f)
                             animationProgress.snapTo(newProgress)
                         }
                     },
@@ -147,17 +181,28 @@ fun ExpandablePlayer(
                         val velocity = velocityTracker.calculateVelocity().y
                         val velocityThreshold = 500f
 
-                        val shouldExpand = when {
-                            velocity < -velocityThreshold -> true  // Быстрый свайп вверх
-                            velocity > velocityThreshold -> false  // Быстрый свайп вниз
-                            expandProgress > 0.5f -> true  // Больше половины - раскрыть
-                            else -> false
-                        }
-
-                        if (shouldExpand) {
-                            animateToExpanded()
-                        } else {
-                            animateToCollapsed()
+                        when {
+                            // Быстрый свайп вниз при свёрнутом состоянии - закрыть плеер
+                            velocity > velocityThreshold && expandProgress < 0.3f -> {
+                                animateToDismissed()
+                            }
+                            // Быстрый свайп вверх - раскрыть
+                            velocity < -velocityThreshold -> {
+                                animateToExpanded()
+                            }
+                            // Быстрый свайп вниз - свернуть или закрыть
+                            velocity > velocityThreshold -> {
+                                if (expandProgress > 0.5f) {
+                                    animateToCollapsed()
+                                } else {
+                                    animateToDismissed()
+                                }
+                            }
+                            // Медленный свайп - определяем по позиции
+                            expandProgress < -0.3f -> animateToDismissed()  // Свайп вниз от мини-плеера
+                            expandProgress > 0.5f -> animateToExpanded()     // Больше половины вверх
+                            expandProgress < 0f -> animateToCollapsed()      // Между -0.3 и 0
+                            else -> animateToCollapsed()                     // По умолчанию свернуть
                         }
                     }
                 )
@@ -175,12 +220,13 @@ fun ExpandablePlayer(
                 .background(MaterialTheme.colorScheme.background)
         )
 
-        // Мини-плеер (виден когда свёрнут, уезжает вверх при развёртывании)
+        // Мини-плеер
+        // expandProgress = 1: уезжает вверх, expandProgress = -1: уезжает вниз
         val miniPlayerOffset = -expandProgress * collapsedHeightPx
         CollapsedPlayerContent(
             uiState = uiState,
             viewModel = viewModel,
-            alpha = 1f - expandProgress,
+            alpha = (1f - abs(expandProgress)).coerceIn(0f, 1f),
             onExpandClick = { animateToExpanded() },
             modifier = Modifier
                 .fillMaxWidth()
@@ -194,7 +240,7 @@ fun ExpandablePlayer(
             ExpandedPlayerContent(
                 uiState = uiState,
                 viewModel = viewModel,
-                alpha = expandProgress,
+                alpha = expandProgress.coerceIn(0f, 1f),
                 onCollapseClick = { animateToCollapsed() },
                 modifier = Modifier
                     .fillMaxWidth()

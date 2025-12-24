@@ -187,7 +187,12 @@ fun MainScreen(
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
     // Offset для NavigationBar: уезжает вниз при раскрытии плеера
-    val navBarOffset = (expandProgress * navBarHeightPx).roundToInt()
+    // При свайпе вниз (expandProgress < 0) остаётся на месте
+    val navBarOffset = if (expandProgress > 0f) {
+        (expandProgress * navBarHeightPx).roundToInt()
+    } else {
+        0
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Основной контент
@@ -214,6 +219,7 @@ fun MainScreen(
                     0 -> PlayerScreen(
                         viewModel = viewModel,
                         settingsRepository = settingsViewModel.settingsRepository,
+                        expandProgress = expandProgress,
                         onTrackClick = { track ->
                             if (playerUiState.currentIndex >= 0 &&
                                 playerUiState.tracks.isNotEmpty() &&
@@ -369,6 +375,7 @@ fun TrackProgressBar(
 fun PlayerScreen(
     viewModel: PlayerViewModel,
     settingsRepository: SettingsRepository? = null,
+    expandProgress: Float = 0f,
     onTrackClick: (Track) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -575,7 +582,8 @@ fun PlayerScreen(
                         isPlaylistMode = false,
                         onTrackClick = onTrackClick,
                         emptyMessage = "Нет треков (попробуйте добавить папки в настройках)",
-                        listState = allTracksListState
+                        listState = allTracksListState,
+                        expandProgress = expandProgress
                     )
                     1 -> TrackList(
                         tracks = favoriteTracks,
@@ -584,7 +592,8 @@ fun PlayerScreen(
                         isPlaylistMode = true,
                         onTrackClick = onTrackClick,
                         emptyMessage = "Нет любимых треков",
-                        listState = favoriteTracksListState
+                        listState = favoriteTracksListState,
+                        expandProgress = expandProgress
                     )
                 }
             }
@@ -595,8 +604,18 @@ fun PlayerScreen(
         if (!uiState.isLoading) {
             val currentListState = if (pagerState.currentPage == 0) allTracksListState else favoriteTracksListState
             val currentTrackCount = if (pagerState.currentPage == 0) allTracks.size else favoriteTracks.size
-            val hasCurrentTrack = uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()
-            val bottomPadding = if (hasCurrentTrack) 122.dp else 0.dp
+
+            // Анимированный padding в зависимости от expandProgress
+            // expandProgress >= 0: плеер виден (122dp), expandProgress < 0: плеер скрыт (50dp)
+            val targetPadding = if (expandProgress >= 0f) 122.dp else 50.dp
+            val bottomPadding by animateDpAsState(
+                targetValue = targetPadding,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                ),
+                label = "scrollbarBottomPadding"
+            )
 
             Box(
                 modifier = Modifier
@@ -622,15 +641,25 @@ private fun TrackList(
     isPlaylistMode: Boolean,
     onTrackClick: (Track) -> Unit,
     emptyMessage: String,
-    listState: LazyListState
+    listState: LazyListState,
+    expandProgress: Float = 0f
 ) {
     if (tracks.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(emptyMessage)
         }
     } else {
-        val hasCurrentTrack = uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()
-        val bottomPadding = if (hasCurrentTrack) 122.dp else 0.dp
+        // Анимированный padding в зависимости от expandProgress
+        // expandProgress >= 0: плеер виден (122dp), expandProgress < 0: плеер скрыт (50dp)
+        val targetPadding = if (expandProgress >= 0f) 122.dp else 50.dp
+        val bottomPadding by animateDpAsState(
+            targetValue = targetPadding,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            ),
+            label = "trackListBottomPadding"
+        )
 
         LazyColumn(
             state = listState,

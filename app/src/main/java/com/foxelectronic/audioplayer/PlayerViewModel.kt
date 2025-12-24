@@ -78,11 +78,11 @@ class PlayerViewModel : ViewModel() {
                 val tracksWithFavorites = updateFavoritesInTracks(tracks)
                 val sortedTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
                 _uiState.value = _uiState.value.copy(allTracks = sortedTracks, tracks = sortedTracks, isLoading = true)
-                
+
                 if (player == null) {
                     initializePlayer(context)
                 }
-                preparePlaylist()
+                // Don't prepare playlist here - will be done later if we have a track to restore
             }
             
             // Always scan for new tracks in the background to ensure we have all available tracks for search
@@ -101,12 +101,12 @@ class PlayerViewModel : ViewModel() {
 
             // Update UI state first
             _uiState.value = _uiState.value.copy(allTracks = sortedFreshTracks, tracks = sortedFreshTracks, isLoading = false)
-            
-            // Prepare the playlist with updated tracks
-            preparePlaylist()
-            
+
             // Restore the last played track if it exists in the new track list
             if (lastPlayedTrackId != null) {
+                // Prepare the playlist only if we have a track to restore
+                preparePlaylist()
+
                 val trackIndex = sortedFreshTracks.indexOfFirst { it.id == lastPlayedTrackId }
                 if (trackIndex >= 0) {
                     // Get the saved position before restoring
@@ -159,15 +159,21 @@ class PlayerViewModel : ViewModel() {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         val index = this@apply.currentMediaItemIndex
                         val dur = this@apply.duration.coerceAtLeast(0L)
-                        _uiState.value = _uiState.value.copy(currentIndex = index, durationMs = dur)
-                        
-                        // Save the current track ID and position when transitioning to a new track, but not during restoration
-                        if (!isRestoringTrack && index >= 0 && _uiState.value.tracks.getOrNull(index) != null) {
-                            val currentTrack = _uiState.value.tracks[index]
-                            val currentPosition = this@apply.currentPosition.coerceAtLeast(0L)
-                            viewModelScope.launch {
-                                settingsRepository?.setLastPlayedTrackId(currentTrack.id.toString())
-                                settingsRepository?.setLastPlayedPosition(currentPosition)
+
+                        // Ignore automatic transition to first track when playlist is prepared but not playing
+                        // This prevents auto-selection of first track on app start
+                        val isAutoPrepare = _uiState.value.currentIndex == -1 && index == 0 && !this@apply.isPlaying
+                        if (!isAutoPrepare) {
+                            _uiState.value = _uiState.value.copy(currentIndex = index, durationMs = dur)
+
+                            // Save the current track ID and position when transitioning to a new track, but not during restoration
+                            if (!isRestoringTrack && index >= 0 && _uiState.value.tracks.getOrNull(index) != null) {
+                                val currentTrack = _uiState.value.tracks[index]
+                                val currentPosition = this@apply.currentPosition.coerceAtLeast(0L)
+                                viewModelScope.launch {
+                                    settingsRepository?.setLastPlayedTrackId(currentTrack.id.toString())
+                                    settingsRepository?.setLastPlayedPosition(currentPosition)
+                                }
                             }
                         }
                     }
@@ -218,6 +224,12 @@ class PlayerViewModel : ViewModel() {
         val index = _uiState.value.tracks.indexOfFirst { it.id == track.id }
         if (index >= 0) {
             val p = player ?: return
+
+            // Prepare playlist if not already prepared (e.g., first track after app start)
+            if (p.mediaItemCount == 0) {
+                preparePlaylist()
+            }
+
             p.seekTo(index, 0)
             p.playWhenReady = true
             p.play()
@@ -348,6 +360,24 @@ class PlayerViewModel : ViewModel() {
             p.playWhenReady = true
             p.play()
             _uiState.value = _uiState.value.copy(isPlaying = true)
+        }
+    }
+
+    fun stopPlayback() {
+        val p = player ?: return
+        p.pause()
+        p.stop()
+        _uiState.value = _uiState.value.copy(
+            isPlaying = false,
+            currentIndex = -1,
+            positionMs = 0L,
+            durationMs = 0L
+        )
+
+        // Очищаем сохранённый последний воспроизводимый трек
+        viewModelScope.launch {
+            settingsRepository?.setLastPlayedTrackId("")
+            settingsRepository?.setLastPlayedPosition(0L)
         }
     }
 
