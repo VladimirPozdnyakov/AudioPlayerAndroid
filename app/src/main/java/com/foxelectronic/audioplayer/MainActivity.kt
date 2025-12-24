@@ -11,6 +11,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -381,6 +383,10 @@ fun PlayerScreen(
     }
     val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
 
+    // Создаём LazyListState для каждой вкладки
+    val allTracksListState = rememberLazyListState()
+    val favoriteTracksListState = rememberLazyListState()
+
     // Сохраняем вкладку при изменении
     LaunchedEffect(pagerState.currentPage) {
         settingsRepository?.setSelectedTab(pagerState.currentPage)
@@ -420,11 +426,12 @@ fun PlayerScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+        ) {
         // Search bar
         Row(
             modifier = Modifier
@@ -567,7 +574,8 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         isPlaylistMode = false,
                         onTrackClick = onTrackClick,
-                        emptyMessage = "Нет треков (попробуйте добавить папки в настройках)"
+                        emptyMessage = "Нет треков (попробуйте добавить папки в настройках)",
+                        listState = allTracksListState
                     )
                     1 -> TrackList(
                         tracks = favoriteTracks,
@@ -575,10 +583,26 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         isPlaylistMode = true,
                         onTrackClick = onTrackClick,
-                        emptyMessage = "Нет любимых треков"
+                        emptyMessage = "Нет любимых треков",
+                        listState = favoriteTracksListState
                     )
                 }
             }
+        }
+        }
+
+        // Scrollbar у правого края экрана
+        if (!uiState.isLoading) {
+            val currentListState = if (pagerState.currentPage == 0) allTracksListState else favoriteTracksListState
+            val currentTrackCount = if (pagerState.currentPage == 0) allTracks.size else favoriteTracks.size
+
+            VerticalScrollbar(
+                listState = currentListState,
+                itemCount = currentTrackCount,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(top = 140.dp, end = 8.dp) // Отступ для search bar и tabs
+            )
         }
     }
 }
@@ -590,14 +614,18 @@ private fun TrackList(
     viewModel: PlayerViewModel,
     isPlaylistMode: Boolean,
     onTrackClick: (Track) -> Unit,
-    emptyMessage: String
+    emptyMessage: String,
+    listState: LazyListState
 ) {
     if (tracks.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(emptyMessage)
         }
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize()
+        ) {
             items(
                 items = tracks,
                 key = { track -> "${if (isPlaylistMode) "fav" else "all"}_${track.id}" }
@@ -831,6 +859,69 @@ fun AnimatedFavoriteButton(
         if (scale != targetScale) {
             delay(200) // Wait for animation to complete
             scale = targetScale
+        }
+    }
+}
+
+@Composable
+fun VerticalScrollbar(
+    listState: LazyListState,
+    itemCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val isScrolling = listState.isScrollInProgress
+
+    // Показываем scrollbar только при прокрутке
+    val alpha by animateFloatAsState(
+        targetValue = if (isScrolling) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (isScrolling) 150 else 500,
+            delayMillis = if (isScrolling) 0 else 700
+        ),
+        label = "scrollbarAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+    ) {
+        if (itemCount > 0) {
+            val firstVisibleIndex = listState.firstVisibleItemIndex.toFloat()
+            val firstVisibleOffset = listState.firstVisibleItemScrollOffset.toFloat()
+
+            // Примерная высота одного элемента (100dp высота карточки + 4dp padding)
+            val itemHeightDp = 104.dp
+            val itemHeightPx = with(LocalDensity.current) { itemHeightDp.toPx() }
+
+            // Общая высота контента
+            val totalContentHeight = itemCount * itemHeightPx
+
+            Canvas(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .graphicsLayer { this.alpha = alpha }
+            ) {
+                val canvasHeight = size.height
+                val canvasWidth = size.width
+
+                // Размер полосы пропорционален видимой области
+                val thumbHeight = (canvasHeight * canvasHeight / totalContentHeight)
+                    .coerceIn(40f, canvasHeight) // минимум 40px, максимум высота canvas
+
+                // Позиция полосы
+                val scrollProgress = (firstVisibleIndex * itemHeightPx + firstVisibleOffset) /
+                    (totalContentHeight - canvasHeight).coerceAtLeast(1f)
+                val thumbTop = scrollProgress * (canvasHeight - thumbHeight)
+
+                // Рисуем закруглённую полосу
+                drawRoundRect(
+                    color = Color.Gray.copy(alpha = 0.5f),
+                    topLeft = Offset(0f, thumbTop),
+                    size = Size(canvasWidth, thumbHeight),
+                    cornerRadius = CornerRadius(canvasWidth / 2, canvasWidth / 2)
+                )
+            }
         }
     }
 }
