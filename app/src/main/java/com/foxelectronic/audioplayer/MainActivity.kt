@@ -595,14 +595,21 @@ fun PlayerScreen(
         if (!uiState.isLoading) {
             val currentListState = if (pagerState.currentPage == 0) allTracksListState else favoriteTracksListState
             val currentTrackCount = if (pagerState.currentPage == 0) allTracks.size else favoriteTracks.size
+            val hasCurrentTrack = uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()
+            val bottomPadding = if (hasCurrentTrack) 122.dp else 0.dp
 
-            VerticalScrollbar(
-                listState = currentListState,
-                itemCount = currentTrackCount,
+            Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(top = 140.dp, end = 8.dp) // Отступ для search bar и tabs
-            )
+                    .fillMaxHeight()
+                    .padding(top = 156.dp, bottom = bottomPadding, end = 8.dp)
+            ) {
+                VerticalScrollbar(
+                    listState = currentListState,
+                    itemCount = currentTrackCount,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
+            }
         }
     }
 }
@@ -622,9 +629,13 @@ private fun TrackList(
             Text(emptyMessage)
         }
     } else {
+        val hasCurrentTrack = uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()
+        val bottomPadding = if (hasCurrentTrack) 122.dp else 0.dp
+
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = bottomPadding)
         ) {
             items(
                 items = tracks,
@@ -881,27 +892,23 @@ fun VerticalScrollbar(
         label = "scrollbarAlpha"
     )
 
-    Box(
-        modifier = modifier
-            .fillMaxHeight()
-    ) {
-        if (itemCount > 0) {
-            val firstVisibleIndex = listState.firstVisibleItemIndex.toFloat()
-            val firstVisibleOffset = listState.firstVisibleItemScrollOffset.toFloat()
+    if (itemCount > 0) {
+        val firstVisibleIndex = listState.firstVisibleItemIndex.toFloat()
+        val firstVisibleOffset = listState.firstVisibleItemScrollOffset.toFloat()
 
-            // Примерная высота одного элемента (100dp высота карточки + 4dp padding)
-            val itemHeightDp = 104.dp
-            val itemHeightPx = with(LocalDensity.current) { itemHeightDp.toPx() }
+        // Примерная высота одного элемента (100dp высота карточки + 4dp padding)
+        val itemHeightDp = 104.dp
+        val itemHeightPx = with(LocalDensity.current) { itemHeightDp.toPx() }
 
-            // Общая высота контента
-            val totalContentHeight = itemCount * itemHeightPx
+        // Общая высота контента
+        val totalContentHeight = itemCount * itemHeightPx
 
-            Canvas(
-                modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .graphicsLayer { this.alpha = alpha }
-            ) {
+        Canvas(
+            modifier = modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .graphicsLayer { this.alpha = alpha }
+        ) {
                 val canvasHeight = size.height
                 val canvasWidth = size.width
 
@@ -914,14 +921,13 @@ fun VerticalScrollbar(
                     (totalContentHeight - canvasHeight).coerceAtLeast(1f)
                 val thumbTop = scrollProgress * (canvasHeight - thumbHeight)
 
-                // Рисуем закруглённую полосу
-                drawRoundRect(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    topLeft = Offset(0f, thumbTop),
-                    size = Size(canvasWidth, thumbHeight),
-                    cornerRadius = CornerRadius(canvasWidth / 2, canvasWidth / 2)
-                )
-            }
+            // Рисуем закруглённую полосу
+            drawRoundRect(
+                color = Color.Gray.copy(alpha = 0.5f),
+                topLeft = Offset(0f, thumbTop),
+                size = Size(canvasWidth, thumbHeight),
+                cornerRadius = CornerRadius(canvasWidth / 2, canvasWidth / 2)
+            )
         }
     }
 }
