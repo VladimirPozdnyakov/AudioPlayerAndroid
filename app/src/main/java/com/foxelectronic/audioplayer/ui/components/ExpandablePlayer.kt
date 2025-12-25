@@ -489,7 +489,7 @@ private fun ExpandedAlbumArt(
     // Синхронизируем pagerState с currentIndex (от кнопок Next/Previous)
     LaunchedEffect(uiState.currentIndex) {
         if (!blockSync && pagerState.settledPage != uiState.currentIndex) {
-            pagerState.scrollToPage(uiState.currentIndex)
+            pagerState.animateScrollToPage(uiState.currentIndex)
             lastSettledPage = uiState.currentIndex
         }
         blockSync = false
