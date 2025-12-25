@@ -1,9 +1,14 @@
 package com.foxelectronic.audioplayer.ui.components
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -265,6 +270,14 @@ private fun CollapsedPlayerContent(
         (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
     } else 0f
 
+    // Отслеживаем предыдущий индекс для определения направления
+    var previousIndex by remember { mutableIntStateOf(uiState.currentIndex) }
+    val swipeDirection = remember(uiState.currentIndex) {
+        val direction = if (uiState.currentIndex > previousIndex) 1 else -1
+        previousIndex = uiState.currentIndex
+        direction
+    }
+
     Column(
         modifier = modifier
             .alpha(alpha)
@@ -282,37 +295,52 @@ private fun CollapsedPlayerContent(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
+            AnimatedContent(
+                targetState = uiState.currentIndex,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                currentTrack?.let { track ->
-                    Text(
-                        text = track.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                transitionSpec = {
+                    if (swipeDirection > 0) {
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { -it })
+                    } else {
+                        slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it }) togetherWith
+                                slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { it })
+                    }
+                },
+                label = "collapsedTrackInfo"
+            ) { _ ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    currentTrack?.let { track ->
                         Text(
-                            text = track.artist ?: "Неизвестный исполнитель",
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
+                            text = track.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = track.artist ?: "Неизвестный исполнитель",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -376,52 +404,75 @@ private fun ExpandedPlayerContent(
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     var showFullscreenArt by remember { mutableStateOf(false) }
 
+    // Отслеживаем предыдущий индекс для определения направления
+    var previousIndex by remember { mutableIntStateOf(uiState.currentIndex) }
+    val swipeDirection = remember(uiState.currentIndex) {
+        val direction = if (uiState.currentIndex > previousIndex) 1 else -1
+        previousIndex = uiState.currentIndex
+        direction
+    }
+
     Box(
         modifier = modifier.alpha(alpha)
     ) {
         // Основной контент
-        Column(
+        AnimatedContent(
+            targetState = uiState.currentIndex,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .padding(top = 32.dp)
                 .align(Alignment.TopCenter),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Album Art
-            ExpandedAlbumArt(
-                uiState = uiState,
-                onArtClick = { showFullscreenArt = true }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Track Info
+            transitionSpec = {
+                if (swipeDirection > 0) {
+                    slideInHorizontally(animationSpec = tween(300), initialOffsetX = { it }) togetherWith
+                            slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { -it })
+                } else {
+                    slideInHorizontally(animationSpec = tween(300), initialOffsetX = { -it }) togetherWith
+                            slideOutHorizontally(animationSpec = tween(300), targetOffsetX = { it })
+                }
+            },
+            label = "expandedTrackContent"
+        ) { _ ->
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = currentTrack?.title ?: "No Track Playing",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                // Album Art
+                ExpandedAlbumArt(
+                    uiState = uiState,
+                    onArtClick = { showFullscreenArt = true }
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = currentTrack?.artist ?: "Unknown Artist",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+                // Track Info
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = currentTrack?.title ?: "No Track Playing",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = currentTrack?.artist ?: "Unknown Artist",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
 
