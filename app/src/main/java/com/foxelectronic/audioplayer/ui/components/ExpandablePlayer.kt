@@ -517,7 +517,7 @@ private fun ExpandedAlbumArt(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 48.dp),
-            pageSpacing = 16.dp
+            pageSpacing = 0.dp
         ) { page ->
             val track = uiState.tracks.getOrNull(page)
             val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
@@ -527,10 +527,10 @@ private fun ExpandedAlbumArt(
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .graphicsLayer {
-                        val scale = 1f - (kotlin.math.abs(pageOffset) * 0.15f).coerceIn(0f, 0.15f)
+                        val scale = 1f - (kotlin.math.abs(pageOffset) * 0.2f).coerceIn(0f, 0.2f)
                         scaleX = scale
                         scaleY = scale
-                        alpha = 1f - (kotlin.math.abs(pageOffset) * 0.3f).coerceIn(0f, 0.3f)
+                        alpha = 1f - (kotlin.math.abs(pageOffset) * 0.6f).coerceIn(0f, 0.6f)
                     }
                     .clickable {
                         if (page == pagerState.currentPage) {
