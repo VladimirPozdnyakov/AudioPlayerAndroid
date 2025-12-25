@@ -177,7 +177,7 @@ fun MainScreen(
     settingsViewModel: SettingsViewModel
 ) {
     var selectedTab by remember { mutableStateOf(0) } // 0: Главная, 1: Настройки
-    var expandProgress by remember { mutableFloatStateOf(0f) }
+    var expandProgress by remember { mutableFloatStateOf(-1f) }
     val ctx = LocalContext.current
     val playerUiState by viewModel.uiState.collectAsState()
     val hasCurrentTrack = playerUiState.currentIndex >= 0 && playerUiState.tracks.isNotEmpty()
