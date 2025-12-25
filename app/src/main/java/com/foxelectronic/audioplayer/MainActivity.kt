@@ -692,7 +692,15 @@ private fun TrackList(
                     onPlayPauseClick = {
                         if (isPlaying) viewModel.pause() else viewModel.resume()
                     },
-                    onFavoriteClick = { viewModel.toggleFavorite(track) }
+                    onFavoriteClick = { viewModel.toggleFavorite(track) },
+                    modifier = Modifier.animateItem(
+                        fadeInSpec = tween(durationMillis = 200),
+                        fadeOutSpec = tween(durationMillis = 200),
+                        placementSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    )
                 )
             }
         }
@@ -707,10 +715,11 @@ private fun TrackItem(
     uiState: PlayerUiState,
     onTrackClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
-    onFavoriteClick: () -> Unit
+    onFavoriteClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(100.dp)
             .padding(vertical = 2.dp),
