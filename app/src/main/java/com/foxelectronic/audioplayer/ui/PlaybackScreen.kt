@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -53,19 +52,6 @@ fun PlaybackScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Кнопка «назад» в верхнем левом углу
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier
-                .padding(start = 16.dp, top = 48.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Назад",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
         // Основной контент с альбомом и информацией о треке по центру
         Column(
             modifier = Modifier

@@ -14,7 +14,6 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -380,18 +379,6 @@ private fun ExpandedPlayerContent(
     Box(
         modifier = modifier.alpha(alpha)
     ) {
-        // Кнопка «назад»
-        IconButton(
-            onClick = onCollapseClick,
-            modifier = Modifier.padding(start = 0.dp, top = 0.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                contentDescription = "Назад",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
         // Основной контент
         Column(
             modifier = Modifier
@@ -450,6 +437,20 @@ private fun ExpandedPlayerContent(
             ExpandedProgressSlider(uiState = uiState, viewModel = viewModel)
             Spacer(modifier = Modifier.height(16.dp))
             ExpandedPlaybackControls(uiState = uiState, viewModel = viewModel)
+        }
+
+        // Кнопка «назад» поверх всего контента
+        IconButton(
+            onClick = onCollapseClick,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 0.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ExpandMore,
+                contentDescription = "Назад",
+                tint = MaterialTheme.colorScheme.onBackground
+            )
         }
     }
 

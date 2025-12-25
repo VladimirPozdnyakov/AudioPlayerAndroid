@@ -13,6 +13,7 @@ build/
 .cursor/
 QWEN.md
 CLAUDE.md
+.claude/
 ToDo.txt
 
 # Файлы локальных настроек проекта
