@@ -253,6 +253,7 @@ fun ExpandablePlayer(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CollapsedPlayerContent(
     uiState: PlayerUiState,
@@ -263,10 +264,24 @@ private fun CollapsedPlayerContent(
 ) {
     if (alpha < 0.01f) return
 
-    val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     val progress = if (uiState.durationMs > 0) {
         (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
     } else 0f
+
+    // Pager для анимации переключения треков
+    val pagerState = rememberPagerState(
+        initialPage = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) uiState.currentIndex else 0,
+        pageCount = { uiState.tracks.size.coerceAtLeast(1) }
+    )
+
+    // Синхронизируем pagerState с currentIndex
+    LaunchedEffect(uiState.currentIndex) {
+        if (uiState.currentIndex >= 0 &&
+            uiState.currentIndex < uiState.tracks.size &&
+            pagerState.currentPage != uiState.currentIndex) {
+            pagerState.animateScrollToPage(uiState.currentIndex)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -285,37 +300,52 @@ private fun CollapsedPlayerContent(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
+            // Анимированная информация о треке
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                currentTrack?.let { track ->
-                    Text(
-                        text = track.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                userScrollEnabled = false
+            ) { page ->
+                val track = uiState.tracks.getOrNull(page)
+                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer(
+                            alpha = 1f - (kotlin.math.abs(pageOffset) * 1.5f).coerceIn(0f, 1f),
+                            translationX = pageOffset * 50f
+                        ),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    track?.let {
                         Text(
-                            text = track.artist ?: "Неизвестный исполнитель",
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
+                            text = it.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = it.artist ?: "Неизвестный исполнитель",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             }
