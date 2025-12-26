@@ -459,12 +459,14 @@ private fun ExpandedPlayerContent(
             onClick = onCollapseClick,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 0.dp)
+                .padding(start = 16.dp)
+                .offset(y = (-4).dp)
         ) {
             Icon(
                 imageVector = Icons.Rounded.ExpandMore,
                 contentDescription = "Назад",
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(32.dp)
             )
         }
     }
