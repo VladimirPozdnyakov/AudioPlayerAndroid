@@ -508,7 +508,7 @@ fun PlayerScreen(
             selectedTabIndex = pagerState.currentPage,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(top = 8.dp),
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
             divider = {
