@@ -52,7 +52,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
@@ -433,6 +435,21 @@ fun PlayerScreen(
         }
     }
 
+    // Измеряем ширину текста для вкладок
+    val textMeasurer = rememberTextMeasurer()
+    val tab0Text = "Все  ${allTracks.size}"
+    val tab1Text = "Любимые  ${favoriteTracks.size}"
+
+    val tab0TextWidth = textMeasurer.measure(
+        text = tab0Text,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+    ).size.width
+
+    val tab1TextWidth = textMeasurer.measure(
+        text = tab1Text,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+    ).size.width
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -513,6 +530,7 @@ fun PlayerScreen(
             contentColor = MaterialTheme.colorScheme.onSurface,
             indicator = { tabPositions ->
                 if (pagerState.currentPage < tabPositions.size) {
+                    val density = LocalDensity.current
                     val currentTab = tabPositions[pagerState.currentPage]
 
                     // Определяем целевую страницу и направление
@@ -525,16 +543,32 @@ fun PlayerScreen(
                     }
                     val targetTab = tabPositions[targetPage]
 
+                    // Ширина текста в dp
+                    val currentTextWidth = with(density) {
+                        if (pagerState.currentPage == 0) tab0TextWidth.toDp() else tab1TextWidth.toDp()
+                    }
+                    val targetTextWidth = with(density) {
+                        if (targetPage == 0) tab0TextWidth.toDp() else tab1TextWidth.toDp()
+                    }
+
                     val fraction = kotlin.math.abs(pagerState.currentPageOffsetFraction)
-                    val indicatorLeft = currentTab.left + (targetTab.left - currentTab.left) * fraction
-                    val indicatorWidth = currentTab.width + (targetTab.width - currentTab.width) * fraction
+
+                    // Центр текущей и целевой вкладок
+                    val currentTabCenter = currentTab.left + currentTab.width / 2
+                    val targetTabCenter = targetTab.left + targetTab.width / 2
+
+                    // Интерполяция центра и ширины (добавляем 16dp padding)
+                    val indicatorPadding = 16.dp
+                    val indicatorCenter = currentTabCenter + (targetTabCenter - currentTabCenter) * fraction
+                    val indicatorWidth: Dp = currentTextWidth + (targetTextWidth - currentTextWidth) * fraction + indicatorPadding
+                    val indicatorLeft = indicatorCenter - indicatorWidth / 2
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentSize(Alignment.BottomStart)
                             .offset(x = indicatorLeft)
-                            .width(indicatorWidth)
+                            .width(width = indicatorWidth)
                             .height(3.dp)
                             .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                             .background(MaterialTheme.colorScheme.primary)
@@ -562,7 +596,7 @@ fun PlayerScreen(
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Text(
-                    text = "Все  ${allTracks.size}",
+                    text = tab0Text,
                     style = if (pagerState.currentPage == 0)
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
@@ -581,7 +615,7 @@ fun PlayerScreen(
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Text(
-                    text = "Любимые  ${favoriteTracks.size}",
+                    text = tab1Text,
                     style = if (pagerState.currentPage == 1)
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
