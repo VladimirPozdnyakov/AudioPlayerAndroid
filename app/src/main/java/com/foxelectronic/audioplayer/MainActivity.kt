@@ -514,12 +514,27 @@ fun PlayerScreen(
             indicator = { tabPositions ->
                 if (pagerState.currentPage < tabPositions.size) {
                     val currentTab = tabPositions[pagerState.currentPage]
+
+                    // Определяем целевую страницу и направление
+                    val targetPage = if (pagerState.currentPageOffsetFraction > 0) {
+                        (pagerState.currentPage + 1).coerceIn(0, tabPositions.size - 1)
+                    } else if (pagerState.currentPageOffsetFraction < 0) {
+                        (pagerState.currentPage - 1).coerceIn(0, tabPositions.size - 1)
+                    } else {
+                        pagerState.currentPage
+                    }
+                    val targetTab = tabPositions[targetPage]
+
+                    val fraction = kotlin.math.abs(pagerState.currentPageOffsetFraction)
+                    val indicatorLeft = currentTab.left + (targetTab.left - currentTab.left) * fraction
+                    val indicatorWidth = currentTab.width + (targetTab.width - currentTab.width) * fraction
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentSize(Alignment.BottomStart)
-                            .offset(x = currentTab.left)
-                            .width(currentTab.width)
+                            .offset(x = indicatorLeft)
+                            .width(indicatorWidth)
                             .height(3.dp)
                             .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                             .background(MaterialTheme.colorScheme.primary)
