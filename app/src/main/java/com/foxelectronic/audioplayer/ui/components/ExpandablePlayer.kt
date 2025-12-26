@@ -419,7 +419,7 @@ private fun ExpandedPlayerContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = currentTrack?.artist ?: "Unknown Artist",
+                    text = currentTrack?.artist ?: "Неизвестный исполнитель",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

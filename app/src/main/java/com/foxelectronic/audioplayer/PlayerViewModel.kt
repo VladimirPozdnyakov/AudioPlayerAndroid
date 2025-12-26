@@ -535,7 +535,7 @@ class PlayerViewModel : ViewModel() {
             while (it.moveToNext()) {
                 val id = it.getLong(idCol)
                 val title = it.getString(titleCol)
-                val artist = it.getString(artistCol)
+                val artist = it.getString(artistCol)?.takeIf { a -> a != "<unknown>" && a.isNotBlank() }
                 val contentUri = Uri.withAppendedPath(collection, id.toString())
                 // Filter by chosen folders if any
                 val passesFilter = run {

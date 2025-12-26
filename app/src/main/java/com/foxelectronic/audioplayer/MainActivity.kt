@@ -851,7 +851,7 @@ private fun TrackItem(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = track.artist ?: "Неизвестен",
+                        text = track.artist ?: "Неизвестный исполнитель",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
