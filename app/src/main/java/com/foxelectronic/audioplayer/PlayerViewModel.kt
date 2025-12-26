@@ -41,7 +41,8 @@ data class PlayerUiState(
     val isLoading: Boolean = false,
     val repeatMode: Int = androidx.media3.common.Player.REPEAT_MODE_OFF,
     val isShuffleModeEnabled: Boolean = false,
-    val sortMode: SortMode = SortMode.ALPHABETICAL_AZ
+    val sortMode: SortMode = SortMode.ALPHABETICAL_AZ,
+    val playlistName: String = "Все треки"
 )
 
 enum class SortMode {
@@ -243,7 +244,7 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun playFromPlaylist(track: Track, playlist: List<Track>) {
+    fun playFromPlaylist(track: Track, playlist: List<Track>, playlistName: String = "Все треки") {
         val p = player ?: return
 
         // Сохраняем текущий трек
@@ -278,7 +279,8 @@ class PlayerViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(
                 tracks = playlist,
                 isPlaying = true,
-                currentIndex = index
+                currentIndex = index,
+                playlistName = playlistName
             )
 
             viewModelScope.launch {

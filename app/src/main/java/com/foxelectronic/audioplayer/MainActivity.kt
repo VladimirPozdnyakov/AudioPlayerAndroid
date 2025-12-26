@@ -648,7 +648,8 @@ fun PlayerScreen(
                         onTrackClick = onTrackClick,
                         emptyMessage = "Нет треков (попробуйте добавить папки в настройках)",
                         listState = allTracksListState,
-                        expandProgress = expandProgress
+                        expandProgress = expandProgress,
+                        playlistName = "Все треки"
                     )
                     1 -> TrackList(
                         tracks = favoriteTracks,
@@ -658,7 +659,8 @@ fun PlayerScreen(
                         onTrackClick = onTrackClick,
                         emptyMessage = "Нет любимых треков",
                         listState = favoriteTracksListState,
-                        expandProgress = expandProgress
+                        expandProgress = expandProgress,
+                        playlistName = "Любимые треки"
                     )
                 }
             }
@@ -707,7 +709,8 @@ private fun TrackList(
     onTrackClick: (Track) -> Unit,
     emptyMessage: String,
     listState: LazyListState,
-    expandProgress: Float = 0f
+    expandProgress: Float = 0f,
+    playlistName: String = "Все треки"
 ) {
     if (tracks.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -750,7 +753,7 @@ private fun TrackList(
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         } else {
                             // Воспроизводим из текущего плейлиста (все или любимые)
-                            viewModel.playFromPlaylist(track, tracks)
+                            viewModel.playFromPlaylist(track, tracks, playlistName)
                         }
                         onTrackClick(track)
                     },

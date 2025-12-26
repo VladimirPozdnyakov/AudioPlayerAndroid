@@ -443,6 +443,17 @@ private fun ExpandedPlayerContent(
             ExpandedPlaybackControls(uiState = uiState, viewModel = viewModel)
         }
 
+        // Название плейлиста по центру на уровне кнопки "назад"
+        Text(
+            text = "Плейлист «${uiState.playlistName}»",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+        )
+
         // Кнопка «назад» поверх всего контента
         IconButton(
             onClick = onCollapseClick,
