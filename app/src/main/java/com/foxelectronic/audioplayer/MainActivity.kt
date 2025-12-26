@@ -511,11 +511,27 @@ fun PlayerScreen(
                 .padding(top = 8.dp),
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
+            indicator = { tabPositions ->
+                if (pagerState.currentPage < tabPositions.size) {
+                    val currentTab = tabPositions[pagerState.currentPage]
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentSize(Alignment.BottomStart)
+                            .offset(x = currentTab.left)
+                            .width(currentTab.width)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            },
             divider = {
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
+                        .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                         .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
                 )
             }
