@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.roundToInt
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
 import com.foxelectronic.audioplayer.ui.components.ExpandablePlayer
+import com.foxelectronic.audioplayer.ui.settings.SettingsScreen
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.foxelectronic.audioplayer.SortMode
