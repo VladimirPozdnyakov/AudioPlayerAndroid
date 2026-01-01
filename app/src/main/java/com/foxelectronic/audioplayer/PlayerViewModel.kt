@@ -226,10 +226,8 @@ class PlayerViewModel : ViewModel() {
         if (index >= 0) {
             val p = player ?: return
 
-            // Prepare playlist if not already prepared (e.g., first track after app start)
-            if (p.mediaItemCount == 0) {
-                preparePlaylist()
-            }
+            // Всегда обновляем плейлист, чтобы он соответствовал текущей сортировке
+            preparePlaylist()
 
             p.seekTo(index, 0)
             p.playWhenReady = true
@@ -469,20 +467,34 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun next() {
-        val p = player ?: return
-        if (p.hasNextMediaItem()) {
-            p.seekToNextMediaItem()
-            p.play()
-            _uiState.value = _uiState.value.copy(isPlaying = true)
+        val currentIndex = _uiState.value.currentIndex
+        val tracks = _uiState.value.tracks
+
+        if (currentIndex >= 0 && currentIndex < tracks.size - 1) {
+            val nextTrack = tracks[currentIndex + 1]
+            play(nextTrack)
+        } else if (currentIndex == tracks.size - 1 && _uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
+            // Если последний трек и включен повтор всех - переходим к первому
+            val firstTrack = tracks.firstOrNull()
+            if (firstTrack != null) {
+                play(firstTrack)
+            }
         }
     }
 
     fun previous() {
-        val p = player ?: return
-        if (p.hasPreviousMediaItem()) {
-            p.seekToPreviousMediaItem()
-            p.play()
-            _uiState.value = _uiState.value.copy(isPlaying = true)
+        val currentIndex = _uiState.value.currentIndex
+        val tracks = _uiState.value.tracks
+
+        if (currentIndex > 0 && tracks.isNotEmpty()) {
+            val previousTrack = tracks[currentIndex - 1]
+            play(previousTrack)
+        } else if (currentIndex == 0 && _uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
+            // Если первый трек и включен повтор всех - переходим к последнему
+            val lastTrack = tracks.lastOrNull()
+            if (lastTrack != null) {
+                play(lastTrack)
+            }
         }
     }
 
@@ -625,9 +637,6 @@ class PlayerViewModel : ViewModel() {
         val currentTrackId = if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.isNotEmpty()) {
             _uiState.value.tracks[_uiState.value.currentIndex].id
         } else null
-        
-        val currentPosition = player?.currentPosition ?: 0L
-        val isPlaying = _uiState.value.isPlaying
 
         val newSortMode = when (_uiState.value.sortMode) {
             SortMode.ALPHABETICAL_AZ -> SortMode.ALPHABETICAL_ZA
@@ -647,20 +656,9 @@ class PlayerViewModel : ViewModel() {
             tracks = sortedTracks,
             currentIndex = newCurrentIndex
         )
-        
-        // Update the player's playlist but preserve current state
-        player?.let { 
-            preparePlaylist()
-            if (newCurrentIndex >= 0) {
-                // Seek to the same track at its new position and preserve the playback position
-                it.seekTo(newCurrentIndex, currentPosition)
-                if (isPlaying) {
-                    it.play()
-                } else {
-                    it.pause()
-                }
-            }
-        }
+
+        // НЕ обновляем плейлист в ExoPlayer - это вызывает паузу
+        // Плейлист обновится автоматически при следующем выборе трека пользователем
     }
 
     private suspend fun updateFavoritesInTracks(tracks: List<Track>): List<Track> {
