@@ -611,6 +611,8 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
+    private var lastSavedPositionTime = 0L
+
     init {
         // Периодическое обновление позиции
         viewModelScope.launch {
@@ -620,12 +622,14 @@ class PlayerViewModel : ViewModel() {
                     val pos = p.currentPosition.coerceAtLeast(0L)
                     val dur = p.duration.coerceAtLeast(0L)
                     _uiState.value = _uiState.value.copy(positionMs = pos, durationMs = dur)
-                    
-                    // Save the playback position periodically if there's a current track
-                    if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.getOrNull(_uiState.value.currentIndex) != null) {
-                        viewModelScope.launch {
-                            settingsRepository?.setLastPlayedPosition(pos)
-                        }
+
+                    // Сохраняем позицию не чаще раза в 5 секунд, чтобы снизить нагрузку на DataStore
+                    val currentTime = System.currentTimeMillis()
+                    if (_uiState.value.currentIndex >= 0 &&
+                        _uiState.value.tracks.getOrNull(_uiState.value.currentIndex) != null &&
+                        currentTime - lastSavedPositionTime > 5000) {
+                        lastSavedPositionTime = currentTime
+                        settingsRepository?.setLastPlayedPosition(pos)
                     }
                 }
                 kotlinx.coroutines.delay(500)
