@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import com.foxelectronic.audioplayer.data.model.Track
 import com.foxelectronic.audioplayer.repository.TrackCacheRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,15 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
-
-data class Track(
-    val id: Long,
-    val uri: Uri,
-    val title: String,
-    val artist: String?,
-    val albumArtPath: String? = null,
-    val isFavorite: Boolean = false
-)
 
 data class PlayerUiState(
     val allTracks: List<Track> = emptyList(),  // Все треки (для отображения)
@@ -42,7 +34,11 @@ data class PlayerUiState(
     val repeatMode: Int = androidx.media3.common.Player.REPEAT_MODE_OFF,
     val isShuffleModeEnabled: Boolean = false,
     val sortMode: SortMode = SortMode.ALPHABETICAL_AZ,
-    val playlistName: String = "Все треки"
+    val playlistName: String = "Все треки",
+    val artistGroups: Map<String, List<Track>> = emptyMap(),
+    val albumGroups: Map<String, List<Track>> = emptyMap(),
+    val selectedArtist: String? = null,
+    val selectedAlbum: String? = null
 )
 
 enum class SortMode {
@@ -102,6 +98,7 @@ class PlayerViewModel : ViewModel() {
 
             // Update UI state first
             _uiState.value = _uiState.value.copy(allTracks = sortedFreshTracks, tracks = sortedFreshTracks, isLoading = false)
+            updateGroups()
 
             // Restore the last played track if it exists in the new track list
             if (lastPlayedTrackId != null) {
@@ -519,6 +516,7 @@ class PlayerViewModel : ViewModel() {
             add(MediaStore.Audio.Media._ID)
             add(MediaStore.Audio.Media.TITLE)
             add(MediaStore.Audio.Media.ARTIST)
+            add(MediaStore.Audio.Media.ALBUM)
             add(MediaStore.Audio.Media.ALBUM_ID) // Add album ID to fetch album art
             if (Build.VERSION.SDK_INT >= 29) {
                 add(MediaStore.Audio.Media.RELATIVE_PATH)
@@ -542,6 +540,7 @@ class PlayerViewModel : ViewModel() {
             val idCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val artistCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val albumCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
             val albumIdCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val relPathCol = if (Build.VERSION.SDK_INT >= 29) it.getColumnIndex(MediaStore.Audio.Media.RELATIVE_PATH) else -1
             @Suppress("DEPRECATION")
@@ -550,6 +549,7 @@ class PlayerViewModel : ViewModel() {
                 val id = it.getLong(idCol)
                 val title = it.getString(titleCol)
                 val artist = it.getString(artistCol)?.takeIf { a -> a != "<unknown>" && a.isNotBlank() }
+                val album = it.getString(albumCol)?.takeIf { a -> a != "<unknown>" && a.isNotBlank() }
                 val contentUri = Uri.withAppendedPath(collection, id.toString())
                 // Filter by chosen folders if any
                 val passesFilter = run {
@@ -594,6 +594,7 @@ class PlayerViewModel : ViewModel() {
                         uri = contentUri,
                         title = title,
                         artist = artist,
+                        album = album,
                         albumArtPath = albumArtUri?.toString()
                     )
                 }
@@ -686,6 +687,7 @@ class PlayerViewModel : ViewModel() {
                 uri = track.uri.toString(),
                 title = track.title,
                 artist = track.artist ?: "",
+                album = track.album ?: "",
                 albumArtPath = track.albumArtPath
             )
             
@@ -713,7 +715,39 @@ class PlayerViewModel : ViewModel() {
                 }
             }
             _uiState.value = _uiState.value.copy(allTracks = updatedAllTracks, tracks = updatedTracks)
+            updateGroups()
         }
+    }
+
+    private fun groupTracksByArtist(tracks: List<Track>): Map<String, List<Track>> {
+        return tracks.groupBy { it.artist ?: "Неизвестный исполнитель" }
+    }
+
+    private fun groupTracksByAlbum(tracks: List<Track>): Map<String, List<Track>> {
+        return tracks.groupBy { it.album ?: "Неизвестный альбом" }
+    }
+
+    private fun updateGroups() {
+        _uiState.value = _uiState.value.copy(
+            artistGroups = groupTracksByArtist(_uiState.value.allTracks),
+            albumGroups = groupTracksByAlbum(_uiState.value.allTracks)
+        )
+    }
+
+    fun selectArtist(artist: String) {
+        _uiState.value = _uiState.value.copy(selectedArtist = artist)
+    }
+
+    fun clearSelectedArtist() {
+        _uiState.value = _uiState.value.copy(selectedArtist = null)
+    }
+
+    fun selectAlbum(album: String) {
+        _uiState.value = _uiState.value.copy(selectedAlbum = album)
+    }
+
+    fun clearSelectedAlbum() {
+        _uiState.value = _uiState.value.copy(selectedAlbum = null)
     }
 
     companion object {

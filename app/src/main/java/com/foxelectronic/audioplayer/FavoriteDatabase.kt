@@ -11,6 +11,8 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Insert
 import androidx.room.Delete
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "favorites")
@@ -19,6 +21,7 @@ data class FavoriteTrack(
     val uri: String,
     val title: String,
     val artist: String?,
+    val album: String? = null,
     val albumArtPath: String?,
     val addedAt: Long = System.currentTimeMillis()
 )
@@ -46,7 +49,7 @@ interface FavoriteDao {
 
 @Database(
     entities = [FavoriteTrack::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters
@@ -57,13 +60,21 @@ abstract class FavoriteDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: FavoriteDatabase? = null
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE favorites ADD COLUMN album TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): FavoriteDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     FavoriteDatabase::class.java,
                     "favorite_database"
-                ).build()
+                )
+                .addMigrations(MIGRATION_1_2)
+                .build()
                 INSTANCE = instance
                 instance
             }

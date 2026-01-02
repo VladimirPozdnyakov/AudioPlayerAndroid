@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.foxelectronic.audioplayer.Track
+import com.foxelectronic.audioplayer.data.model.Track
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -22,12 +22,13 @@ class TrackCacheRepository(private val context: Context) {
     
     suspend fun saveTracksToCache(tracks: List<Track>) {
         val json = Json { encodeDefaults = true }
-        val serializedTracks = json.encodeToString(tracks.map { 
+        val serializedTracks = json.encodeToString(tracks.map {
             TrackDto(
                 id = it.id,
                 uri = it.uri.toString(),  // Convert Uri to string for serialization
                 title = it.title,
                 artist = it.artist,
+                album = it.album,
                 albumArtPath = it.albumArtPath
             )
         })
@@ -40,9 +41,12 @@ class TrackCacheRepository(private val context: Context) {
     suspend fun getTracksFromCache(): List<Track> {
         return context.trackCacheDataStore.data
             .map { preferences ->
-                val json = Json { encodeDefaults = true }
+                val json = Json {
+                    encodeDefaults = true
+                    ignoreUnknownKeys = true  // Handle old cache without album field
+                }
                 val serializedTracks = preferences[trackCacheKey] ?: return@map emptyList()
-                
+
                 try {
                     val trackDtos = json.decodeFromString<List<TrackDto>>(serializedTracks)
                     trackDtos.map { dto ->
@@ -51,6 +55,7 @@ class TrackCacheRepository(private val context: Context) {
                             uri = android.net.Uri.parse(dto.uri),  // Convert string back to Uri
                             title = dto.title,
                             artist = dto.artist,
+                            album = dto.album,
                             albumArtPath = dto.albumArtPath
                         )
                     }
@@ -77,5 +82,6 @@ data class TrackDto(
     val uri: String,  // Store as string to make it serializable
     val title: String,
     val artist: String?,
+    val album: String? = null,
     val albumArtPath: String?
 )
