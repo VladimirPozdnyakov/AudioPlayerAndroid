@@ -87,6 +87,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -1216,7 +1217,32 @@ private fun ArtistsTab(
     if (selectedArtist == null) {
         ArtistGroupList(artistGroups, { viewModel.selectArtist(it) }, listState, expandProgress)
     } else {
-        Column(Modifier.fillMaxSize()) {
+        var swipeOffset by remember { mutableFloatStateOf(0f) }
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            if (swipeOffset > 200) {
+                                viewModel.clearSelectedArtist()
+                            }
+                            swipeOffset = 0f
+                        },
+                        onDragCancel = {
+                            swipeOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            // Разрешаем свайп только слева направо
+                            if (dragAmount > 0) {
+                                swipeOffset = (swipeOffset + dragAmount).coerceAtMost(400f)
+                            }
+                        }
+                    )
+                }
+        ) {
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -1351,7 +1377,32 @@ private fun AlbumsTab(
     if (selectedAlbum == null) {
         AlbumGroupList(albumGroups, { viewModel.selectAlbum(it) }, listState, expandProgress)
     } else {
-        Column(Modifier.fillMaxSize()) {
+        var swipeOffset by remember { mutableFloatStateOf(0f) }
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            if (swipeOffset > 200) {
+                                viewModel.clearSelectedAlbum()
+                            }
+                            swipeOffset = 0f
+                        },
+                        onDragCancel = {
+                            swipeOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            // Разрешаем свайп только слева направо
+                            if (dragAmount > 0) {
+                                swipeOffset = (swipeOffset + dragAmount).coerceAtMost(400f)
+                            }
+                        }
+                    )
+                }
+        ) {
             Row(
                 Modifier
                     .fillMaxWidth()
