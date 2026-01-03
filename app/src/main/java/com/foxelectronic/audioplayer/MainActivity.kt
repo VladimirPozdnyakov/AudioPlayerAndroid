@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.activity.compose.BackHandler
 import coil.request.ImageRequest
 import coil.request.CachePolicy
 import com.foxelectronic.audioplayer.data.model.Track
@@ -412,6 +413,16 @@ fun PlayerScreen(
         if (pagerState.currentPage != 3) viewModel.clearSelectedAlbum()
     }
 
+    // Обработка навигации "назад" при просмотре деталей исполнителя/альбома
+    val isViewingArtistOrAlbum = uiState.selectedArtist != null || uiState.selectedAlbum != null
+    BackHandler(enabled = isViewingArtistOrAlbum) {
+        if (uiState.selectedArtist != null) {
+            viewModel.clearSelectedArtist()
+        } else if (uiState.selectedAlbum != null) {
+            viewModel.clearSelectedAlbum()
+        }
+    }
+
     // Все треки (для вкладки "Все")
     val allTracks = remember(uiState.allTracks, searchQuery, uiState.sortMode) {
         val filtered = if (searchQuery.isEmpty()) {
@@ -748,10 +759,12 @@ fun PlayerScreen(
                 )
             }
         } else {
+            val isViewingArtistOrAlbum = uiState.selectedArtist != null || uiState.selectedAlbum != null
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f),
-                pageSpacing = 16.dp
+                pageSpacing = 16.dp,
+                userScrollEnabled = !isViewingArtistOrAlbum
             ) { page ->
                 when (page) {
                     0 -> TrackList(
