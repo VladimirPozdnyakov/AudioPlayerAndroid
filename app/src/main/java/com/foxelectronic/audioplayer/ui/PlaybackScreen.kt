@@ -32,6 +32,7 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlayerUiState
+import com.foxelectronic.audioplayer.PlaylistType
 import com.foxelectronic.audioplayer.ui.components.AnimatedFavoriteButton
 import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
@@ -246,6 +247,32 @@ private fun TrackInfo(uiState: PlayerUiState) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
     ) {
+        // Показываем тип плейлиста (Исполнитель/Альбом) если это не "Все" и не "Любимые"
+        if (uiState.playlistType == PlaylistType.ARTIST || uiState.playlistType == PlaylistType.ALBUM) {
+            val prefix = if (uiState.playlistType == PlaylistType.ARTIST) "Исполнитель" else "Альбом"
+            Text(
+                text = prefix,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Text(
+                text = uiState.playlistName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Text(
             text = currentTrack?.title ?: "No Track Playing",
             style = MaterialTheme.typography.titleLarge,

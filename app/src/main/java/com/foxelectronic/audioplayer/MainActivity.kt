@@ -774,7 +774,8 @@ fun PlayerScreen(
                         emptyMessage = "Нет любимых треков",
                         listState = favoriteTracksListState,
                         expandProgress = expandProgress,
-                        playlistName = "Любимые треки"
+                        playlistName = "Любимые треки",
+                        playlistType = PlaylistType.FAVORITES
                     )
                     2 -> ArtistsTab(
                         artistGroups = filteredArtistGroups,
@@ -860,7 +861,8 @@ private fun TrackList(
     emptyMessage: String,
     listState: LazyListState,
     expandProgress: Float = 0f,
-    playlistName: String = "Все треки"
+    playlistName: String = "Все треки",
+    playlistType: PlaylistType = PlaylistType.ALL
 ) {
     if (tracks.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -903,7 +905,7 @@ private fun TrackList(
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         } else {
                             // Воспроизводим из текущего плейлиста (все или любимые)
-                            viewModel.playFromPlaylist(track, tracks, playlistName)
+                            viewModel.playFromPlaylist(track, tracks, playlistName, playlistType)
                         }
                         onTrackClick(track)
                     },
@@ -1222,7 +1224,8 @@ private fun ArtistsTab(
                 emptyMessage = "Нет треков у этого исполнителя",
                 listState = listState,
                 expandProgress = expandProgress,
-                playlistName = selectedArtist
+                playlistName = selectedArtist,
+                playlistType = PlaylistType.ARTIST
             )
         }
     }
@@ -1356,7 +1359,8 @@ private fun AlbumsTab(
                 emptyMessage = "Нет треков в этом альбоме",
                 listState = listState,
                 expandProgress = expandProgress,
-                playlistName = selectedAlbum
+                playlistName = selectedAlbum,
+                playlistType = PlaylistType.ALBUM
             )
         }
     }

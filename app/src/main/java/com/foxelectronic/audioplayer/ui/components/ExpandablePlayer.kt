@@ -47,6 +47,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.foxelectronic.audioplayer.PlayerUiState
 import com.foxelectronic.audioplayer.PlayerViewModel
+import com.foxelectronic.audioplayer.PlaylistType
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -474,8 +475,14 @@ private fun ExpandedPlayerContent(
         }
 
         // Название плейлиста по центру на уровне кнопки "назад"
+        val playlistText = when (uiState.playlistType) {
+            PlaylistType.ARTIST -> "Исполнитель\n«${uiState.playlistName}»"
+            PlaylistType.ALBUM -> "Альбом\n«${uiState.playlistName}»"
+            else -> uiState.playlistName
+        }
+
         Text(
-            text = "Плейлист «${uiState.playlistName}»",
+            text = playlistText,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

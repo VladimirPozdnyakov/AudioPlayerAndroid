@@ -23,6 +23,13 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
 
+enum class PlaylistType {
+    ALL,        // Все треки
+    FAVORITES,  // Любимые треки
+    ARTIST,     // Плейлист исполнителя
+    ALBUM       // Плейлист альбома
+}
+
 data class PlayerUiState(
     val allTracks: List<Track> = emptyList(),  // Все треки (для отображения)
     val tracks: List<Track> = emptyList(),      // Текущий плейлист плеера
@@ -35,6 +42,7 @@ data class PlayerUiState(
     val isShuffleModeEnabled: Boolean = false,
     val sortMode: SortMode = SortMode.ALPHABETICAL_AZ,
     val playlistName: String = "Все треки",
+    val playlistType: PlaylistType = PlaylistType.ALL,
     val artistGroups: Map<String, List<Track>> = emptyMap(),
     val albumGroups: Map<String, List<Track>> = emptyMap(),
     val selectedArtist: String? = null,
@@ -239,7 +247,7 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun playFromPlaylist(track: Track, playlist: List<Track>, playlistName: String = "Все треки") {
+    fun playFromPlaylist(track: Track, playlist: List<Track>, playlistName: String = "Все треки", playlistType: PlaylistType = PlaylistType.ALL) {
         val p = player ?: return
 
         // Сохраняем текущий трек
@@ -275,7 +283,8 @@ class PlayerViewModel : ViewModel() {
                 tracks = playlist,
                 isPlaying = true,
                 currentIndex = index,
-                playlistName = playlistName
+                playlistName = playlistName,
+                playlistType = playlistType
             )
 
             viewModelScope.launch {
