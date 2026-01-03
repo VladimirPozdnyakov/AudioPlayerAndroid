@@ -195,15 +195,17 @@ fun ExpandablePlayer(
                             }
                             // Быстрый свайп вниз - свернуть или закрыть
                             velocity > velocityThreshold -> {
-                                if (expandProgress > 0.5f) {
+                                if (expandProgress >= 0f) {
+                                    // Если мы на мини-плеере или выше - свернуть к мини-плееру
                                     animateToCollapsed()
                                 } else {
+                                    // Только если тянули вниз от мини-плеера - закрыть
                                     animateToDismissed()
                                 }
                             }
                             // Медленный свайп - определяем по позиции
                             expandProgress < -0.3f -> animateToDismissed()  // Свайп вниз от мини-плеера
-                            expandProgress > 0.5f -> animateToExpanded()     // Больше половины вверх
+                            expandProgress > 0.3f -> animateToExpanded()     // 30%
                             expandProgress < 0f -> animateToCollapsed()      // Между -0.3 и 0
                             else -> animateToCollapsed()                     // По умолчанию свернуть
                         }
