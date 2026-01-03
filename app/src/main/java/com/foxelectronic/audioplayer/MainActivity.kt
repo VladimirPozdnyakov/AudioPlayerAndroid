@@ -571,13 +571,14 @@ fun PlayerScreen(
         }
 
         // Tabs with swipe support
-        TabRow(
+        ScrollableTabRow(
             selectedTabIndex = pagerState.currentPage,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
+            edgePadding = 16.dp,
             indicator = { tabPositions ->
                 if (pagerState.currentPage < tabPositions.size) {
                     val density = LocalDensity.current
@@ -654,7 +655,9 @@ fun PlayerScreen(
                 },
                 selectedContentColor = MaterialTheme.colorScheme.onSurface,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             ) {
                 Text(
                     text = tab0Text,
@@ -674,7 +677,9 @@ fun PlayerScreen(
                 },
                 selectedContentColor = MaterialTheme.colorScheme.onSurface,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             ) {
                 Text(
                     text = tab1Text,
@@ -694,7 +699,9 @@ fun PlayerScreen(
                 },
                 selectedContentColor = MaterialTheme.colorScheme.onSurface,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             ) {
                 Text(
                     text = tab2Text,
@@ -714,7 +721,9 @@ fun PlayerScreen(
                 },
                 selectedContentColor = MaterialTheme.colorScheme.onSurface,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             ) {
                 Text(
                     text = tab3Text,
