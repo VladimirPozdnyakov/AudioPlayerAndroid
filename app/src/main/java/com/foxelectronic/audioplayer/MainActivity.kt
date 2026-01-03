@@ -1391,7 +1391,13 @@ private fun AlbumGroupList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(albumGroups.toList(), key = { (album, _) -> "album_$album" }) { (album, tracks) ->
-                AlbumGroupItem(album, tracks.firstOrNull()?.artist ?: "Неизвестный исполнитель", tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) })
+                val uniqueArtists = tracks.mapNotNull { it.artist }.distinct()
+                val artistText = if (uniqueArtists.isEmpty()) {
+                    "Неизвестный исполнитель"
+                } else {
+                    uniqueArtists.joinToString(", ")
+                }
+                AlbumGroupItem(album, artistText, tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) })
             }
         }
     }
