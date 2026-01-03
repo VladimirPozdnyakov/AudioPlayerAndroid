@@ -1214,58 +1214,124 @@ private fun ArtistsTab(
     listState: LazyListState,
     expandProgress: Float
 ) {
-    if (selectedArtist == null) {
-        ArtistGroupList(artistGroups, { viewModel.selectArtist(it) }, listState, expandProgress)
-    } else {
-        var swipeOffset by remember { mutableFloatStateOf(0f) }
+    val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var previousArtist by remember { mutableStateOf<String?>(null) }
+    val density = LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            if (swipeOffset > 200) {
+    // Анимация при изменении selectedArtist
+    LaunchedEffect(selectedArtist) {
+        if (selectedArtist != null && previousArtist == null) {
+            // Открытие - анимируем справа налево
+            swipeOffset.snapTo(screenWidthPx)
+            swipeOffset.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                )
+            )
+        }
+        previousArtist = selectedArtist
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Список исполнителей (задний слой, статичный)
+        ArtistGroupList(artistGroups, { viewModel.selectArtist(it) }, listState, expandProgress)
+
+        // Детали исполнителя (передний слой)
+        if (selectedArtist != null) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(swipeOffset.value.roundToInt(), 0) }
+                    .background(MaterialTheme.colorScheme.background)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                coroutineScope.launch {
+                                    // Порог: 30% ширины экрана
+                                    val threshold = size.width * 0.3f
+                                    if (swipeOffset.value > threshold) {
+                                        // Завершаем свайп: анимируем до конца экрана
+                                        swipeOffset.animateTo(
+                                            targetValue = size.width.toFloat(),
+                                            animationSpec = tween(
+                                                durationMillis = 200,
+                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                            )
+                                        )
+                                        viewModel.clearSelectedArtist()
+                                    } else {
+                                        // Возвращаем назад
+                                        swipeOffset.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessMedium
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                            onDragCancel = {
+                                coroutineScope.launch {
+                                    swipeOffset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        )
+                                    )
+                                }
+                            },
+                            onHorizontalDrag = { _, dragAmount ->
+                                coroutineScope.launch {
+                                    // Синхронизируем с движением пальца
+                                    val newValue = (swipeOffset.value + dragAmount).coerceAtLeast(0f)
+                                    swipeOffset.snapTo(newValue)
+                                }
+                            }
+                        )
+                    }
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            coroutineScope.launch {
+                                swipeOffset.animateTo(
+                                    targetValue = screenWidthPx,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    )
+                                )
                                 viewModel.clearSelectedArtist()
                             }
-                            swipeOffset = 0f
-                        },
-                        onDragCancel = {
-                            swipeOffset = 0f
-                        },
-                        onHorizontalDrag = { _, dragAmount ->
-                            // Разрешаем свайп только слева направо
-                            if (dragAmount > 0) {
-                                swipeOffset = (swipeOffset + dragAmount).coerceAtMost(400f)
-                            }
                         }
-                    )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(selectedArtist, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-        ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.clearSelectedArtist() }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(selectedArtist, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                TrackList(
+                    tracks = artistGroups[selectedArtist] ?: emptyList(),
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPlaylistMode = true,
+                    onTrackClick = onTrackClick,
+                    emptyMessage = "Нет треков у этого исполнителя",
+                    listState = listState,
+                    expandProgress = expandProgress,
+                    playlistName = selectedArtist,
+                    playlistType = PlaylistType.ARTIST
+                )
             }
-            TrackList(
-                tracks = artistGroups[selectedArtist] ?: emptyList(),
-                uiState = uiState,
-                viewModel = viewModel,
-                isPlaylistMode = true,
-                onTrackClick = onTrackClick,
-                emptyMessage = "Нет треков у этого исполнителя",
-                listState = listState,
-                expandProgress = expandProgress,
-                playlistName = selectedArtist,
-                playlistType = PlaylistType.ARTIST
-            )
         }
     }
 }
@@ -1374,58 +1440,124 @@ private fun AlbumsTab(
     listState: LazyListState,
     expandProgress: Float
 ) {
-    if (selectedAlbum == null) {
-        AlbumGroupList(albumGroups, { viewModel.selectAlbum(it) }, listState, expandProgress)
-    } else {
-        var swipeOffset by remember { mutableFloatStateOf(0f) }
+    val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var previousAlbum by remember { mutableStateOf<String?>(null) }
+    val density = LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            if (swipeOffset > 200) {
+    // Анимация при изменении selectedAlbum
+    LaunchedEffect(selectedAlbum) {
+        if (selectedAlbum != null && previousAlbum == null) {
+            // Открытие - анимируем справа налево
+            swipeOffset.snapTo(screenWidthPx)
+            swipeOffset.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = 300,
+                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                )
+            )
+        }
+        previousAlbum = selectedAlbum
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Список альбомов (задний слой, статичный)
+        AlbumGroupList(albumGroups, { viewModel.selectAlbum(it) }, listState, expandProgress)
+
+        // Детали альбома (передний слой)
+        if (selectedAlbum != null) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(swipeOffset.value.roundToInt(), 0) }
+                    .background(MaterialTheme.colorScheme.background)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                coroutineScope.launch {
+                                    // Порог: 30% ширины экрана
+                                    val threshold = size.width * 0.3f
+                                    if (swipeOffset.value > threshold) {
+                                        // Завершаем свайп: анимируем до конца экрана
+                                        swipeOffset.animateTo(
+                                            targetValue = size.width.toFloat(),
+                                            animationSpec = tween(
+                                                durationMillis = 200,
+                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                            )
+                                        )
+                                        viewModel.clearSelectedAlbum()
+                                    } else {
+                                        // Возвращаем назад
+                                        swipeOffset.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessMedium
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                            onDragCancel = {
+                                coroutineScope.launch {
+                                    swipeOffset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        )
+                                    )
+                                }
+                            },
+                            onHorizontalDrag = { _, dragAmount ->
+                                coroutineScope.launch {
+                                    // Синхронизируем с движением пальца
+                                    val newValue = (swipeOffset.value + dragAmount).coerceAtLeast(0f)
+                                    swipeOffset.snapTo(newValue)
+                                }
+                            }
+                        )
+                    }
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            coroutineScope.launch {
+                                swipeOffset.animateTo(
+                                    targetValue = screenWidthPx,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    )
+                                )
                                 viewModel.clearSelectedAlbum()
                             }
-                            swipeOffset = 0f
-                        },
-                        onDragCancel = {
-                            swipeOffset = 0f
-                        },
-                        onHorizontalDrag = { _, dragAmount ->
-                            // Разрешаем свайп только слева направо
-                            if (dragAmount > 0) {
-                                swipeOffset = (swipeOffset + dragAmount).coerceAtMost(400f)
-                            }
                         }
-                    )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(selectedAlbum, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
-        ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.clearSelectedAlbum() }
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(selectedAlbum, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                TrackList(
+                    tracks = albumGroups[selectedAlbum] ?: emptyList(),
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPlaylistMode = true,
+                    onTrackClick = onTrackClick,
+                    emptyMessage = "Нет треков в этом альбоме",
+                    listState = listState,
+                    expandProgress = expandProgress,
+                    playlistName = selectedAlbum,
+                    playlistType = PlaylistType.ALBUM
+                )
             }
-            TrackList(
-                tracks = albumGroups[selectedAlbum] ?: emptyList(),
-                uiState = uiState,
-                viewModel = viewModel,
-                isPlaylistMode = true,
-                onTrackClick = onTrackClick,
-                emptyMessage = "Нет треков в этом альбоме",
-                listState = listState,
-                expandProgress = expandProgress,
-                playlistName = selectedAlbum,
-                playlistType = PlaylistType.ALBUM
-            )
         }
     }
 }
