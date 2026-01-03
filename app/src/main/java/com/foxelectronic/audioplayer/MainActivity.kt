@@ -1228,9 +1228,9 @@ private fun ArtistsTab(
             swipeOffset.snapTo(screenWidthPx)
             swipeOffset.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
                 )
             )
         }
@@ -1258,9 +1258,9 @@ private fun ArtistsTab(
                                         // Завершаем свайп: анимируем до конца экрана
                                         swipeOffset.animateTo(
                                             targetValue = size.width.toFloat(),
-                                            animationSpec = tween(
-                                                durationMillis = 200,
-                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessMediumLow
                                             )
                                         )
                                         viewModel.clearSelectedArtist()
@@ -1304,9 +1304,9 @@ private fun ArtistsTab(
                             coroutineScope.launch {
                                 swipeOffset.animateTo(
                                     targetValue = screenWidthPx,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMedium
                                     )
                                 )
                                 viewModel.clearSelectedArtist()
@@ -1454,9 +1454,9 @@ private fun AlbumsTab(
             swipeOffset.snapTo(screenWidthPx)
             swipeOffset.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(
-                    durationMillis = 300,
-                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
                 )
             )
         }
@@ -1484,9 +1484,9 @@ private fun AlbumsTab(
                                         // Завершаем свайп: анимируем до конца экрана
                                         swipeOffset.animateTo(
                                             targetValue = size.width.toFloat(),
-                                            animationSpec = tween(
-                                                durationMillis = 200,
-                                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessMediumLow
                                             )
                                         )
                                         viewModel.clearSelectedAlbum()
@@ -1530,9 +1530,9 @@ private fun AlbumsTab(
                             coroutineScope.launch {
                                 swipeOffset.animateTo(
                                     targetValue = screenWidthPx,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMedium
                                     )
                                 )
                                 viewModel.clearSelectedAlbum()
