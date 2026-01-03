@@ -13,6 +13,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -653,7 +656,7 @@ fun PlayerScreen(
                         pagerState.animateScrollToPage(0)
                     }
                 },
-                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -665,7 +668,7 @@ fun PlayerScreen(
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
                         MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
             Tab(
@@ -675,7 +678,7 @@ fun PlayerScreen(
                         pagerState.animateScrollToPage(1)
                     }
                 },
-                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -687,7 +690,7 @@ fun PlayerScreen(
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
                         MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
             Tab(
@@ -697,7 +700,7 @@ fun PlayerScreen(
                         pagerState.animateScrollToPage(2)
                     }
                 },
-                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -709,7 +712,7 @@ fun PlayerScreen(
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
                         MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
             Tab(
@@ -719,7 +722,7 @@ fun PlayerScreen(
                         pagerState.animateScrollToPage(3)
                     }
                 },
-                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
@@ -731,7 +734,7 @@ fun PlayerScreen(
                         MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     else
                         MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
         }
@@ -1242,14 +1245,15 @@ private fun ArtistGroupList(
             spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
             label = "artistListBottomPadding"
         )
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
-            state = listState,
-            contentPadding = PaddingValues(bottom = bottomPadding)
+            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = bottomPadding),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(artistGroups.toList(), key = { (artist, _) -> "artist_$artist" }) { (artist, tracks) ->
-                ArtistGroupItem(artist, tracks.size, tracks.firstOrNull()?.albumArtPath, { onArtistClick(artist) },
-                    Modifier.animateItem())
+                ArtistGroupItem(artist, tracks.size, tracks.firstOrNull()?.albumArtPath, { onArtistClick(artist) })
             }
         }
     }
@@ -1258,42 +1262,62 @@ private fun ArtistGroupList(
 @Composable
 private fun ArtistGroupItem(artist: String, trackCount: Int, albumArtPath: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier.fillMaxWidth().height(80.dp).padding(vertical = 2.dp),
+        modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
     ) {
-        Row(
-            Modifier.fillMaxSize().clickable(onClick = onClick).padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
-                        .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
-                    contentDescription = "Album Art",
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop,
-                    loading = {
-                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))) {
-                            Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                        }
-                    },
-                    error = {
-                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))) {
-                            Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                        }
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
+                    .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
+                contentDescription = "Album Art",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                     }
-                )
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(artist, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Text("$trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Icon(Icons.Rounded.ArrowDropDown, "Открыть",
-                Modifier.size(24.dp).graphicsLayer { rotationZ = -90f },
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
+                error = {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                    }
+                }
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = artist,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "$trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -1355,14 +1379,15 @@ private fun AlbumGroupList(
             spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
             label = "albumListBottomPadding"
         )
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
-            state = listState,
-            contentPadding = PaddingValues(bottom = bottomPadding)
+            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = bottomPadding),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(albumGroups.toList(), key = { (album, _) -> "album_$album" }) { (album, tracks) ->
-                AlbumGroupItem(album, tracks.firstOrNull()?.artist ?: "Неизвестный исполнитель", tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) },
-                    Modifier.animateItem())
+                AlbumGroupItem(album, tracks.firstOrNull()?.artist ?: "Неизвестный исполнитель", tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) })
             }
         }
     }
@@ -1371,43 +1396,63 @@ private fun AlbumGroupList(
 @Composable
 private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, albumArtPath: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier.fillMaxWidth().height(80.dp).padding(vertical = 2.dp),
+        modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
     ) {
-        Row(
-            Modifier.fillMaxSize().clickable(onClick = onClick).padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
-                        .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
-                    contentDescription = "Album Art",
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop,
-                    loading = {
-                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))) {
-                            Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                        }
-                    },
-                    error = {
-                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))) {
-                            Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                        }
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
+                    .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
+                contentDescription = "Album Art",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                     }
-                )
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(album, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Text("$artist • $trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Icon(Icons.Rounded.ArrowDropDown, "Открыть",
-                Modifier.size(24.dp).graphicsLayer { rotationZ = -90f },
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
+                error = {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                    }
+                }
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = album,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "$artist • $trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
