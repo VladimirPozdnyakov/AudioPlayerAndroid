@@ -4,10 +4,7 @@
       "Bash(./gradlew assembleDebug:*)",
       "Bash(cat:*)",
       "Bash(./gradlew installDebug:*)",
-      "Bash(./gradlew:*)",
-      "Bash(gradlew assembleDebug:*)",
-      "Bash(.gradlew.bat assembleDebug)",
-      "Bash(cmd /c \"cd /d C:\\\\Users\\\\Vlad\\\\Documents\\\\MyProjects\\\\AudioPlayerAndroid && gradlew.bat assembleDebug\")"
+      "Bash(./gradlew:*)"
     ]
   }
 }

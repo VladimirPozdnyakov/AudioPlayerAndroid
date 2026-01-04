@@ -50,10 +50,15 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -391,6 +396,16 @@ fun PlayerScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+
+    // История поиска
+    val searchHistory by viewModel.searchHistory.collectAsState()
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val showHistoryDropdown by remember {
+        derivedStateOf {
+            isSearchFocused && searchHistory.isNotEmpty() && searchQuery.isEmpty()
+        }
+    }
 
     // Загружаем сохранённую вкладку синхронно при первом запуске
     val initialTab = remember {
@@ -412,6 +427,8 @@ fun PlayerScreen(
         // Очищаем выбор при смене вкладки
         if (pagerState.currentPage != 2) viewModel.clearSelectedArtist()
         if (pagerState.currentPage != 3) viewModel.clearSelectedAlbum()
+        // Снимаем фокус с поля поиска при переключении вкладок
+        focusManager.clearFocus()
     }
 
     // Обработка навигации "назад" при просмотре деталей исполнителя/альбома
@@ -529,35 +546,140 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Rounded.Clear,
-                                contentDescription = "Clear"
-                            )
+            // Оборачиваем TextField в Box для добавления dropdown
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { newQuery ->
+                        searchQuery = newQuery
+                        // Вызываем debounce функцию для сохранения запроса
+                        viewModel.onSearchQueryChanged(newQuery)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            isSearchFocused = focusState.isFocused
+                        },
+                    singleLine = true,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Clear,
+                                    contentDescription = "Clear"
+                                )
+                            }
                         }
                     }
+                )
+
+                // Dropdown с историей поиска
+                DropdownMenu(
+                    expanded = showHistoryDropdown,
+                    onDismissRequest = {
+                        isSearchFocused = false
+                        focusManager.clearFocus()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .heightIn(max = 300.dp)
+                ) {
+                    // Элементы истории
+                    searchHistory.forEach { historyItem ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.History,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = historyItem.query,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            viewModel.removeSearchHistoryItem(historyItem.query)
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Close,
+                                            contentDescription = "Удалить",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = {
+                                searchQuery = historyItem.query
+                                isSearchFocused = false
+                            }
+                        )
+                    }
+
+                    // Разделитель перед кнопкой очистки
+                    if (searchHistory.isNotEmpty()) {
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.DeleteSweep,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                    Text(
+                                        text = "Очистить историю",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            onClick = {
+                                viewModel.clearSearchHistory()
+                                isSearchFocused = false
+                                focusManager.clearFocus()
+                            }
+                        )
+                    }
                 }
-            )
+            }
 
             IconButton(
                 onClick = { viewModel.toggleSortMode() },

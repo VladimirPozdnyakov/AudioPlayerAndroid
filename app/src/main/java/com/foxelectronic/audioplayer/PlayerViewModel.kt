@@ -16,12 +16,18 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import com.foxelectronic.audioplayer.data.model.Track
 import com.foxelectronic.audioplayer.repository.TrackCacheRepository
+import com.foxelectronic.audioplayer.repository.SearchHistoryRepository
+import com.foxelectronic.audioplayer.repository.SearchHistoryItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 enum class PlaylistType {
     ALL,        // Все треки
@@ -58,13 +64,30 @@ class PlayerViewModel : ViewModel() {
     private var player: ExoPlayer? = null
     private var settingsRepository: SettingsRepository? = null
     private var favoriteDao: FavoriteDao? = null
+    private var searchHistoryRepository: SearchHistoryRepository? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState
 
+    // История поиска
+    private val _searchHistory = MutableStateFlow<List<SearchHistoryItem>>(emptyList())
+    val searchHistory: StateFlow<List<SearchHistoryItem>> = _searchHistory
+
+    // Job для debounce сохранения поискового запроса
+    private var saveSearchJob: Job? = null
+
     fun loadTracks(context: Context, settingsRepo: SettingsRepository, allowedFolders: List<String> = emptyList()) {
         this.settingsRepository = settingsRepo
         this.favoriteDao = FavoriteDatabase.getDatabase(context).favoriteDao()
+        this.searchHistoryRepository = SearchHistoryRepository(context)
+
+        // Подписка на историю поиска
+        viewModelScope.launch {
+            searchHistoryRepository?.getSearchHistory()?.collect { history ->
+                _searchHistory.value = history
+            }
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
@@ -757,6 +780,43 @@ class PlayerViewModel : ViewModel() {
 
     fun clearSelectedAlbum() {
         _uiState.value = _uiState.value.copy(selectedAlbum = null)
+    }
+
+    // Функции для работы с историей поиска
+
+    /**
+     * Обработчик изменения поискового запроса с debounce
+     * Сохраняет запрос после паузы в 1.5 секунды
+     */
+    fun onSearchQueryChanged(query: String) {
+        // Отменяем предыдущую корутину
+        saveSearchJob?.cancel()
+
+        // Сохраняем только запросы длиной от 2 символов
+        if (query.length >= 2) {
+            saveSearchJob = viewModelScope.launch {
+                delay(1500) // Пауза 1.5 секунды
+                searchHistoryRepository?.addSearchQuery(query)
+            }
+        }
+    }
+
+    /**
+     * Удалить конкретный запрос из истории
+     */
+    fun removeSearchHistoryItem(query: String) {
+        viewModelScope.launch {
+            searchHistoryRepository?.removeSearchQuery(query)
+        }
+    }
+
+    /**
+     * Очистить всю историю поиска
+     */
+    fun clearSearchHistory() {
+        viewModelScope.launch {
+            searchHistoryRepository?.clearAllHistory()
+        }
     }
 
     companion object {
