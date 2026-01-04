@@ -53,7 +53,18 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material3.*
+import com.foxelectronic.audioplayer.data.model.Playlist
+import com.foxelectronic.audioplayer.ui.playlist.dialogs.CreatePlaylistDialog
+import com.foxelectronic.audioplayer.ui.playlist.dialogs.AddToPlaylistDialog
+import com.foxelectronic.audioplayer.ui.playlist.dialogs.EditMetadataDialog
+import com.foxelectronic.audioplayer.ui.playlist.dialogs.DeletePlaylistDialog
+import com.foxelectronic.audioplayer.ui.playlist.dialogs.RenamePlaylistDialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -413,13 +424,14 @@ fun PlayerScreen(
             settingsRepository?.selectedTabFlow?.first() ?: 0
         }
     }
-    val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 4 })
+    val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 5 })
 
     // Создаём LazyListState для каждой вкладки
     val allTracksListState = rememberLazyListState()
     val favoriteTracksListState = rememberLazyListState()
     val artistsListState = rememberLazyListState()
     val albumsListState = rememberLazyListState()
+    val playlistsListState = rememberLazyListState()
 
     // Сохраняем вкладку при изменении
     LaunchedEffect(pagerState.currentPage) {
@@ -427,17 +439,18 @@ fun PlayerScreen(
         // Очищаем выбор при смене вкладки
         if (pagerState.currentPage != 2) viewModel.clearSelectedArtist()
         if (pagerState.currentPage != 3) viewModel.clearSelectedAlbum()
+        if (pagerState.currentPage != 4) viewModel.clearSelectedCustomPlaylist()
         // Снимаем фокус с поля поиска при переключении вкладок
         focusManager.clearFocus()
     }
 
-    // Обработка навигации "назад" при просмотре деталей исполнителя/альбома
-    val isViewingArtistOrAlbum = uiState.selectedArtist != null || uiState.selectedAlbum != null
-    BackHandler(enabled = isViewingArtistOrAlbum) {
-        if (uiState.selectedArtist != null) {
-            viewModel.clearSelectedArtist()
-        } else if (uiState.selectedAlbum != null) {
-            viewModel.clearSelectedAlbum()
+    // Обработка навигации "назад" при просмотре деталей исполнителя/альбома/плейлиста
+    val isViewingDetails = uiState.selectedArtist != null || uiState.selectedAlbum != null || uiState.selectedCustomPlaylist != null
+    BackHandler(enabled = isViewingDetails) {
+        when {
+            uiState.selectedArtist != null -> viewModel.clearSelectedArtist()
+            uiState.selectedAlbum != null -> viewModel.clearSelectedAlbum()
+            uiState.selectedCustomPlaylist != null -> viewModel.clearSelectedCustomPlaylist()
         }
     }
 
@@ -511,6 +524,7 @@ fun PlayerScreen(
     val tab1Text = "Любимые  ${favoriteTracks.size}"
     val tab2Text = "Исполнители  ${filteredArtistGroups.size}"
     val tab3Text = "Альбомы  ${filteredAlbumGroups.size}"
+    val tab4Text = "Плейлисты  ${uiState.customPlaylists.size}"
 
     val tab0TextWidth = textMeasurer.measure(
         text = tab0Text,
@@ -529,6 +543,11 @@ fun PlayerScreen(
 
     val tab3TextWidth = textMeasurer.measure(
         text = tab3Text,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+    ).size.width
+
+    val tab4TextWidth = textMeasurer.measure(
+        text = tab4Text,
         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
     ).size.width
 
@@ -737,7 +756,8 @@ fun PlayerScreen(
                             0 -> tab0TextWidth.toDp()
                             1 -> tab1TextWidth.toDp()
                             2 -> tab2TextWidth.toDp()
-                            else -> tab3TextWidth.toDp()
+                            3 -> tab3TextWidth.toDp()
+                            else -> tab4TextWidth.toDp()
                         }
                     }
                     val targetTextWidth = with(density) {
@@ -745,7 +765,8 @@ fun PlayerScreen(
                             0 -> tab0TextWidth.toDp()
                             1 -> tab1TextWidth.toDp()
                             2 -> tab2TextWidth.toDp()
-                            else -> tab3TextWidth.toDp()
+                            3 -> tab3TextWidth.toDp()
+                            else -> tab4TextWidth.toDp()
                         }
                     }
 
@@ -871,6 +892,28 @@ fun PlayerScreen(
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
+            Tab(
+                selected = pagerState.currentPage == 4,
+                onClick = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(4)
+                    }
+                },
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+            ) {
+                Text(
+                    text = tab4Text,
+                    style = if (pagerState.currentPage == 4)
+                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    else
+                        MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+                )
+            }
         }
 
         if (uiState.isLoading) {
@@ -882,12 +925,12 @@ fun PlayerScreen(
                 )
             }
         } else {
-            val isViewingArtistOrAlbum = uiState.selectedArtist != null || uiState.selectedAlbum != null
+            val isViewingDetails = uiState.selectedArtist != null || uiState.selectedAlbum != null || uiState.selectedCustomPlaylist != null
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f),
                 pageSpacing = 16.dp,
-                userScrollEnabled = !isViewingArtistOrAlbum
+                userScrollEnabled = !isViewingDetails
             ) { page ->
                 when (page) {
                     0 -> TrackList(
@@ -931,6 +974,16 @@ fun PlayerScreen(
                         listState = albumsListState,
                         expandProgress = expandProgress
                     )
+                    4 -> PlaylistsTab(
+                        playlists = uiState.customPlaylists,
+                        selectedPlaylist = uiState.selectedCustomPlaylist,
+                        playlistTracks = uiState.customPlaylistTracks,
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onTrackClick = onTrackClick,
+                        listState = playlistsListState,
+                        expandProgress = expandProgress
+                    )
                 }
             }
         }
@@ -942,7 +995,8 @@ fun PlayerScreen(
                 0 -> allTracksListState
                 1 -> favoriteTracksListState
                 2 -> artistsListState
-                else -> albumsListState
+                3 -> albumsListState
+                else -> playlistsListState
             }
             val currentTrackCount = when (pagerState.currentPage) {
                 0 -> allTracks.size
@@ -952,10 +1006,15 @@ fun PlayerScreen(
                 } else {
                     filteredArtistGroups.size
                 }
-                else -> if (uiState.selectedAlbum != null) {
+                3 -> if (uiState.selectedAlbum != null) {
                     filteredAlbumGroups[uiState.selectedAlbum]?.size ?: 0
                 } else {
                     filteredAlbumGroups.size
+                }
+                else -> if (uiState.selectedCustomPlaylist != null) {
+                    uiState.customPlaylistTracks.size
+                } else {
+                    uiState.customPlaylists.size
                 }
             }
 
@@ -983,6 +1042,37 @@ fun PlayerScreen(
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
+
+            // FAB для создания плейлиста
+            val fabBottomPadding by animateDpAsState(
+                targetValue = if (expandProgress >= 0f) 140.dp else 80.dp,
+                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
+                label = "fabBottomPadding"
+            )
+
+            var showCreatePlaylistFabDialog by remember { mutableStateOf(false) }
+
+            FloatingActionButton(
+                onClick = { showCreatePlaylistFabDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = fabBottomPadding),
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = "Создать плейлист"
+                )
+            }
+
+            if (showCreatePlaylistFabDialog) {
+                CreatePlaylistDialog(
+                    onDismiss = { showCreatePlaylistFabDialog = false },
+                    onCreate = { name ->
+                        viewModel.createPlaylist(name)
+                    }
+                )
+            }
         }
     }
 }
@@ -1000,6 +1090,65 @@ private fun TrackList(
     playlistName: String = "Все треки",
     playlistType: PlaylistType = PlaylistType.ALL
 ) {
+    // Состояния для диалогов
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var showEditMetadataDialog by remember { mutableStateOf(false) }
+    var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+    var selectedTrackForDialog by remember { mutableStateOf<Track?>(null) }
+
+    // Диалог добавления в плейлист
+    if (showAddToPlaylistDialog && selectedTrackForDialog != null) {
+        AddToPlaylistDialog(
+            playlists = uiState.customPlaylists,
+            onDismiss = {
+                showAddToPlaylistDialog = false
+                selectedTrackForDialog = null
+            },
+            onPlaylistSelected = { playlist ->
+                viewModel.addTrackToPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)
+            },
+            onCreateNewPlaylist = {
+                showAddToPlaylistDialog = false
+                showCreatePlaylistDialog = true
+            }
+        )
+    }
+
+    // Диалог создания плейлиста (после выбора "Создать новый" в диалоге добавления)
+    if (showCreatePlaylistDialog) {
+        CreatePlaylistDialog(
+            onDismiss = {
+                showCreatePlaylistDialog = false
+                selectedTrackForDialog = null
+            },
+            onCreate = { name ->
+                viewModel.createPlaylist(name)
+                // После создания плейлиста трек будет добавлен при следующем открытии диалога
+            }
+        )
+    }
+
+    // Диалог редактирования метаданных
+    if (showEditMetadataDialog && selectedTrackForDialog != null) {
+        EditMetadataDialog(
+            track = selectedTrackForDialog!!,
+            onDismiss = {
+                showEditMetadataDialog = false
+                selectedTrackForDialog = null
+            },
+            onSave = { title, artist, album, coverUri, writeToFile ->
+                viewModel.updateTrackMetadata(
+                    track = selectedTrackForDialog!!,
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    coverImageUri = coverUri,
+                    writeToFile = writeToFile
+                )
+            }
+        )
+    }
+
     if (tracks.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(emptyMessage)
@@ -1049,6 +1198,14 @@ private fun TrackList(
                         if (isPlaying) viewModel.pause() else viewModel.resume()
                     },
                     onFavoriteClick = { viewModel.toggleFavorite(track) },
+                    onAddToPlaylistClick = {
+                        selectedTrackForDialog = track
+                        showAddToPlaylistDialog = true
+                    },
+                    onEditInfoClick = {
+                        selectedTrackForDialog = track
+                        showEditMetadataDialog = true
+                    },
                     modifier = Modifier.animateItem(
                         fadeInSpec = tween(durationMillis = 200),
                         fadeOutSpec = tween(durationMillis = 200),
@@ -1072,8 +1229,11 @@ private fun TrackItem(
     onTrackClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
     onFavoriteClick: () -> Unit,
+    onAddToPlaylistClick: () -> Unit = {},
+    onEditInfoClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1220,6 +1380,52 @@ private fun TrackItem(
                     onToggleFavorite = onFavoriteClick,
                     modifier = Modifier.size(32.dp)
                 )
+
+                // Кнопка меню
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.MoreVert,
+                            contentDescription = "Меню",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Добавить в плейлист") },
+                            onClick = {
+                                showMenu = false
+                                onAddToPlaylistClick()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.PlaylistAdd,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Редактировать") },
+                            onClick = {
+                                showMenu = false
+                                onEditInfoClick()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Edit,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -1779,6 +1985,316 @@ private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, album
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaylistsTab(
+    playlists: List<Playlist>,
+    selectedPlaylist: Playlist?,
+    playlistTracks: List<Track>,
+    uiState: PlayerUiState,
+    viewModel: PlayerViewModel,
+    onTrackClick: (Track) -> Unit,
+    listState: LazyListState,
+    expandProgress: Float
+) {
+    val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    var previousPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    val density = LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+
+    // Состояния для диалогов
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Анимация при изменении selectedPlaylist
+    LaunchedEffect(selectedPlaylist) {
+        if (selectedPlaylist != null && previousPlaylist == null) {
+            swipeOffset.snapTo(screenWidthPx)
+            swipeOffset.animateTo(
+                targetValue = 0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+        }
+        previousPlaylist = selectedPlaylist
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Список плейлистов (задний слой)
+        PlaylistGroupList(
+            playlists = playlists,
+            onPlaylistClick = { viewModel.selectCustomPlaylist(it) },
+            listState = listState,
+            expandProgress = expandProgress
+        )
+
+        // Детали плейлиста (передний слой)
+        if (selectedPlaylist != null) {
+            // Диалог переименования
+            if (showRenameDialog) {
+                RenamePlaylistDialog(
+                    currentName = selectedPlaylist.name,
+                    onDismiss = { showRenameDialog = false },
+                    onRename = { newName ->
+                        viewModel.renamePlaylist(selectedPlaylist, newName)
+                    }
+                )
+            }
+
+            // Диалог удаления
+            if (showDeleteDialog) {
+                DeletePlaylistDialog(
+                    playlistName = selectedPlaylist.name,
+                    onDismiss = { showDeleteDialog = false },
+                    onConfirm = {
+                        viewModel.deletePlaylist(selectedPlaylist)
+                        viewModel.clearSelectedCustomPlaylist()
+                    }
+                )
+            }
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(swipeOffset.value.roundToInt(), 0) }
+                    .background(MaterialTheme.colorScheme.background)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                coroutineScope.launch {
+                                    val threshold = size.width * 0.3f
+                                    if (swipeOffset.value > threshold) {
+                                        swipeOffset.animateTo(
+                                            targetValue = size.width.toFloat(),
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessMediumLow
+                                            )
+                                        )
+                                        viewModel.clearSelectedCustomPlaylist()
+                                    } else {
+                                        swipeOffset.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessMedium
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                            onDragCancel = {
+                                coroutineScope.launch {
+                                    swipeOffset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        )
+                                    )
+                                }
+                            },
+                            onHorizontalDrag = { _, dragAmount ->
+                                coroutineScope.launch {
+                                    val newValue = (swipeOffset.value + dragAmount).coerceAtLeast(0f)
+                                    swipeOffset.snapTo(newValue)
+                                }
+                            }
+                        )
+                    }
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                swipeOffset.animateTo(
+                                    targetValue = screenWidthPx,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                )
+                                viewModel.clearSelectedCustomPlaylist()
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    }
+                    Text(
+                        text = selectedPlaylist.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    // Кнопка меню плейлиста
+                    var showPlaylistMenu by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { showPlaylistMenu = true }) {
+                            Icon(Icons.Rounded.MoreVert, "Меню")
+                        }
+                        DropdownMenu(
+                            expanded = showPlaylistMenu,
+                            onDismissRequest = { showPlaylistMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Переименовать") },
+                                onClick = {
+                                    showPlaylistMenu = false
+                                    showRenameDialog = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Edit, null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Удалить") },
+                                onClick = {
+                                    showPlaylistMenu = false
+                                    showDeleteDialog = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Close, null)
+                                }
+                            )
+                        }
+                    }
+                }
+                TrackList(
+                    tracks = playlistTracks,
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    isPlaylistMode = true,
+                    onTrackClick = onTrackClick,
+                    emptyMessage = "Плейлист пуст",
+                    listState = listState,
+                    expandProgress = expandProgress,
+                    playlistName = selectedPlaylist.name,
+                    playlistType = PlaylistType.CUSTOM_PLAYLIST
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistGroupList(
+    playlists: List<Playlist>,
+    onPlaylistClick: (Playlist) -> Unit,
+    listState: LazyListState,
+    expandProgress: Float
+) {
+    if (playlists.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Rounded.QueueMusic,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Нет плейлистов",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Нажмите + чтобы создать",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+    } else {
+        val bottomPadding by animateDpAsState(
+            if (expandProgress >= 0f) 122.dp else 50.dp,
+            spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
+            label = "playlistListBottomPadding"
+        )
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = bottomPadding),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(playlists, key = { it.playlistId }) { playlist ->
+                PlaylistItem(
+                    playlist = playlist,
+                    onClick = { onPlaylistClick(playlist) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistItem(
+    playlist: Playlist,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Обложка плейлиста
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (playlist.coverImagePath != null) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(playlist.coverImagePath)
+                            .size(256, 256)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = "Обложка плейлиста",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.QueueMusic,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = playlist.name,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth()
             )
         }

@@ -15,9 +15,14 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import com.foxelectronic.audioplayer.data.model.Track
+import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.repository.TrackCacheRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryItem
+import com.foxelectronic.audioplayer.repository.PlaylistRepository
+import com.foxelectronic.audioplayer.repository.MetadataRepository
+import com.foxelectronic.audioplayer.util.AudioFileEditor
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -30,10 +35,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
 enum class PlaylistType {
-    ALL,        // Все треки
-    FAVORITES,  // Любимые треки
-    ARTIST,     // Плейлист исполнителя
-    ALBUM       // Плейлист альбома
+    ALL,            // Все треки
+    FAVORITES,      // Любимые треки
+    ARTIST,         // Плейлист исполнителя
+    ALBUM,          // Плейлист альбома
+    CUSTOM_PLAYLIST // Пользовательский плейлист
 }
 
 data class PlayerUiState(
@@ -52,7 +58,11 @@ data class PlayerUiState(
     val artistGroups: Map<String, List<Track>> = emptyMap(),
     val albumGroups: Map<String, List<Track>> = emptyMap(),
     val selectedArtist: String? = null,
-    val selectedAlbum: String? = null
+    val selectedAlbum: String? = null,
+    // Пользовательские плейлисты
+    val customPlaylists: List<Playlist> = emptyList(),
+    val selectedCustomPlaylist: Playlist? = null,
+    val customPlaylistTracks: List<Track> = emptyList()
 )
 
 enum class SortMode {
@@ -65,6 +75,9 @@ class PlayerViewModel : ViewModel() {
     private var settingsRepository: SettingsRepository? = null
     private var favoriteDao: FavoriteDao? = null
     private var searchHistoryRepository: SearchHistoryRepository? = null
+    private var playlistRepository: PlaylistRepository? = null
+    private var metadataRepository: MetadataRepository? = null
+    private var applicationContext: Context? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState
@@ -78,13 +91,24 @@ class PlayerViewModel : ViewModel() {
 
     fun loadTracks(context: Context, settingsRepo: SettingsRepository, allowedFolders: List<String> = emptyList()) {
         this.settingsRepository = settingsRepo
-        this.favoriteDao = FavoriteDatabase.getDatabase(context).favoriteDao()
+        this.applicationContext = context.applicationContext
+        val database = FavoriteDatabase.getDatabase(context)
+        this.favoriteDao = database.favoriteDao()
         this.searchHistoryRepository = SearchHistoryRepository(context)
+        this.playlistRepository = PlaylistRepository(database.playlistDao(), database.trackMetadataDao())
+        this.metadataRepository = MetadataRepository(database.trackMetadataDao(), context)
 
         // Подписка на историю поиска
         viewModelScope.launch {
             searchHistoryRepository?.getSearchHistory()?.collect { history ->
                 _searchHistory.value = history
+            }
+        }
+
+        // Подписка на пользовательские плейлисты
+        viewModelScope.launch {
+            playlistRepository?.allPlaylists?.collect { playlists ->
+                _uiState.value = _uiState.value.copy(customPlaylists = playlists)
             }
         }
 
@@ -816,6 +840,212 @@ class PlayerViewModel : ViewModel() {
     fun clearSearchHistory() {
         viewModelScope.launch {
             searchHistoryRepository?.clearAllHistory()
+        }
+    }
+
+    // ========== Функции управления плейлистами ==========
+
+    /**
+     * Создать новый плейлист
+     */
+    fun createPlaylist(name: String, coverImagePath: String? = null) {
+        viewModelScope.launch {
+            playlistRepository?.createPlaylist(name, coverImagePath)
+        }
+    }
+
+    /**
+     * Удалить плейлист
+     */
+    fun deletePlaylist(playlist: Playlist) {
+        viewModelScope.launch {
+            playlistRepository?.deletePlaylist(playlist)
+        }
+    }
+
+    /**
+     * Переименовать плейлист
+     */
+    fun renamePlaylist(playlist: Playlist, newName: String) {
+        viewModelScope.launch {
+            playlistRepository?.updatePlaylist(playlist.copy(name = newName))
+        }
+    }
+
+    /**
+     * Добавить трек в плейлист
+     */
+    fun addTrackToPlaylist(playlistId: Long, trackId: Long) {
+        viewModelScope.launch {
+            playlistRepository?.addTrackToPlaylist(playlistId, trackId)
+        }
+    }
+
+    /**
+     * Удалить трек из плейлиста
+     */
+    fun removeTrackFromPlaylist(playlistId: Long, trackId: Long) {
+        viewModelScope.launch {
+            playlistRepository?.removeTrackFromPlaylist(playlistId, trackId)
+            // Обновляем треки в UI, если это текущий плейлист
+            if (_uiState.value.selectedCustomPlaylist?.playlistId == playlistId) {
+                loadPlaylistTracks(playlistId)
+            }
+        }
+    }
+
+    /**
+     * Выбрать пользовательский плейлист для просмотра
+     */
+    fun selectCustomPlaylist(playlist: Playlist) {
+        _uiState.value = _uiState.value.copy(selectedCustomPlaylist = playlist)
+        loadPlaylistTracks(playlist.playlistId)
+    }
+
+    /**
+     * Закрыть выбранный пользовательский плейлист
+     */
+    fun clearSelectedCustomPlaylist() {
+        _uiState.value = _uiState.value.copy(
+            selectedCustomPlaylist = null,
+            customPlaylistTracks = emptyList()
+        )
+    }
+
+    /**
+     * Загрузить треки плейлиста
+     */
+    private fun loadPlaylistTracks(playlistId: Long) {
+        viewModelScope.launch {
+            playlistRepository?.getPlaylistTrackIds(playlistId)?.collect { trackIds ->
+                // Находим треки из общего списка по ID
+                val playlistTracks = trackIds.mapNotNull { trackId ->
+                    _uiState.value.allTracks.find { it.id == trackId }
+                }
+                // Применяем переопределения метаданных
+                val tracksWithOverrides = playlistRepository?.applyMetadataOverrides(playlistTracks) ?: playlistTracks
+                _uiState.value = _uiState.value.copy(customPlaylistTracks = tracksWithOverrides)
+            }
+        }
+    }
+
+    /**
+     * Воспроизвести из пользовательского плейлиста
+     */
+    fun playFromCustomPlaylist(track: Track, playlist: Playlist) {
+        val tracks = _uiState.value.customPlaylistTracks
+        playFromPlaylist(track, tracks, playlist.name, PlaylistType.CUSTOM_PLAYLIST)
+    }
+
+    /**
+     * Проверить, есть ли трек в плейлисте
+     */
+    suspend fun isTrackInPlaylist(playlistId: Long, trackId: Long): Boolean {
+        return playlistRepository?.isTrackInPlaylist(playlistId, trackId) ?: false
+    }
+
+    // ========== Функции редактирования метаданных ==========
+
+    /**
+     * Обновить метаданные трека (сохранение в БД)
+     * @param writeToFile если true, также записывает в ID3 теги файла
+     */
+    fun updateTrackMetadata(
+        track: Track,
+        title: String? = null,
+        artist: String? = null,
+        album: String? = null,
+        coverImageUri: Uri? = null,
+        writeToFile: Boolean = false,
+        onResult: ((Boolean) -> Unit)? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                // Сохраняем изображение обложки, если оно предоставлено
+                var coverPath: String? = null
+                if (coverImageUri != null) {
+                    coverPath = metadataRepository?.saveCoverImage(coverImageUri)
+                }
+
+                // Сохраняем переопределение в БД
+                metadataRepository?.saveMetadataOverride(
+                    trackId = track.id,
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    coverImagePath = coverPath
+                )
+
+                // Если нужно записать в файл
+                if (writeToFile) {
+                    val context = applicationContext ?: return@launch
+                    var coverFile: File? = null
+                    if (coverPath != null) {
+                        coverFile = File(coverPath)
+                    }
+
+                    val result = AudioFileEditor.editAudioFile(
+                        context = context,
+                        uri = track.uri,
+                        title = title,
+                        artist = artist,
+                        album = album,
+                        coverImageFile = coverFile
+                    )
+
+                    if (result.isFailure) {
+                        onResult?.invoke(false)
+                        return@launch
+                    }
+                }
+
+                // Обновляем треки в UI
+                updateTrackInLists(track.id, title, artist, album, coverPath)
+                onResult?.invoke(true)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult?.invoke(false)
+            }
+        }
+    }
+
+    /**
+     * Обновить трек во всех списках UI
+     */
+    private fun updateTrackInLists(
+        trackId: Long,
+        title: String?,
+        artist: String?,
+        album: String?,
+        coverPath: String?
+    ) {
+        val updateTrack: (Track) -> Track = { track ->
+            if (track.id == trackId) {
+                track.copy(
+                    title = title ?: track.title,
+                    artist = artist ?: track.artist,
+                    album = album ?: track.album,
+                    albumArtPath = coverPath ?: track.albumArtPath
+                )
+            } else {
+                track
+            }
+        }
+
+        _uiState.value = _uiState.value.copy(
+            allTracks = _uiState.value.allTracks.map(updateTrack),
+            tracks = _uiState.value.tracks.map(updateTrack),
+            customPlaylistTracks = _uiState.value.customPlaylistTracks.map(updateTrack)
+        )
+        updateGroups()
+    }
+
+    /**
+     * Удалить переопределение метаданных трека
+     */
+    fun resetTrackMetadata(trackId: Long) {
+        viewModelScope.launch {
+            metadataRepository?.deleteMetadataOverride(trackId)
         }
     }
 
