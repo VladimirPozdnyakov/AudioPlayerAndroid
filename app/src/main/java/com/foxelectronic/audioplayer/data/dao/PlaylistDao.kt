@@ -53,4 +53,7 @@ interface PlaylistDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM playlist_tracks WHERE playlistId = :playlistId AND trackId = :trackId)")
     suspend fun isTrackInPlaylist(playlistId: Long, trackId: Long): Boolean
+
+    @Query("SELECT DISTINCT playlistId FROM playlist_tracks WHERE trackId = :trackId")
+    suspend fun getPlaylistsContainingTrack(trackId: Long): List<Long>
 }

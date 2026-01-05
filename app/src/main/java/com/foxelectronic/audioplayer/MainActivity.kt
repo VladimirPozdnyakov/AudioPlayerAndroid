@@ -1095,14 +1095,23 @@ private fun TrackList(
     var showEditMetadataDialog by remember { mutableStateOf(false) }
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var selectedTrackForDialog by remember { mutableStateOf<Track?>(null) }
+    var playlistsContainingTrack by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     // Диалог добавления в плейлист
     if (showAddToPlaylistDialog && selectedTrackForDialog != null) {
+        // Загружаем список плейлистов, содержащих трек
+        LaunchedEffect(selectedTrackForDialog) {
+            playlistsContainingTrack = viewModel.getPlaylistsContainingTrack(selectedTrackForDialog!!.id)
+        }
+
         AddToPlaylistDialog(
             playlists = uiState.customPlaylists,
+            trackId = selectedTrackForDialog!!.id,
+            playlistsContainingTrack = playlistsContainingTrack,
             onDismiss = {
                 showAddToPlaylistDialog = false
                 selectedTrackForDialog = null
+                playlistsContainingTrack = emptySet()
             },
             onPlaylistSelected = { playlist ->
                 viewModel.addTrackToPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)

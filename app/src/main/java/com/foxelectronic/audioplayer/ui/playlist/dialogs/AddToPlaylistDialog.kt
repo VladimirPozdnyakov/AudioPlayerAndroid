@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,10 +18,18 @@ import com.foxelectronic.audioplayer.data.model.Playlist
 
 /**
  * Диалог добавления трека в плейлист
+ * @param playlists список всех плейлистов
+ * @param trackId ID трека, который добавляем
+ * @param playlistsContainingTrack множество ID плейлистов, уже содержащих этот трек
+ * @param onDismiss колбэк закрытия диалога
+ * @param onPlaylistSelected колбэк выбора плейлиста
+ * @param onCreateNewPlaylist колбэк создания нового плейлиста
  */
 @Composable
 fun AddToPlaylistDialog(
     playlists: List<Playlist>,
+    trackId: Long,
+    playlistsContainingTrack: Set<Long>,
     onDismiss: () -> Unit,
     onPlaylistSelected: (Playlist) -> Unit,
     onCreateNewPlaylist: () -> Unit
@@ -65,21 +74,43 @@ fun AddToPlaylistDialog(
                         modifier = Modifier.heightIn(max = 300.dp)
                     ) {
                         items(playlists) { playlist ->
+                            val isTrackInPlaylist = playlistsContainingTrack.contains(playlist.playlistId)
+
                             ListItem(
                                 headlineContent = {
                                     Text(
                                         text = playlist.name,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = if (isTrackInPlaylist)
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
                                     )
                                 },
+                                supportingContent = if (isTrackInPlaylist) {
+                                    { Text("Уже добавлен", style = MaterialTheme.typography.bodySmall) }
+                                } else null,
                                 leadingContent = {
                                     Icon(
                                         imageVector = Icons.Default.QueueMusic,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = if (isTrackInPlaylist)
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
                                     )
                                 },
-                                modifier = Modifier.clickable {
+                                trailingContent = if (isTrackInPlaylist) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Трек уже в плейлисте",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                } else null,
+                                modifier = Modifier.clickable(enabled = !isTrackInPlaylist) {
                                     onPlaylistSelected(playlist)
                                     onDismiss()
                                 }

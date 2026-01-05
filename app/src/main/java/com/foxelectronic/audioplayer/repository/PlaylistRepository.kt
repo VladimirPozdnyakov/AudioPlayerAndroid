@@ -87,6 +87,13 @@ class PlaylistRepository(
     }
 
     /**
+     * Получить список ID плейлистов, содержащих данный трек
+     */
+    suspend fun getPlaylistsContainingTrack(trackId: Long): Set<Long> {
+        return playlistDao.getPlaylistsContainingTrack(trackId).toSet()
+    }
+
+    /**
      * Применить переопределения метаданных к списку треков
      */
     suspend fun applyMetadataOverrides(tracks: List<Track>): List<Track> {

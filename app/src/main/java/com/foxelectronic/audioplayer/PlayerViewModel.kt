@@ -944,6 +944,13 @@ class PlayerViewModel : ViewModel() {
         return playlistRepository?.isTrackInPlaylist(playlistId, trackId) ?: false
     }
 
+    /**
+     * Получить список ID плейлистов, содержащих данный трек
+     */
+    suspend fun getPlaylistsContainingTrack(trackId: Long): Set<Long> {
+        return playlistRepository?.getPlaylistsContainingTrack(trackId) ?: emptySet()
+    }
+
     // ========== Функции редактирования метаданных ==========
 
     /**
