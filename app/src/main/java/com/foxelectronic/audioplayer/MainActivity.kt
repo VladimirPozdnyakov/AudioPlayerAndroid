@@ -212,6 +212,11 @@ fun MainScreen(
     val density = LocalDensity.current
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
+    // Состояния для диалогов (общие для списка треков и большого плеера)
+    var showAddToPlaylistDialogFromPlayer by remember { mutableStateOf(false) }
+    var showEditMetadataDialogFromPlayer by remember { mutableStateOf(false) }
+    var playlistsContainingTrack by remember { mutableStateOf<Set<Long>>(emptySet()) }
+
     // Offset для NavigationBar: уезжает вниз при раскрытии плеера
     // При свайпе вниз (expandProgress < 0) остаётся на месте
     val navBarOffset = if (expandProgress > 0f) {
@@ -360,9 +365,70 @@ fun MainScreen(
                 viewModel = viewModel,
                 onExpandProgressChange = { progress -> expandProgress = progress },
                 navBarHeight = navBarHeight,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onAddToPlaylistClick = {
+                    showAddToPlaylistDialogFromPlayer = true
+                },
+                onEditInfoClick = {
+                    showEditMetadataDialogFromPlayer = true
+                }
             )
         }
+    }
+
+    // Диалоги для большого плеера
+    val currentTrack = if (playerUiState.currentIndex >= 0 && playerUiState.tracks.isNotEmpty()) {
+        playerUiState.tracks[playerUiState.currentIndex]
+    } else null
+
+    // Диалог добавления в плейлист
+    if (showAddToPlaylistDialogFromPlayer && currentTrack != null) {
+        LaunchedEffect(currentTrack) {
+            playlistsContainingTrack = viewModel.getPlaylistsContainingTrack(currentTrack.id)
+        }
+
+        com.foxelectronic.audioplayer.ui.playlist.dialogs.AddToPlaylistDialog(
+            playlists = playerUiState.customPlaylists,
+            trackId = currentTrack.id,
+            playlistsContainingTrack = playlistsContainingTrack,
+            onDismiss = {
+                showAddToPlaylistDialogFromPlayer = false
+                playlistsContainingTrack = emptySet()
+            },
+            onPlaylistSelected = { playlist ->
+                viewModel.addTrackToPlaylist(playlist.playlistId, currentTrack.id)
+            },
+            onPlaylistRemoved = { playlist ->
+                viewModel.removeTrackFromPlaylist(playlist.playlistId, currentTrack.id)
+            },
+            onCreateNewPlaylist = {
+                showAddToPlaylistDialogFromPlayer = false
+                // Можно добавить логику создания нового плейлиста
+            }
+        )
+    }
+
+    // Диалог редактирования метаданных
+    if (showEditMetadataDialogFromPlayer && currentTrack != null) {
+        com.foxelectronic.audioplayer.ui.playlist.dialogs.EditMetadataDialog(
+            track = currentTrack,
+            onDismiss = {
+                showEditMetadataDialogFromPlayer = false
+            },
+            onSave = { title, artist, album, coverUri, writeToFile, onComplete ->
+                viewModel.updateTrackMetadata(
+                    track = currentTrack,
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    coverImageUri = coverUri,
+                    writeToFile = writeToFile,
+                    onResult = { success ->
+                        onComplete()
+                    }
+                )
+            }
+        )
     }
 }
 

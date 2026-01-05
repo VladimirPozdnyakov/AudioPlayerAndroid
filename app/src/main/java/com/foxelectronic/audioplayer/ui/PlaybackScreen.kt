@@ -43,10 +43,13 @@ import com.foxelectronic.audioplayer.ui.components.toTimeString
 fun PlaybackScreen(
     viewModel: PlayerViewModel,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onAddToPlaylistClick: () -> Unit = {},
+    onEditInfoClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showFullscreenArt by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -90,6 +93,53 @@ fun PlaybackScreen(
 
             // Playback Controls
             PlaybackControls(uiState = uiState, viewModel = viewModel)
+        }
+
+        // Кнопка меню в правом верхнем углу
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 8.dp)
+        ) {
+            IconButton(onClick = { showMenu = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = "Меню",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Добавить в плейлист") },
+                    onClick = {
+                        showMenu = false
+                        onAddToPlaylistClick()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.PlaylistAdd,
+                            contentDescription = null
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Изменить информацию") },
+                    onClick = {
+                        showMenu = false
+                        onEditInfoClick()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
         }
     }
 

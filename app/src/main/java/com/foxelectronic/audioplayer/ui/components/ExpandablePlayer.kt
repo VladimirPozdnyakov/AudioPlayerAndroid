@@ -58,7 +58,9 @@ fun ExpandablePlayer(
     viewModel: PlayerViewModel,
     onExpandProgressChange: (Float) -> Unit = {},
     navBarHeight: Dp = 72.dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddToPlaylistClick: () -> Unit = {},
+    onEditInfoClick: () -> Unit = {}
 ) {
     if (uiState.currentIndex < 0 || uiState.tracks.isEmpty()) return
 
@@ -247,6 +249,8 @@ fun ExpandablePlayer(
                 viewModel = viewModel,
                 alpha = expandProgress.coerceIn(0f, 1f),
                 onCollapseClick = { animateToCollapsed() },
+                onAddToPlaylistClick = onAddToPlaylistClick,
+                onEditInfoClick = onEditInfoClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { backgroundHeight.toDp() })
@@ -407,10 +411,13 @@ private fun ExpandedPlayerContent(
     viewModel: PlayerViewModel,
     alpha: Float,
     onCollapseClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddToPlaylistClick: () -> Unit = {},
+    onEditInfoClick: () -> Unit = {}
 ) {
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     var showFullscreenArt by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.alpha(alpha)
@@ -507,6 +514,55 @@ private fun ExpandedPlayerContent(
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(32.dp)
             )
+        }
+
+        // Кнопка меню в правом верхнем углу
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = 8.dp)
+                .offset(y = (-4).dp)
+        ) {
+            IconButton(onClick = { showMenu = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = "Меню",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Добавить в плейлист") },
+                    onClick = {
+                        showMenu = false
+                        onAddToPlaylistClick()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.PlaylistAdd,
+                            contentDescription = null
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Изменить информацию") },
+                    onClick = {
+                        showMenu = false
+                        onEditInfoClick()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
         }
     }
 
