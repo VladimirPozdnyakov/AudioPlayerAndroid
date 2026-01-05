@@ -1116,6 +1116,9 @@ private fun TrackList(
             onPlaylistSelected = { playlist ->
                 viewModel.addTrackToPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)
             },
+            onPlaylistRemoved = { playlist ->
+                viewModel.removeTrackFromPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)
+            },
             onCreateNewPlaylist = {
                 showAddToPlaylistDialog = false
                 showCreatePlaylistDialog = true
@@ -1215,6 +1218,13 @@ private fun TrackList(
                         selectedTrackForDialog = track
                         showEditMetadataDialog = true
                     },
+                    onRemoveFromPlaylistClick = {
+                        // Удаляем трек из текущего пользовательского плейлиста
+                        uiState.selectedCustomPlaylist?.let { playlist ->
+                            viewModel.removeTrackFromPlaylist(playlist.playlistId, track.id)
+                        }
+                    },
+                    showRemoveFromPlaylist = playlistType == PlaylistType.CUSTOM_PLAYLIST,
                     modifier = Modifier.animateItem(
                         fadeInSpec = tween(durationMillis = 200),
                         fadeOutSpec = tween(durationMillis = 200),
@@ -1240,6 +1250,8 @@ private fun TrackItem(
     onFavoriteClick: () -> Unit,
     onAddToPlaylistClick: () -> Unit = {},
     onEditInfoClick: () -> Unit = {},
+    onRemoveFromPlaylistClick: () -> Unit = {},
+    showRemoveFromPlaylist: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -1407,6 +1419,21 @@ private fun TrackItem(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
+                        if (showRemoveFromPlaylist) {
+                            DropdownMenuItem(
+                                text = { Text("Удалить из плейлиста") },
+                                onClick = {
+                                    showMenu = false
+                                    onRemoveFromPlaylistClick()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Close,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Добавить в плейлист") },
                             onClick = {

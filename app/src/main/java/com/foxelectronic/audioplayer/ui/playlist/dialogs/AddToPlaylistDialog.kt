@@ -22,7 +22,8 @@ import com.foxelectronic.audioplayer.data.model.Playlist
  * @param trackId ID трека, который добавляем
  * @param playlistsContainingTrack множество ID плейлистов, уже содержащих этот трек
  * @param onDismiss колбэк закрытия диалога
- * @param onPlaylistSelected колбэк выбора плейлиста
+ * @param onPlaylistSelected колбэк выбора плейлиста (добавление)
+ * @param onPlaylistRemoved колбэк удаления трека из плейлиста
  * @param onCreateNewPlaylist колбэк создания нового плейлиста
  */
 @Composable
@@ -32,6 +33,7 @@ fun AddToPlaylistDialog(
     playlistsContainingTrack: Set<Long>,
     onDismiss: () -> Unit,
     onPlaylistSelected: (Playlist) -> Unit,
+    onPlaylistRemoved: (Playlist) -> Unit,
     onCreateNewPlaylist: () -> Unit
 ) {
     AlertDialog(
@@ -89,14 +91,14 @@ fun AddToPlaylistDialog(
                                     )
                                 },
                                 supportingContent = if (isTrackInPlaylist) {
-                                    { Text("Уже добавлен", style = MaterialTheme.typography.bodySmall) }
+                                    { Text("Нажмите, чтобы удалить", style = MaterialTheme.typography.bodySmall) }
                                 } else null,
                                 leadingContent = {
                                     Icon(
                                         imageVector = Icons.Default.QueueMusic,
                                         contentDescription = null,
                                         tint = if (isTrackInPlaylist)
-                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                            MaterialTheme.colorScheme.primary
                                         else
                                             MaterialTheme.colorScheme.onSurface
                                     )
@@ -110,8 +112,12 @@ fun AddToPlaylistDialog(
                                         )
                                     }
                                 } else null,
-                                modifier = Modifier.clickable(enabled = !isTrackInPlaylist) {
-                                    onPlaylistSelected(playlist)
+                                modifier = Modifier.clickable {
+                                    if (isTrackInPlaylist) {
+                                        onPlaylistRemoved(playlist)
+                                    } else {
+                                        onPlaylistSelected(playlist)
+                                    }
                                     onDismiss()
                                 }
                             )
