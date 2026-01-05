@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -30,13 +31,14 @@ import com.foxelectronic.audioplayer.data.model.Track
 fun EditMetadataDialog(
     track: Track,
     onDismiss: () -> Unit,
-    onSave: (title: String?, artist: String?, album: String?, coverUri: Uri?, writeToFile: Boolean) -> Unit
+    onSave: (title: String?, artist: String?, album: String?, coverUri: Uri?, writeToFile: Boolean, onComplete: () -> Unit) -> Unit
 ) {
     var title by remember { mutableStateOf(track.title) }
     var artist by remember { mutableStateOf(track.artist ?: "") }
     var album by remember { mutableStateOf(track.album ?: "") }
     var selectedCoverUri by remember { mutableStateOf<Uri?>(null) }
     var writeToFile by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -148,15 +150,32 @@ fun EditMetadataDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val newTitle = title.trim().takeIf { it != track.title }
-                    val newArtist = artist.trim().takeIf { it != (track.artist ?: "") }
-                    val newAlbum = album.trim().takeIf { it != (track.album ?: "") }
+                    if (!isSaving) {
+                        isSaving = true
+                        val newTitle = title.trim().takeIf { it != track.title }
+                        val newArtist = artist.trim().takeIf { it != (track.artist ?: "") }
+                        val newAlbum = album.trim().takeIf { it != (track.album ?: "") }
 
-                    onSave(newTitle, newArtist, newAlbum, selectedCoverUri, writeToFile)
-                    onDismiss()
-                }
+                        android.util.Log.d("EditMetadataDialog", "Saving: title=$newTitle, artist=$newArtist, album=$newAlbum")
+                        android.util.Log.d("EditMetadataDialog", "Original track: title=${track.title}, artist=${track.artist}, album=${track.album}")
+
+                        onSave(newTitle, newArtist, newAlbum, selectedCoverUri, writeToFile) {
+                            // Колбэк вызывается после завершения сохранения
+                            android.util.Log.d("EditMetadataDialog", "Save completed, closing dialog")
+                            onDismiss()
+                        }
+                    }
+                },
+                enabled = !isSaving
             ) {
-                Text("Сохранить")
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Сохранить")
+                }
             }
         },
         dismissButton = {

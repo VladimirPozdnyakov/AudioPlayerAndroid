@@ -1148,14 +1148,20 @@ private fun TrackList(
                 showEditMetadataDialog = false
                 selectedTrackForDialog = null
             },
-            onSave = { title, artist, album, coverUri, writeToFile ->
+            onSave = { title, artist, album, coverUri, writeToFile, onComplete ->
+                android.util.Log.d("MainActivity", "Calling updateTrackMetadata: title=$title, artist=$artist, album=$album")
                 viewModel.updateTrackMetadata(
                     track = selectedTrackForDialog!!,
                     title = title,
                     artist = artist,
                     album = album,
                     coverImageUri = coverUri,
-                    writeToFile = writeToFile
+                    writeToFile = writeToFile,
+                    onResult = { success ->
+                        // Вызываем callback после завершения
+                        android.util.Log.d("MainActivity", "updateTrackMetadata completed: success=$success")
+                        onComplete()
+                    }
                 )
             }
         )

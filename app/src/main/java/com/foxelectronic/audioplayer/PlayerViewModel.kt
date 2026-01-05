@@ -27,12 +27,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 enum class PlaylistType {
     ALL,            // Все треки
@@ -128,7 +131,9 @@ class PlayerViewModel : ViewModel() {
             // If we have cached tracks, show them immediately while scanning in background
             if (tracks.isNotEmpty()) {
                 val tracksWithFavorites = updateFavoritesInTracks(tracks)
-                val sortedTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
+                // Применяем переопределения метаданных
+                val tracksWithOverrides = playlistRepository?.applyMetadataOverrides(tracksWithFavorites) ?: tracksWithFavorites
+                val sortedTracks = applySorting(tracksWithOverrides, _uiState.value.sortMode)
                 _uiState.value = _uiState.value.copy(allTracks = sortedTracks, tracks = sortedTracks, isLoading = true)
 
                 if (player == null) {
@@ -149,7 +154,9 @@ class PlayerViewModel : ViewModel() {
             
             // Update the UI with the fresh track list with favorite information
             val tracksWithFavorites = updateFavoritesInTracks(freshTracks)
-            val sortedFreshTracks = applySorting(tracksWithFavorites, _uiState.value.sortMode)
+            // Применяем переопределения метаданных
+            val tracksWithOverrides = playlistRepository?.applyMetadataOverrides(tracksWithFavorites) ?: tracksWithFavorites
+            val sortedFreshTracks = applySorting(tracksWithOverrides, _uiState.value.sortMode)
 
             // Update UI state first
             _uiState.value = _uiState.value.copy(allTracks = sortedFreshTracks, tracks = sortedFreshTracks, isLoading = false)
@@ -966,23 +973,38 @@ class PlayerViewModel : ViewModel() {
         writeToFile: Boolean = false,
         onResult: ((Boolean) -> Unit)? = null
     ) {
+        android.util.Log.d("PlayerViewModel", "updateTrackMetadata called for track ${track.id}: title=$title, artist=$artist, album=$album")
+
         viewModelScope.launch {
             try {
+                // Получаем существующее переопределение
+                val existingOverride = metadataRepository?.getMetadataOverride(track.id)
+                android.util.Log.d("PlayerViewModel", "Existing override: title=${existingOverride?.customTitle}, artist=${existingOverride?.customArtist}, album=${existingOverride?.customAlbum}")
+
                 // Сохраняем изображение обложки, если оно предоставлено
-                var coverPath: String? = null
-                if (coverImageUri != null) {
-                    coverPath = metadataRepository?.saveCoverImage(coverImageUri)
-                }
+                var coverPath: String? = coverImageUri?.let {
+                    metadataRepository?.saveCoverImage(it)
+                } ?: existingOverride?.customCoverPath
+
+                // Объединяем с существующими переопределениями
+                val finalTitle = title ?: existingOverride?.customTitle
+                val finalArtist = artist ?: existingOverride?.customArtist
+                val finalAlbum = album ?: existingOverride?.customAlbum
+
+                android.util.Log.d("PlayerViewModel", "Final values to save: title=$finalTitle, artist=$finalArtist, album=$finalAlbum")
 
                 // Сохраняем переопределение в БД
                 metadataRepository?.saveMetadataOverride(
                     trackId = track.id,
-                    title = title,
-                    artist = artist,
-                    album = album,
+                    title = finalTitle,
+                    artist = finalArtist,
+                    album = finalAlbum,
                     coverImagePath = coverPath
                 )
 
+                android.util.Log.d("PlayerViewModel", "Metadata saved to DB")
+
+                var fileWriteSuccess = true
                 // Если нужно записать в файл
                 if (writeToFile) {
                     val context = applicationContext ?: return@launch
@@ -994,22 +1016,30 @@ class PlayerViewModel : ViewModel() {
                     val result = AudioFileEditor.editAudioFile(
                         context = context,
                         uri = track.uri,
-                        title = title,
-                        artist = artist,
-                        album = album,
+                        title = finalTitle,
+                        artist = finalArtist,
+                        album = finalAlbum,
                         coverImageFile = coverFile
                     )
 
                     if (result.isFailure) {
-                        onResult?.invoke(false)
-                        return@launch
+                        android.util.Log.e("PlayerViewModel", "Failed to write to file: ${result.exceptionOrNull()?.message}")
+                        fileWriteSuccess = false
+                    } else {
+                        android.util.Log.d("PlayerViewModel", "Metadata written to file")
                     }
                 }
 
-                // Обновляем треки в UI
-                updateTrackInLists(track.id, title, artist, album, coverPath)
-                onResult?.invoke(true)
+                // Обновляем треки в UI на главном потоке (ВСЕГДА, даже если запись в файл не удалась)
+                android.util.Log.d("PlayerViewModel", "Updating UI...")
+                withContext(Dispatchers.Main) {
+                    updateTrackInLists(track.id, finalTitle, finalArtist, finalAlbum, coverPath)
+                }
+
+                android.util.Log.d("PlayerViewModel", "Metadata update complete")
+                onResult?.invoke(fileWriteSuccess)
             } catch (e: Exception) {
+                android.util.Log.e("PlayerViewModel", "Error updating metadata", e)
                 e.printStackTrace()
                 onResult?.invoke(false)
             }
@@ -1026,25 +1056,48 @@ class PlayerViewModel : ViewModel() {
         album: String?,
         coverPath: String?
     ) {
+        android.util.Log.d("PlayerViewModel", "updateTrackInLists called: trackId=$trackId, artist=$artist, album=$album")
+
         val updateTrack: (Track) -> Track = { track ->
             if (track.id == trackId) {
-                track.copy(
+                val updatedTrack = track.copy(
                     title = title ?: track.title,
                     artist = artist ?: track.artist,
                     album = album ?: track.album,
                     albumArtPath = coverPath ?: track.albumArtPath
                 )
+                android.util.Log.d("PlayerViewModel", "Updated track: ${updatedTrack.title} by ${updatedTrack.artist} from ${updatedTrack.album}")
+                updatedTrack
             } else {
                 track
             }
         }
 
-        _uiState.value = _uiState.value.copy(
-            allTracks = _uiState.value.allTracks.map(updateTrack),
-            tracks = _uiState.value.tracks.map(updateTrack),
-            customPlaylistTracks = _uiState.value.customPlaylistTracks.map(updateTrack)
-        )
-        updateGroups()
+        // Используем update для атомарного обновления состояния
+        _uiState.update { currentState ->
+            // Создаём новые списки с обновлёнными треками
+            val updatedAllTracks = currentState.allTracks.map(updateTrack).toList()
+            val updatedTracks = currentState.tracks.map(updateTrack).toList()
+            val updatedCustomPlaylistTracks = currentState.customPlaylistTracks.map(updateTrack).toList()
+
+            // Пересчитываем группировки на основе обновленных треков
+            val updatedArtistGroups = groupTracksByArtist(updatedAllTracks).toMap()
+            val updatedAlbumGroups = groupTracksByAlbum(updatedAllTracks).toMap()
+
+            android.util.Log.d("PlayerViewModel", "Artist groups: ${updatedArtistGroups.keys.joinToString()}")
+            android.util.Log.d("PlayerViewModel", "Album groups: ${updatedAlbumGroups.keys.joinToString()}")
+
+            // Создаём новый state со всеми обновлёнными коллекциями
+            currentState.copy(
+                allTracks = updatedAllTracks,
+                tracks = updatedTracks,
+                customPlaylistTracks = updatedCustomPlaylistTracks,
+                artistGroups = updatedArtistGroups,
+                albumGroups = updatedAlbumGroups
+            )
+        }
+
+        android.util.Log.d("PlayerViewModel", "State updated successfully")
     }
 
     /**
