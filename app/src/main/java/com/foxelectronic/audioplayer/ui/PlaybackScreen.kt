@@ -297,9 +297,16 @@ private fun TrackInfo(uiState: PlayerUiState) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
     ) {
-        // Показываем тип плейлиста (Исполнитель/Альбом) если это не "Все" и не "Любимые"
-        if (uiState.playlistType == PlaylistType.ARTIST || uiState.playlistType == PlaylistType.ALBUM) {
-            val prefix = if (uiState.playlistType == PlaylistType.ARTIST) "Исполнитель" else "Альбом"
+        // Показываем тип плейлиста (Исполнитель/Альбом/Плейлист) если это не "Все" и не "Любимые"
+        if (uiState.playlistType == PlaylistType.ARTIST ||
+            uiState.playlistType == PlaylistType.ALBUM ||
+            uiState.playlistType == PlaylistType.CUSTOM_PLAYLIST) {
+            val prefix = when (uiState.playlistType) {
+                PlaylistType.ARTIST -> "Исполнитель"
+                PlaylistType.ALBUM -> "Альбом"
+                PlaylistType.CUSTOM_PLAYLIST -> "Плейлист"
+                else -> ""
+            }
             Text(
                 text = prefix,
                 style = MaterialTheme.typography.titleSmall,

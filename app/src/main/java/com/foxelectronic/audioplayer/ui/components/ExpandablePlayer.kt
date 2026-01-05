@@ -487,6 +487,7 @@ private fun ExpandedPlayerContent(
         val playlistText = when (uiState.playlistType) {
             PlaylistType.ARTIST -> "Исполнитель\n«${uiState.playlistName}»"
             PlaylistType.ALBUM -> "Альбом\n«${uiState.playlistName}»"
+            PlaylistType.CUSTOM_PLAYLIST -> "Плейлист\n«${uiState.playlistName}»"
             else -> uiState.playlistName
         }
 
