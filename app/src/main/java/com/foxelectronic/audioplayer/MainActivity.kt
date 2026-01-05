@@ -71,10 +71,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -586,11 +589,51 @@ fun PlayerScreen(
 
     // Измеряем ширину текста для вкладок
     val textMeasurer = rememberTextMeasurer()
-    val tab0Text = "Все  ${allTracks.size}"
-    val tab1Text = "Любимые  ${favoriteTracks.size}"
-    val tab2Text = "Исполнители  ${filteredArtistGroups.size}"
-    val tab3Text = "Альбомы  ${filteredAlbumGroups.size}"
-    val tab4Text = "Плейлисты  ${uiState.customPlaylists.size}"
+    val tab0Text = buildAnnotatedString {
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("Все")
+        }
+        append(" ")
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
+            append("${allTracks.size}")
+        }
+    }
+    val tab1Text = buildAnnotatedString {
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("Любимые")
+        }
+        append(" ")
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
+            append("${favoriteTracks.size}")
+        }
+    }
+    val tab2Text = buildAnnotatedString {
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("Исполнители")
+        }
+        append(" ")
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
+            append("${filteredArtistGroups.size}")
+        }
+    }
+    val tab3Text = buildAnnotatedString {
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("Альбомы")
+        }
+        append(" ")
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
+            append("${filteredAlbumGroups.size}")
+        }
+    }
+    val tab4Text = buildAnnotatedString {
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append("Плейлисты")
+        }
+        append(" ")
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
+            append("${uiState.customPlaylists.size}")
+        }
+    }
 
     val tab0TextWidth = textMeasurer.measure(
         text = tab0Text,
@@ -885,10 +928,7 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = tab0Text,
-                    style = if (pagerState.currentPage == 0)
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    else
-                        MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
@@ -907,10 +947,7 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = tab1Text,
-                    style = if (pagerState.currentPage == 1)
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    else
-                        MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
@@ -929,10 +966,7 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = tab2Text,
-                    style = if (pagerState.currentPage == 2)
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    else
-                        MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
@@ -951,10 +985,7 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = tab3Text,
-                    style = if (pagerState.currentPage == 3)
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    else
-                        MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
@@ -973,10 +1004,7 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = tab4Text,
-                    style = if (pagerState.currentPage == 4)
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    else
-                        MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
                 )
             }
