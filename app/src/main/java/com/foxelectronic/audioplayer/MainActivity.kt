@@ -60,6 +60,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material3.*
 import com.foxelectronic.audioplayer.data.model.Playlist
+import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.CreatePlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.AddToPlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.EditMetadataDialog
@@ -398,11 +399,11 @@ fun MainScreen(
                 showAddToPlaylistDialogFromPlayer = false
                 playlistsContainingTrack = emptySet()
             },
-            onPlaylistSelected = { playlist ->
-                viewModel.addTrackToPlaylist(playlist.playlistId, currentTrack.id)
+            onPlaylistSelected = { playlistWithCount ->
+                viewModel.addTrackToPlaylist(playlistWithCount.playlistId, currentTrack.id)
             },
-            onPlaylistRemoved = { playlist ->
-                viewModel.removeTrackFromPlaylist(playlist.playlistId, currentTrack.id)
+            onPlaylistRemoved = { playlistWithCount ->
+                viewModel.removeTrackFromPlaylist(playlistWithCount.playlistId, currentTrack.id)
             },
             onCreateNewPlaylist = {
                 showAddToPlaylistDialogFromPlayer = false
@@ -1176,11 +1177,11 @@ private fun TrackList(
                 selectedTrackForDialog = null
                 playlistsContainingTrack = emptySet()
             },
-            onPlaylistSelected = { playlist ->
-                viewModel.addTrackToPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)
+            onPlaylistSelected = { playlistWithCount ->
+                viewModel.addTrackToPlaylist(playlistWithCount.playlistId, selectedTrackForDialog!!.id)
             },
-            onPlaylistRemoved = { playlist ->
-                viewModel.removeTrackFromPlaylist(playlist.playlistId, selectedTrackForDialog!!.id)
+            onPlaylistRemoved = { playlistWithCount ->
+                viewModel.removeTrackFromPlaylist(playlistWithCount.playlistId, selectedTrackForDialog!!.id)
             },
             onCreateNewPlaylist = {
                 showAddToPlaylistDialog = false
@@ -2085,7 +2086,15 @@ private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, album
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "$artist • $trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
+                text = artist,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "$trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -2098,7 +2107,7 @@ private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, album
 
 @Composable
 private fun PlaylistsTab(
-    playlists: List<Playlist>,
+    playlists: List<PlaylistWithTrackCount>,
     selectedPlaylist: Playlist?,
     playlistTracks: List<Track>,
     uiState: PlayerUiState,
@@ -2148,7 +2157,16 @@ private fun PlaylistsTab(
         // Список плейлистов (задний слой)
         PlaylistGroupList(
             playlists = playlists,
-            onPlaylistClick = { viewModel.selectCustomPlaylist(it) },
+            onPlaylistClick = { playlistWithCount ->
+                val playlist = Playlist(
+                    playlistId = playlistWithCount.playlistId,
+                    name = playlistWithCount.name,
+                    coverImagePath = playlistWithCount.coverImagePath,
+                    createdAt = playlistWithCount.createdAt,
+                    updatedAt = playlistWithCount.updatedAt
+                )
+                viewModel.selectCustomPlaylist(playlist)
+            },
             listState = listState,
             expandProgress = expandProgress,
             onCreatePlaylistClick = { showCreateDialog = true }
@@ -2309,8 +2327,8 @@ private fun PlaylistsTab(
 
 @Composable
 private fun PlaylistGroupList(
-    playlists: List<Playlist>,
-    onPlaylistClick: (Playlist) -> Unit,
+    playlists: List<PlaylistWithTrackCount>,
+    onPlaylistClick: (PlaylistWithTrackCount) -> Unit,
     listState: LazyListState,
     expandProgress: Float,
     onCreatePlaylistClick: () -> Unit
@@ -2347,7 +2365,7 @@ private fun PlaylistGroupList(
 
 @Composable
 private fun PlaylistItem(
-    playlist: Playlist,
+    playlist: PlaylistWithTrackCount,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -2398,6 +2416,14 @@ private fun PlaylistItem(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "${playlist.trackCount} ${if (playlist.trackCount == 1) "трек" else if (playlist.trackCount in 2..4) "трека" else "треков"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.fillMaxWidth()
             )
         }

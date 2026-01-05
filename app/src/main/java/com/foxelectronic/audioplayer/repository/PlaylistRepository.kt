@@ -5,6 +5,7 @@ import com.foxelectronic.audioplayer.data.dao.PlaylistDao
 import com.foxelectronic.audioplayer.data.dao.TrackMetadataDao
 import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.data.model.PlaylistTrackCrossRef
+import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 import com.foxelectronic.audioplayer.data.model.Track
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -15,6 +16,7 @@ class PlaylistRepository(
     private val trackMetadataDao: TrackMetadataDao
 ) {
     val allPlaylists: Flow<List<Playlist>> = playlistDao.getAllPlaylists()
+    val allPlaylistsWithTrackCount: Flow<List<PlaylistWithTrackCount>> = playlistDao.getAllPlaylistsWithTrackCount()
 
     suspend fun createPlaylist(name: String, coverImagePath: String? = null): Long {
         val playlist = Playlist(

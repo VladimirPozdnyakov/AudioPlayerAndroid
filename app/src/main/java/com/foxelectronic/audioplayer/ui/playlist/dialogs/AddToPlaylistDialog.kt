@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.foxelectronic.audioplayer.data.model.Playlist
+import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 
 /**
  * Диалог добавления трека в плейлист
@@ -28,12 +28,12 @@ import com.foxelectronic.audioplayer.data.model.Playlist
  */
 @Composable
 fun AddToPlaylistDialog(
-    playlists: List<Playlist>,
+    playlists: List<PlaylistWithTrackCount>,
     trackId: Long,
     playlistsContainingTrack: Set<Long>,
     onDismiss: () -> Unit,
-    onPlaylistSelected: (Playlist) -> Unit,
-    onPlaylistRemoved: (Playlist) -> Unit,
+    onPlaylistSelected: (PlaylistWithTrackCount) -> Unit,
+    onPlaylistRemoved: (PlaylistWithTrackCount) -> Unit,
     onCreateNewPlaylist: () -> Unit
 ) {
     AlertDialog(

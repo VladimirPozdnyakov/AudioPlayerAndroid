@@ -59,3 +59,15 @@ data class PlaylistTrackWithPosition(
     val trackId: Long,
     val position: Int
 )
+
+/**
+ * Плейлист с количеством треков
+ */
+data class PlaylistWithTrackCount(
+    val playlistId: Long,
+    val name: String,
+    val coverImagePath: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val trackCount: Int
+)

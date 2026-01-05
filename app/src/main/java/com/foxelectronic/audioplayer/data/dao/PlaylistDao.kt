@@ -4,6 +4,7 @@ import androidx.room.*
 import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.data.model.PlaylistTrackCrossRef
 import com.foxelectronic.audioplayer.data.model.PlaylistTrackWithPosition
+import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -11,6 +12,15 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
     fun getAllPlaylists(): Flow<List<Playlist>>
+
+    @Query("""
+        SELECT p.*, COUNT(pt.trackId) as trackCount
+        FROM playlists p
+        LEFT JOIN playlist_tracks pt ON p.playlistId = pt.playlistId
+        GROUP BY p.playlistId
+        ORDER BY p.updatedAt DESC
+    """)
+    fun getAllPlaylistsWithTrackCount(): Flow<List<PlaylistWithTrackCount>>
 
     @Query("SELECT * FROM playlists WHERE playlistId = :id")
     suspend fun getPlaylistById(id: Long): Playlist?

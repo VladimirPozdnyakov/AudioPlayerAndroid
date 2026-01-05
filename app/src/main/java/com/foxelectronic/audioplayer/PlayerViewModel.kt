@@ -16,6 +16,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import com.foxelectronic.audioplayer.data.model.Track
 import com.foxelectronic.audioplayer.data.model.Playlist
+import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 import com.foxelectronic.audioplayer.repository.TrackCacheRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryItem
@@ -63,7 +64,7 @@ data class PlayerUiState(
     val selectedArtist: String? = null,
     val selectedAlbum: String? = null,
     // Пользовательские плейлисты
-    val customPlaylists: List<Playlist> = emptyList(),
+    val customPlaylists: List<PlaylistWithTrackCount> = emptyList(),
     val selectedCustomPlaylist: Playlist? = null,
     val customPlaylistTracks: List<Track> = emptyList()
 )
@@ -110,7 +111,7 @@ class PlayerViewModel : ViewModel() {
 
         // Подписка на пользовательские плейлисты
         viewModelScope.launch {
-            playlistRepository?.allPlaylists?.collect { playlists ->
+            playlistRepository?.allPlaylistsWithTrackCount?.collect { playlists ->
                 _uiState.value = _uiState.value.copy(customPlaylists = playlists)
             }
         }
