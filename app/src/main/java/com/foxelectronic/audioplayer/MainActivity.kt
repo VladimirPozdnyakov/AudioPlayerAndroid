@@ -1108,37 +1108,6 @@ fun PlayerScreen(
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
-
-            // FAB для создания плейлиста
-            val fabBottomPadding by animateDpAsState(
-                targetValue = if (expandProgress >= 0f) 140.dp else 80.dp,
-                animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
-                label = "fabBottomPadding"
-            )
-
-            var showCreatePlaylistFabDialog by remember { mutableStateOf(false) }
-
-            FloatingActionButton(
-                onClick = { showCreatePlaylistFabDialog = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = fabBottomPadding),
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "Создать плейлист"
-                )
-            }
-
-            if (showCreatePlaylistFabDialog) {
-                CreatePlaylistDialog(
-                    onDismiss = { showCreatePlaylistFabDialog = false },
-                    onCreate = { name ->
-                        viewModel.createPlaylist(name)
-                    }
-                )
-            }
         }
     }
 }
@@ -2120,6 +2089,7 @@ private fun PlaylistsTab(
     // Состояния для диалогов
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     // Анимация при изменении selectedPlaylist
     LaunchedEffect(selectedPlaylist) {
@@ -2136,13 +2106,24 @@ private fun PlaylistsTab(
         previousPlaylist = selectedPlaylist
     }
 
+    // Диалог создания плейлиста
+    if (showCreateDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name ->
+                viewModel.createPlaylist(name)
+            }
+        )
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Список плейлистов (задний слой)
         PlaylistGroupList(
             playlists = playlists,
             onPlaylistClick = { viewModel.selectCustomPlaylist(it) },
             listState = listState,
-            expandProgress = expandProgress
+            expandProgress = expandProgress,
+            onCreatePlaylistClick = { showCreateDialog = true }
         )
 
         // Детали плейлиста (передний слой)
@@ -2303,49 +2284,35 @@ private fun PlaylistGroupList(
     playlists: List<Playlist>,
     onPlaylistClick: (Playlist) -> Unit,
     listState: LazyListState,
-    expandProgress: Float
+    expandProgress: Float,
+    onCreatePlaylistClick: () -> Unit
 ) {
-    if (playlists.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Rounded.QueueMusic,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = "Нет плейлистов",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Нажмите + чтобы создать",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
+    val bottomPadding by animateDpAsState(
+        if (expandProgress >= 0f) 122.dp else 50.dp,
+        spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
+        label = "playlistListBottomPadding"
+    )
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = bottomPadding),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Существующие плейлисты
+        items(playlists, key = { it.playlistId }) { playlist ->
+            PlaylistItem(
+                playlist = playlist,
+                onClick = { onPlaylistClick(playlist) }
+            )
         }
-    } else {
-        val bottomPadding by animateDpAsState(
-            if (expandProgress >= 0f) 122.dp else 50.dp,
-            spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
-            label = "playlistListBottomPadding"
-        )
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = bottomPadding),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(playlists, key = { it.playlistId }) { playlist ->
-                PlaylistItem(
-                    playlist = playlist,
-                    onClick = { onPlaylistClick(playlist) }
-                )
-            }
+
+        // Карточка создания нового плейлиста
+        item {
+            CreatePlaylistCard(
+                onClick = onCreatePlaylistClick
+            )
         }
     }
 }
@@ -2399,6 +2366,51 @@ private fun PlaylistItem(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = playlist.name,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreatePlaylistCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Плюс вместо обложки
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Создать новый",
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
