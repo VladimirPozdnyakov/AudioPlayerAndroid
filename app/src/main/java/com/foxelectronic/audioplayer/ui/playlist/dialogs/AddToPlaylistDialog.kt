@@ -26,6 +26,7 @@ import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
  * @param onPlaylistRemoved колбэк удаления трека из плейлиста
  * @param onCreateNewPlaylist колбэк создания нового плейлиста
  */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun AddToPlaylistDialog(
     playlists: List<PlaylistWithTrackCount>,
@@ -94,6 +95,7 @@ fun AddToPlaylistDialog(
                                     { Text("Нажмите, чтобы удалить", style = MaterialTheme.typography.bodySmall) }
                                 } else null,
                                 leadingContent = {
+                                    @Suppress("DEPRECATION")
                                     Icon(
                                         imageVector = Icons.Default.QueueMusic,
                                         contentDescription = null,

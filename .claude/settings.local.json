@@ -5,7 +5,8 @@
       "Bash(cat:*)",
       "Bash(./gradlew installDebug:*)",
       "Bash(./gradlew:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(find:*)"
     ]
   }
 }

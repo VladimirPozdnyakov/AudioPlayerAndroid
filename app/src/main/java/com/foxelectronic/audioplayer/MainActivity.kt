@@ -47,7 +47,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.History
@@ -125,10 +125,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.AnimationState
@@ -428,7 +424,7 @@ fun MainScreen(
                     album = album,
                     coverImageUri = coverUri,
                     writeToFile = writeToFile,
-                    onResult = { success ->
+                    onResult = { _ ->
                         onComplete()
                     }
                 )
@@ -1021,7 +1017,6 @@ fun PlayerScreen(
                 )
             }
         } else {
-            val isViewingDetails = uiState.selectedArtist != null || uiState.selectedAlbum != null || uiState.selectedCustomPlaylist != null
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f),
@@ -1512,6 +1507,7 @@ private fun TrackItem(
                                 onAddToPlaylistClick()
                             },
                             leadingIcon = {
+                                @Suppress("DEPRECATION")
                                 Icon(
                                     imageVector = Icons.Rounded.PlaylistAdd,
                                     contentDescription = null
@@ -1750,7 +1746,7 @@ private fun ArtistsTab(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(selectedArtist, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
@@ -1771,6 +1767,7 @@ private fun ArtistsTab(
     }
 }
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 private fun ArtistGroupList(
     artistGroups: Map<String, List<Track>>,
@@ -1978,7 +1975,7 @@ private fun AlbumsTab(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(selectedAlbum, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
@@ -1999,6 +1996,7 @@ private fun AlbumsTab(
     }
 }
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 private fun AlbumGroupList(
     albumGroups: Map<String, List<Track>>,
@@ -2273,7 +2271,7 @@ private fun PlaylistsTab(
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
                     }
                     Text(
                         text = selectedPlaylist.name,
@@ -2331,6 +2329,7 @@ private fun PlaylistsTab(
     }
 }
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 private fun PlaylistGroupList(
     playlists: List<PlaylistWithTrackCount>,
@@ -2407,6 +2406,7 @@ private fun PlaylistItem(
                         contentScale = ContentScale.Crop
                     )
                 } else {
+                    @Suppress("DEPRECATION")
                     Icon(
                         imageVector = Icons.Rounded.QueueMusic,
                         contentDescription = null,

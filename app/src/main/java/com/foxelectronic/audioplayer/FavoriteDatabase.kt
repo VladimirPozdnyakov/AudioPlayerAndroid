@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import android.content.Context
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Dao
 import androidx.room.Query
@@ -73,15 +74,15 @@ abstract class FavoriteDatabase : RoomDatabase() {
         private var INSTANCE: FavoriteDatabase? = null
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE favorites ADD COLUMN album TEXT")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE favorites ADD COLUMN album TEXT")
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // Таблица плейлистов
-                database.execSQL("""
+                db.execSQL("""
                     CREATE TABLE IF NOT EXISTS playlists (
                         playlistId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         name TEXT NOT NULL,
@@ -92,7 +93,7 @@ abstract class FavoriteDatabase : RoomDatabase() {
                 """)
 
                 // Таблица связей плейлист-трек
-                database.execSQL("""
+                db.execSQL("""
                     CREATE TABLE IF NOT EXISTS playlist_tracks (
                         playlistId INTEGER NOT NULL,
                         trackId INTEGER NOT NULL,
@@ -101,11 +102,11 @@ abstract class FavoriteDatabase : RoomDatabase() {
                         FOREIGN KEY(playlistId) REFERENCES playlists(playlistId) ON DELETE CASCADE
                     )
                 """)
-                database.execSQL("CREATE INDEX IF NOT EXISTS index_playlist_tracks_playlistId ON playlist_tracks(playlistId)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS index_playlist_tracks_trackId ON playlist_tracks(trackId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_playlist_tracks_playlistId ON playlist_tracks(playlistId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_playlist_tracks_trackId ON playlist_tracks(trackId)")
 
                 // Таблица переопределений метаданных
-                database.execSQL("""
+                db.execSQL("""
                     CREATE TABLE IF NOT EXISTS track_metadata_overrides (
                         trackId INTEGER PRIMARY KEY NOT NULL,
                         customTitle TEXT,

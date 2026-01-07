@@ -11,7 +11,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import com.foxelectronic.audioplayer.data.model.Track
@@ -37,6 +36,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 
 enum class PlaylistType {
     ALL,            // Все треки
@@ -305,11 +305,6 @@ class PlayerViewModel : ViewModel() {
     fun playFromPlaylist(track: Track, playlist: List<Track>, playlistName: String = "Все треки", playlistType: PlaylistType = PlaylistType.ALL) {
         val p = player ?: return
 
-        // Сохраняем текущий трек
-        val currentTrackId = if (_uiState.value.currentIndex >= 0 && _uiState.value.tracks.isNotEmpty()) {
-            _uiState.value.tracks[_uiState.value.currentIndex].id
-        } else null
-
         // Очищаем плеер и добавляем треки из плейлиста
         p.clearMediaItems()
         val items = playlist.map { t ->
@@ -442,43 +437,6 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun startPlaybackService(context: Context) {
-        val intent = Intent(context, MediaPlaybackService::class.java)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
-    }
-
-    fun stopPlaybackService(context: Context) {
-        val intent = Intent(context, MediaPlaybackService::class.java)
-        context.stopService(intent)
-    }
-
-    private suspend fun restoreLastPlayedTrack() {
-        isRestoringTrack = true
-        val lastPlayedId = settingsRepository?.lastPlayedTrackIdFlow?.firstOrNull()
-        val lastPlayedPosition = settingsRepository?.lastPlayedPositionFlow?.firstOrNull() ?: 0L
-        if (!lastPlayedId.isNullOrEmpty()) {
-            val trackId = lastPlayedId.toLongOrNull()
-            if (trackId != null) {
-                val trackIndex = _uiState.value.tracks.indexOfFirst { it.id == trackId }
-                if (trackIndex >= 0) {
-                    val p = player ?: return
-                    // Only restore if the player is not already playing another track
-                    if (_uiState.value.currentIndex == -1 || _uiState.value.currentIndex != trackIndex) {
-                        p.seekTo(trackIndex, lastPlayedPosition)
-                        _uiState.value = _uiState.value.copy(currentIndex = trackIndex)
-                    }
-                }
-            }
-        }
-        // Reset the flag after a short delay to allow for proper initialization
-        kotlinx.coroutines.delay(200)
-        isRestoringTrack = false
-    }
-
     fun seekTo(positionMs: Long) {
         val p = player ?: return
         // Сохраняем текущее состояние воспроизведения до seekTo
@@ -600,6 +558,26 @@ class PlayerViewModel : ViewModel() {
             null,
             sortOrder
         )
+        // Предварительно вычисляем базовые пути для фильтрации (вне цикла для оптимизации O(n) вместо O(n*m))
+        val chosenRelBases: List<String> = foldersToScan.mapNotNull { folderUriStr ->
+            try {
+                val u = Uri.parse(folderUriStr)
+                val docId = android.provider.DocumentsContract.getTreeDocumentId(u)
+                val afterColon = docId.substringAfter(":", "")
+                if (afterColon.isNotEmpty()) afterColon.trimEnd('/') + "/" else null
+            } catch (t: Throwable) { null }
+        }
+        val basesFs: List<String> = foldersToScan.mapNotNull { folderUriStr ->
+            try {
+                val u = Uri.parse(folderUriStr)
+                val docId = android.provider.DocumentsContract.getTreeDocumentId(u)
+                val afterColon = docId.substringAfter(":", "")
+                if (docId.startsWith("primary:")) {
+                    "/storage/emulated/0/" + afterColon.trimEnd('/') + "/"
+                } else null
+            } catch (t: Throwable) { null }
+        }
+
         cursor?.use {
             val idCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
@@ -615,38 +593,14 @@ class PlayerViewModel : ViewModel() {
                 val artist = it.getString(artistCol)?.takeIf { a -> a != "<unknown>" && a.isNotBlank() }
                 val album = it.getString(albumCol)?.takeIf { a -> a != "<unknown>" && a.isNotBlank() && a.isNotEmpty() }
                 val contentUri = Uri.withAppendedPath(collection, id.toString())
-                // Filter by chosen folders if any
-                val passesFilter = run {
-                    val chosenRelBases: List<String> = foldersToScan.mapNotNull { folderUriStr ->
-                        try {
-                            val u = Uri.parse(folderUriStr)
-                            val docId = android.provider.DocumentsContract.getTreeDocumentId(u)
-                            // e.g. primary:Music/MyFolder -> RELATIVE_PATH starts with Music/MyFolder/
-                            val afterColon = docId.substringAfter(":", "")
-                            if (afterColon.isNotEmpty()) afterColon.trimEnd('/') + "/" else null
-                        } catch (t: Throwable) { null }
-                    }
-                    if (Build.VERSION.SDK_INT >= 29) {
-                        val rel = if (relPathCol >= 0) it.getString(relPathCol) else null
-                        rel != null && chosenRelBases.any { base -> rel.startsWith(base, ignoreCase = true) }
-                    } else {
-                        @Suppress("DEPRECATION")
-                        val fullPath = if (dataCol >= 0) it.getString(dataCol) else null
-                        if (fullPath == null) false else {
-                            // Map primary: to /storage/emulated/0/
-                            val basesFs: List<String> = foldersToScan.mapNotNull { folderUriStr ->
-                                try {
-                                    val u = Uri.parse(folderUriStr)
-                                    val docId = android.provider.DocumentsContract.getTreeDocumentId(u)
-                                    val afterColon = docId.substringAfter(":", "")
-                                    if (docId.startsWith("primary:")) {
-                                        "/storage/emulated/0/" + afterColon.trimEnd('/') + "/"
-                                    } else null
-                                } catch (t: Throwable) { null }
-                            }
-                            basesFs.any { base -> fullPath.startsWith(base, ignoreCase = true) }
-                        }
-                    }
+                // Фильтрация по выбранным папкам
+                val passesFilter = if (Build.VERSION.SDK_INT >= 29) {
+                    val rel = if (relPathCol >= 0) it.getString(relPathCol) else null
+                    rel != null && chosenRelBases.any { base -> rel.startsWith(base, ignoreCase = true) }
+                } else {
+                    @Suppress("DEPRECATION")
+                    val fullPath = if (dataCol >= 0) it.getString(dataCol) else null
+                    fullPath != null && basesFs.any { base -> fullPath.startsWith(base, ignoreCase = true) }
                 }
                 if (passesFilter) {
                     // Get album art path if available
@@ -681,7 +635,7 @@ class PlayerViewModel : ViewModel() {
     init {
         // Периодическое обновление позиции
         viewModelScope.launch {
-            while (true) {
+            while (isActive) {
                 val p = player
                 if (p != null) {
                     val pos = p.currentPosition.coerceAtLeast(0L)
@@ -731,7 +685,8 @@ class PlayerViewModel : ViewModel() {
     }
 
     private suspend fun updateFavoritesInTracks(tracks: List<Track>): List<Track> {
-        val favoriteTrackIds = favoriteDao?.getAllFavorites()?.first()?.map { it.trackId } ?: emptyList()
+        // Используем Set для O(1) поиска вместо List с O(n)
+        val favoriteTrackIds = favoriteDao?.getAllFavorites()?.first()?.map { it.trackId }?.toSet() ?: emptySet()
         return tracks.map { track ->
             track.copy(isFavorite = track.id in favoriteTrackIds)
         }
@@ -821,8 +776,9 @@ class PlayerViewModel : ViewModel() {
      * Сохраняет запрос после паузы в 1.5 секунды
      */
     fun onSearchQueryChanged(query: String) {
-        // Отменяем предыдущую корутину
+        // Отменяем предыдущую корутину и очищаем ссылку
         saveSearchJob?.cancel()
+        saveSearchJob = null
 
         // Сохраняем только запросы длиной от 2 символов
         if (query.length >= 2) {

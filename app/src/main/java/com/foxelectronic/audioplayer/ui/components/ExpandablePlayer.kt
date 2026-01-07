@@ -555,6 +555,7 @@ private fun ExpandedPlayerContent(
                         onAddToPlaylistClick()
                     },
                     leadingIcon = {
+                        @Suppress("DEPRECATION")
                         Icon(
                             imageVector = Icons.Rounded.PlaylistAdd,
                             contentDescription = null

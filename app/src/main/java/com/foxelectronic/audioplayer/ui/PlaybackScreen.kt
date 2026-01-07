@@ -40,6 +40,7 @@ import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
 import com.foxelectronic.audioplayer.ui.components.toTimeString
 
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun PlaybackScreen(
     viewModel: PlayerViewModel,
     modifier: Modifier = Modifier,
@@ -120,6 +121,7 @@ fun PlaybackScreen(
                         onAddToPlaylistClick()
                     },
                     leadingIcon = {
+                        @Suppress("DEPRECATION")
                         Icon(
                             imageVector = Icons.Rounded.PlaylistAdd,
                             contentDescription = null
@@ -157,9 +159,11 @@ private fun AlbumArt(
     uiState: PlayerUiState,
     onArtClick: () -> Unit = {}
 ) {
-    val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
-        uiState.tracks[uiState.currentIndex]
-    } else null
+    val currentTrack = remember(uiState.currentIndex, uiState.tracks) {
+        if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+            uiState.tracks[uiState.currentIndex]
+        } else null
+    }
     val context = LocalContext.current
 
     Box(
@@ -216,9 +220,11 @@ private fun FullscreenAlbumArt(
     uiState: PlayerUiState,
     onDismiss: () -> Unit
 ) {
-    val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
-        uiState.tracks[uiState.currentIndex]
-    } else null
+    val currentTrack = remember(uiState.currentIndex, uiState.tracks) {
+        if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+            uiState.tracks[uiState.currentIndex]
+        } else null
+    }
     val context = LocalContext.current
 
     var scale by remember { mutableStateOf(1f) }
@@ -289,9 +295,11 @@ private fun FullscreenAlbumArt(
 
 @Composable
 private fun TrackInfo(uiState: PlayerUiState) {
-    val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
-        uiState.tracks[uiState.currentIndex]
-    } else null
+    val currentTrack = remember(uiState.currentIndex, uiState.tracks) {
+        if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+            uiState.tracks[uiState.currentIndex]
+        } else null
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -507,9 +515,11 @@ private fun PlaybackControls(
             )
 
             // Favorite button
-            val currentTrack = if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
-                uiState.tracks[uiState.currentIndex]
-            } else null
+            val currentTrack = remember(uiState.currentIndex, uiState.tracks) {
+                if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
+                    uiState.tracks[uiState.currentIndex]
+                } else null
+            }
 
             if (currentTrack != null) {
                 AnimatedFavoriteButton(

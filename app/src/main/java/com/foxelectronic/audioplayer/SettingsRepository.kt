@@ -31,8 +31,11 @@ class SettingsRepository(private val context: Context) {
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
-    val themeFlow: Flow<AppTheme> = context.dataStore.data
+    // Базовый Flow с обработкой ошибок - используется всеми остальными Flow
+    private val preferencesFlow: Flow<Preferences> = context.dataStore.data
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+
+    val themeFlow: Flow<AppTheme> = preferencesFlow
         .map { prefs ->
             when (prefs[KEY_THEME]) {
                 AppTheme.LIGHT.name -> AppTheme.LIGHT
@@ -41,8 +44,7 @@ class SettingsRepository(private val context: Context) {
             }
         }
 
-    val foldersFlow: Flow<List<String>> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val foldersFlow: Flow<List<String>> = preferencesFlow
         .map { prefs ->
             val folders = prefs[KEY_FOLDERS]?.split('|')?.filter { it.isNotBlank() } ?: emptyList()
             // Если папки не настроены, возвращаем папку Music по умолчанию
@@ -53,14 +55,12 @@ class SettingsRepository(private val context: Context) {
             }
         }
 
-    val accentFlow: Flow<String> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val accentFlow: Flow<String> = preferencesFlow
         .map { prefs ->
             prefs[KEY_ACCENT] ?: DEFAULT_ACCENT
         }
 
-    val fontTypeFlow: Flow<FontType> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val fontTypeFlow: Flow<FontType> = preferencesFlow
         .map { prefs ->
             when (prefs[KEY_FONT_TYPE]) {
                 FontType.SYSTEM.name -> FontType.SYSTEM
@@ -86,14 +86,12 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    val lastPlayedTrackIdFlow: Flow<String?> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val lastPlayedTrackIdFlow: Flow<String?> = preferencesFlow
         .map { prefs ->
             prefs[KEY_LAST_PLAYED_TRACK_ID]
         }
 
-    val lastPlayedPositionFlow: Flow<Long> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val lastPlayedPositionFlow: Flow<Long> = preferencesFlow
         .map { prefs ->
             prefs[KEY_LAST_PLAYED_POSITION] ?: 0L
         }
@@ -120,8 +118,7 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    val selectedTabFlow: Flow<Int> = context.dataStore.data
-        .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+    val selectedTabFlow: Flow<Int> = preferencesFlow
         .map { prefs ->
             prefs[KEY_SELECTED_TAB] ?: 0
         }
