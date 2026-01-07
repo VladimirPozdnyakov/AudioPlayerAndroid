@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.foxelectronic.audioplayer.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -339,7 +341,7 @@ private fun CollapsedPlayerContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = it.artist ?: "Неизвестный исполнитель",
+                                text = it.artist ?: stringResource(R.string.unknown_artist),
                                 style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -459,7 +461,7 @@ private fun ExpandedPlayerContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = currentTrack?.artist ?: "Неизвестный исполнитель",
+                    text = currentTrack?.artist ?: stringResource(R.string.unknown_artist),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -484,11 +486,16 @@ private fun ExpandedPlayerContent(
         }
 
         // Название плейлиста по центру на уровне кнопки "назад"
-        val playlistText = when (uiState.playlistType) {
-            PlaylistType.ARTIST -> "Исполнитель\n«${uiState.playlistName}»"
-            PlaylistType.ALBUM -> "Альбом\n«${uiState.playlistName}»"
-            PlaylistType.CUSTOM_PLAYLIST -> "Плейлист\n«${uiState.playlistName}»"
-            else -> uiState.playlistName
+        val playlistTypeLabel = when (uiState.playlistType) {
+            PlaylistType.ARTIST -> stringResource(R.string.playlist_type_artist)
+            PlaylistType.ALBUM -> stringResource(R.string.playlist_type_album)
+            PlaylistType.CUSTOM_PLAYLIST -> stringResource(R.string.playlist_type_playlist)
+            else -> null
+        }
+        val playlistText = if (playlistTypeLabel != null) {
+            "$playlistTypeLabel\n«${uiState.playlistName}»"
+        } else {
+            uiState.playlistName
         }
 
         Column(
@@ -498,7 +505,7 @@ private fun ExpandedPlayerContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Сейчас воспроизводится:",
+                text = stringResource(R.string.now_playing),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
@@ -522,7 +529,7 @@ private fun ExpandedPlayerContent(
         ) {
             Icon(
                 imageVector = Icons.Rounded.ExpandMore,
-                contentDescription = "Назад",
+                contentDescription = stringResource(R.string.back),
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(32.dp)
             )
@@ -538,7 +545,7 @@ private fun ExpandedPlayerContent(
             IconButton(onClick = { showMenu = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Меню",
+                    contentDescription = stringResource(R.string.menu),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.size(24.dp)
                 )
@@ -549,7 +556,7 @@ private fun ExpandedPlayerContent(
                 onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Добавить в плейлист") },
+                    text = { Text(stringResource(R.string.menu_add_to_playlist)) },
                     onClick = {
                         showMenu = false
                         onAddToPlaylistClick()
@@ -563,7 +570,7 @@ private fun ExpandedPlayerContent(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Изменить информацию") },
+                    text = { Text(stringResource(R.string.dialog_edit_metadata)) },
                     onClick = {
                         showMenu = false
                         onEditInfoClick()

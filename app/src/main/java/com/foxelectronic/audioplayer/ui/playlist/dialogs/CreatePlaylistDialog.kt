@@ -6,7 +6,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 
 /**
  * Диалог создания нового плейлиста
@@ -25,12 +27,12 @@ fun CreatePlaylistDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новый плейлист") },
+        title = { Text(stringResource(R.string.dialog_new_playlist)) },
         text = {
             OutlinedTextField(
                 value = playlistName,
                 onValueChange = { playlistName = it },
-                label = { Text("Название") },
+                label = { Text(stringResource(R.string.playlist_name_hint)) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -47,12 +49,12 @@ fun CreatePlaylistDialog(
                 },
                 enabled = playlistName.isNotBlank()
             ) {
-                Text("Создать")
+                Text(stringResource(R.string.btn_create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )
@@ -76,12 +78,12 @@ fun RenamePlaylistDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Переименовать плейлист") },
+        title = { Text(stringResource(R.string.dialog_rename_playlist)) },
         text = {
             OutlinedTextField(
                 value = playlistName,
                 onValueChange = { playlistName = it },
-                label = { Text("Название") },
+                label = { Text(stringResource(R.string.playlist_name_hint)) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,12 +100,12 @@ fun RenamePlaylistDialog(
                 },
                 enabled = playlistName.isNotBlank()
             ) {
-                Text("Сохранить")
+                Text(stringResource(R.string.btn_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )
@@ -120,9 +122,9 @@ fun DeletePlaylistDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Удалить плейлист?") },
+        title = { Text(stringResource(R.string.dialog_delete_playlist)) },
         text = {
-            Text("Вы действительно хотите удалить плейлист \"$playlistName\"? Треки не будут удалены с устройства.")
+            Text(stringResource(R.string.delete_playlist_confirm, playlistName))
         },
         confirmButton = {
             TextButton(
@@ -131,12 +133,12 @@ fun DeletePlaylistDialog(
                     onDismiss()
                 }
             ) {
-                Text("Удалить")
+                Text(stringResource(R.string.btn_delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

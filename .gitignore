@@ -13,7 +13,7 @@ build/
 .cursor/
 QWEN.md
 CLAUDE.md
-.claude/
+/.claude/
 ToDo.txt
 
 # Файлы локальных настроек проекта
@@ -64,3 +64,4 @@ captures/
 # Резервные копии
 *.bak
 *~
+/nul

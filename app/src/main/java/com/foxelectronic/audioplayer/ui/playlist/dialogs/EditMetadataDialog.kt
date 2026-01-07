@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.foxelectronic.audioplayer.R
 import coil.request.ImageRequest
 import com.foxelectronic.audioplayer.data.model.Track
 
@@ -51,7 +53,7 @@ fun EditMetadataDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Редактировать информацию") },
+        title = { Text(stringResource(R.string.dialog_edit_metadata)) },
         text = {
             Column(
                 modifier = Modifier
@@ -76,7 +78,7 @@ fun EditMetadataDialog(
                                 .data(coverToShow)
                                 .crossfade(true)
                                 .build(),
-                            contentDescription = "Обложка",
+                            contentDescription = stringResource(R.string.field_cover),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -91,7 +93,7 @@ fun EditMetadataDialog(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Выбрать",
+                                text = stringResource(R.string.btn_select),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -103,7 +105,7 @@ fun EditMetadataDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Название") },
+                    label = { Text(stringResource(R.string.field_title)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -111,7 +113,7 @@ fun EditMetadataDialog(
                 OutlinedTextField(
                     value = artist,
                     onValueChange = { artist = it },
-                    label = { Text("Исполнитель") },
+                    label = { Text(stringResource(R.string.field_artist)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -119,7 +121,7 @@ fun EditMetadataDialog(
                 OutlinedTextField(
                     value = album,
                     onValueChange = { album = it },
-                    label = { Text("Альбом") },
+                    label = { Text(stringResource(R.string.field_album)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -135,11 +137,11 @@ fun EditMetadataDialog(
                     )
                     Column(modifier = Modifier.padding(start = 8.dp)) {
                         Text(
-                            text = "Записать в файл",
+                            text = stringResource(R.string.write_to_file),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "Изменить ID3 теги в самом файле",
+                            text = stringResource(R.string.write_id3_tags),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -174,13 +176,13 @@ fun EditMetadataDialog(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Сохранить")
+                    Text(stringResource(R.string.btn_save))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

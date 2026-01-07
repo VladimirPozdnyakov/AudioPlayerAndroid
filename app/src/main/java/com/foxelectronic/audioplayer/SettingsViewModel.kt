@@ -13,7 +13,8 @@ data class SettingsUiState(
     val theme: AppTheme = AppTheme.SYSTEM,
     val folders: List<String> = emptyList(),
     val accentHex: String = "#6750A4",
-    val fontType: FontType = FontType.JETBRAINS_MONO
+    val fontType: FontType = FontType.JETBRAINS_MONO,
+    val language: AppLanguage = AppLanguage.ENGLISH
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -25,9 +26,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         repo.themeFlow,
         repo.foldersFlow,
         repo.accentFlow,
-        repo.fontTypeFlow
-    ) { theme, folders, accent, fontType ->
-        SettingsUiState(theme, folders, accent, fontType)
+        repo.fontTypeFlow,
+        repo.languageFlow
+    ) { theme, folders, accent, fontType, language ->
+        SettingsUiState(theme, folders, accent, fontType, language)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SettingsUiState())
 
     fun setTheme(theme: AppTheme) {
@@ -44,5 +46,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setFontType(fontType: FontType) {
         viewModelScope.launch { repo.setFontType(fontType) }
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        viewModelScope.launch { repo.setLanguage(language) }
     }
 }

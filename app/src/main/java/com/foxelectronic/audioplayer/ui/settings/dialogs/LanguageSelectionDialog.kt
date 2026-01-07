@@ -10,42 +10,42 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import com.foxelectronic.audioplayer.FontType
+import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.RadioOptionRow
 
 /**
- * Диалог выбора шрифта приложения
+ * Диалог выбора языка приложения
  */
 @Composable
-fun FontSelectionDialog(
-    currentFont: FontType,
+fun LanguageSelectionDialog(
+    currentLanguage: AppLanguage,
     onDismiss: () -> Unit,
-    onConfirm: (FontType) -> Unit
+    onConfirm: (AppLanguage) -> Unit
 ) {
-    var selectedFont by remember { mutableStateOf(currentFont) }
+    var selectedLanguage by remember { mutableStateOf(currentLanguage) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.dialog_select_font)) },
+        title = { Text(stringResource(R.string.dialog_select_language)) },
         text = {
             Column {
                 RadioOptionRow(
-                    label = stringResource(R.string.font_system),
-                    selected = selectedFont == FontType.SYSTEM,
-                    onSelect = { selectedFont = FontType.SYSTEM }
+                    label = stringResource(R.string.language_english),
+                    selected = selectedLanguage == AppLanguage.ENGLISH,
+                    onSelect = { selectedLanguage = AppLanguage.ENGLISH }
                 )
                 RadioOptionRow(
-                    label = stringResource(R.string.font_jetbrains),
-                    selected = selectedFont == FontType.JETBRAINS_MONO,
-                    onSelect = { selectedFont = FontType.JETBRAINS_MONO }
+                    label = stringResource(R.string.language_russian),
+                    selected = selectedLanguage == AppLanguage.RUSSIAN,
+                    onSelect = { selectedLanguage = AppLanguage.RUSSIAN }
                 )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirm(selectedFont)
+                    onConfirm(selectedLanguage)
                     onDismiss()
                 }
             ) {

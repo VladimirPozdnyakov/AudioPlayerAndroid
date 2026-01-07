@@ -12,8 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
 
 /**
@@ -37,14 +39,16 @@ fun AddToPlaylistDialog(
     onPlaylistRemoved: (PlaylistWithTrackCount) -> Unit,
     onCreateNewPlaylist: () -> Unit
 ) {
+    val trackInPlaylistDesc = stringResource(R.string.track_in_playlist)
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Добавить в плейлист") },
+        title = { Text(stringResource(R.string.dialog_add_to_playlist)) },
         text = {
             Column {
                 // Кнопка создания нового плейлиста
                 ListItem(
-                    headlineContent = { Text("Создать новый плейлист") },
+                    headlineContent = { Text(stringResource(R.string.create_new_playlist)) },
                     leadingContent = {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -67,7 +71,7 @@ fun AddToPlaylistDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Нет плейлистов",
+                            text = stringResource(R.string.empty_no_playlists),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -92,7 +96,7 @@ fun AddToPlaylistDialog(
                                     )
                                 },
                                 supportingContent = if (isTrackInPlaylist) {
-                                    { Text("Нажмите, чтобы удалить", style = MaterialTheme.typography.bodySmall) }
+                                    { Text(stringResource(R.string.click_to_remove), style = MaterialTheme.typography.bodySmall) }
                                 } else null,
                                 leadingContent = {
                                     @Suppress("DEPRECATION")
@@ -109,7 +113,7 @@ fun AddToPlaylistDialog(
                                     {
                                         Icon(
                                             imageVector = Icons.Default.Check,
-                                            contentDescription = "Трек уже в плейлисте",
+                                            contentDescription = trackInPlaylistDesc,
                                             tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
@@ -131,7 +135,7 @@ fun AddToPlaylistDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

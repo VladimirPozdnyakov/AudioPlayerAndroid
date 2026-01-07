@@ -1,5 +1,6 @@
 package com.foxelectronic.audioplayer.ui.settings.state
 
+import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.AppTheme
 import com.foxelectronic.audioplayer.FontType
 
@@ -19,6 +20,9 @@ sealed class SettingsDialogState {
 
     /** Диалог выбора шрифта */
     data class FontSelection(val currentFont: FontType) : SettingsDialogState()
+
+    /** Диалог выбора языка */
+    data class LanguageSelection(val currentLanguage: AppLanguage) : SettingsDialogState()
 
     /** Диалог подтверждения удаления папки */
     data class FolderDeletion(val folderUri: String, val folderName: String) : SettingsDialogState()

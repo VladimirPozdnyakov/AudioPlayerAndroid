@@ -3,7 +3,7 @@ package com.foxelectronic.audioplayer
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -67,6 +67,8 @@ import com.foxelectronic.audioplayer.ui.playlist.dialogs.EditMetadataDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.DeletePlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.RenamePlaylistDialog
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -96,6 +98,8 @@ import com.foxelectronic.audioplayer.SortMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.lifecycle.lifecycleScope
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -138,7 +142,7 @@ import kotlinx.coroutines.delay
 
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val viewModel: PlayerViewModel by viewModels()
 
     private val requestPermission =
@@ -195,6 +199,16 @@ class MainActivity : ComponentActivity() {
         }
         requestPermission.launch(permissions.toTypedArray())
     }
+
+}
+
+private fun applyLanguage(language: AppLanguage) {
+    val localeTag = when (language) {
+        AppLanguage.ENGLISH -> "en"
+        AppLanguage.RUSSIAN -> "ru"
+    }
+    val localeList = LocaleListCompat.forLanguageTags(localeTag)
+    AppCompatDelegate.setApplicationLocales(localeList)
 }
 
 @Composable
@@ -267,6 +281,10 @@ fun MainScreen(
                         onThemeChange = settingsViewModel::setTheme,
                         onAccentChange = settingsViewModel::setAccent,
                         onFontTypeChange = settingsViewModel::setFontType,
+                        onLanguageChange = { language ->
+                            settingsViewModel.setLanguage(language)
+                            applyLanguage(language)
+                        },
                         onAddFolder = { newFolder ->
                             val updated = (settings.folders + newFolder).distinct()
                             settingsViewModel.setFolders(updated)
@@ -300,8 +318,8 @@ fun MainScreen(
             NavigationBarItem(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Rounded.Home, contentDescription = "Главная", modifier = Modifier.size(24.dp)) },
-                        label = { Text("Главная") },
+                        icon = { Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.nav_home), modifier = Modifier.size(24.dp)) },
+                        label = { Text(stringResource(R.string.nav_home)) },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.onSurface,
@@ -337,7 +355,7 @@ fun MainScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Settings,
-                                    contentDescription = "Настройки",
+                                    contentDescription = stringResource(R.string.nav_settings),
                                     modifier = Modifier
                                         .graphicsLayer {
                                             rotationZ = rotation
@@ -347,7 +365,7 @@ fun MainScreen(
                                 )
                             }
                         },
-                        label = { Text("Настройки") },
+                        label = { Text(stringResource(R.string.nav_settings)) },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.onSurface,
@@ -587,9 +605,15 @@ fun PlayerScreen(
 
     // Измеряем ширину текста для вкладок
     val textMeasurer = rememberTextMeasurer()
+    val tabAllLabel = stringResource(R.string.tab_all)
+    val tabFavoritesLabel = stringResource(R.string.tab_favorites)
+    val tabArtistsLabel = stringResource(R.string.tab_artists)
+    val tabAlbumsLabel = stringResource(R.string.tab_albums)
+    val tabPlaylistsLabel = stringResource(R.string.tab_playlists)
+
     val tab0Text = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("Все")
+            append(tabAllLabel)
         }
         append(" ")
         withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
@@ -598,7 +622,7 @@ fun PlayerScreen(
     }
     val tab1Text = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("Любимые")
+            append(tabFavoritesLabel)
         }
         append(" ")
         withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
@@ -607,7 +631,7 @@ fun PlayerScreen(
     }
     val tab2Text = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("Исполнители")
+            append(tabArtistsLabel)
         }
         append(" ")
         withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
@@ -616,7 +640,7 @@ fun PlayerScreen(
     }
     val tab3Text = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("Альбомы")
+            append(tabAlbumsLabel)
         }
         append(" ")
         withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
@@ -625,7 +649,7 @@ fun PlayerScreen(
     }
     val tab4Text = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-            append("Плейлисты")
+            append(tabPlaylistsLabel)
         }
         append(" ")
         withStyle(style = SpanStyle(fontWeight = FontWeight.Normal)) {
@@ -760,7 +784,7 @@ fun PlayerScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Rounded.Close,
-                                            contentDescription = "Удалить",
+                                            contentDescription = stringResource(R.string.btn_delete),
                                             modifier = Modifier.size(18.dp),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -791,7 +815,7 @@ fun PlayerScreen(
                                         tint = MaterialTheme.colorScheme.error
                                     )
                                     Text(
-                                        text = "Очистить историю",
+                                        text = stringResource(R.string.clear_history),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.error
                                     )
@@ -826,7 +850,7 @@ fun PlayerScreen(
                         } else {
                             Icons.Rounded.ArrowDropUp
                         },
-                        contentDescription = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) "По алфавиту (А-Я)" else "По алфавиту (Я-А)",
+                        contentDescription = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) stringResource(R.string.sort_az) else stringResource(R.string.sort_za),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -1030,10 +1054,10 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         isPlaylistMode = false,
                         onTrackClick = onTrackClick,
-                        emptyMessage = "Нет треков (попробуйте добавить папки в настройках)",
+                        emptyMessage = stringResource(R.string.empty_no_tracks),
                         listState = allTracksListState,
                         expandProgress = expandProgress,
-                        playlistName = "Все треки"
+                        playlistName = stringResource(R.string.all_tracks)
                     )
                     1 -> TrackList(
                         tracks = favoriteTracks,
@@ -1041,10 +1065,10 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         isPlaylistMode = true,
                         onTrackClick = onTrackClick,
-                        emptyMessage = "Нет любимых треков",
+                        emptyMessage = stringResource(R.string.empty_no_favorites),
                         listState = favoriteTracksListState,
                         expandProgress = expandProgress,
-                        playlistName = "Любимые треки",
+                        playlistName = stringResource(R.string.tab_favorites),
                         playlistType = PlaylistType.FAVORITES
                     )
                     2 -> ArtistsTab(
@@ -1454,7 +1478,7 @@ private fun TrackItem(
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = track.artist ?: "Неизвестный исполнитель",
+                        text = track.artist ?: stringResource(R.string.unknown_artist),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
@@ -1476,7 +1500,7 @@ private fun TrackItem(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = "Меню",
+                            contentDescription = stringResource(R.string.menu),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -1487,7 +1511,7 @@ private fun TrackItem(
                     ) {
                         if (showRemoveFromPlaylist) {
                             DropdownMenuItem(
-                                text = { Text("Удалить из плейлиста") },
+                                text = { Text(stringResource(R.string.menu_remove_from_playlist)) },
                                 onClick = {
                                     showMenu = false
                                     onRemoveFromPlaylistClick()
@@ -1501,7 +1525,7 @@ private fun TrackItem(
                             )
                         }
                         DropdownMenuItem(
-                            text = { Text("Добавить в плейлист") },
+                            text = { Text(stringResource(R.string.menu_add_to_playlist)) },
                             onClick = {
                                 showMenu = false
                                 onAddToPlaylistClick()
@@ -1515,7 +1539,7 @@ private fun TrackItem(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Редактировать") },
+                            text = { Text(stringResource(R.string.menu_edit)) },
                             onClick = {
                                 showMenu = false
                                 onEditInfoClick()
@@ -1561,7 +1585,7 @@ fun AnimatedFavoriteButton(
 
         Icon(
             imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-            contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+            contentDescription = if (isFavorite) stringResource(R.string.menu_remove_from_favorites) else stringResource(R.string.menu_add_to_favorites),
             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .scale(currentScale)
@@ -1746,7 +1770,7 @@ private fun ArtistsTab(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(selectedArtist, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
@@ -1756,7 +1780,7 @@ private fun ArtistsTab(
                     viewModel = viewModel,
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
-                    emptyMessage = "Нет треков у этого исполнителя",
+                    emptyMessage = stringResource(R.string.empty_artist_tracks),
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedArtist,
@@ -1777,7 +1801,7 @@ private fun ArtistGroupList(
 ) {
     if (artistGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Нет исполнителей")
+            Text(stringResource(R.string.empty_no_artists))
         }
     } else {
         val bottomPadding by animateDpAsState(
@@ -1785,6 +1809,7 @@ private fun ArtistGroupList(
             spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
             label = "artistListBottomPadding"
         )
+        val unknownArtistText = stringResource(R.string.unknown_artist)
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
@@ -1793,7 +1818,8 @@ private fun ArtistGroupList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(artistGroups.toList(), key = { (artist, _) -> "artist_$artist" }) { (artist, tracks) ->
-                ArtistGroupItem(artist, tracks.size, tracks.firstOrNull()?.albumArtPath, { onArtistClick(artist) })
+                val displayArtist = if (artist == PlayerViewModel.UNKNOWN_ARTIST_KEY) unknownArtistText else artist
+                ArtistGroupItem(displayArtist, tracks.size, tracks.firstOrNull()?.albumArtPath, { onArtistClick(artist) })
             }
         }
     }
@@ -1853,7 +1879,7 @@ private fun ArtistGroupItem(artist: String, trackCount: Int, albumArtPath: Strin
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "$trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
+                text = pluralStringResource(R.plurals.track_count, trackCount, trackCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -1975,7 +2001,7 @@ private fun AlbumsTab(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(selectedAlbum, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
@@ -1985,7 +2011,7 @@ private fun AlbumsTab(
                     viewModel = viewModel,
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
-                    emptyMessage = "Нет треков в этом альбоме",
+                    emptyMessage = stringResource(R.string.empty_album_tracks),
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedAlbum,
@@ -2006,7 +2032,7 @@ private fun AlbumGroupList(
 ) {
     if (albumGroups.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Нет альбомов")
+            Text(stringResource(R.string.empty_no_albums))
         }
     } else {
         val bottomPadding by animateDpAsState(
@@ -2014,6 +2040,8 @@ private fun AlbumGroupList(
             spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
             label = "albumListBottomPadding"
         )
+        val unknownArtistText = stringResource(R.string.unknown_artist)
+        val unknownAlbumText = stringResource(R.string.unknown_album)
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
@@ -2024,11 +2052,12 @@ private fun AlbumGroupList(
             items(albumGroups.toList(), key = { (album, _) -> "album_$album" }) { (album, tracks) ->
                 val uniqueArtists = tracks.mapNotNull { it.artist }.distinct()
                 val artistText = if (uniqueArtists.isEmpty()) {
-                    "Неизвестный исполнитель"
+                    unknownArtistText
                 } else {
                     uniqueArtists.joinToString(", ")
                 }
-                AlbumGroupItem(album, artistText, tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) })
+                val displayAlbum = if (album == PlayerViewModel.UNKNOWN_ALBUM_KEY) unknownAlbumText else album
+                AlbumGroupItem(displayAlbum, artistText, tracks.size, tracks.firstOrNull()?.albumArtPath, { onAlbumClick(album) })
             }
         }
     }
@@ -2097,7 +2126,7 @@ private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, album
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "$trackCount ${if (trackCount == 1) "трек" else if (trackCount in 2..4) "трека" else "треков"}",
+                text = pluralStringResource(R.plurals.track_count, trackCount, trackCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -2271,7 +2300,7 @@ private fun PlaylistsTab(
                             }
                         }
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Назад", Modifier.size(24.dp))
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), Modifier.size(24.dp))
                     }
                     Text(
                         text = selectedPlaylist.name,
@@ -2283,14 +2312,14 @@ private fun PlaylistsTab(
                     var showPlaylistMenu by remember { mutableStateOf(false) }
                     Box {
                         IconButton(onClick = { showPlaylistMenu = true }) {
-                            Icon(Icons.Rounded.MoreVert, "Меню")
+                            Icon(Icons.Rounded.MoreVert, stringResource(R.string.menu))
                         }
                         DropdownMenu(
                             expanded = showPlaylistMenu,
                             onDismissRequest = { showPlaylistMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Переименовать") },
+                                text = { Text(stringResource(R.string.btn_rename)) },
                                 onClick = {
                                     showPlaylistMenu = false
                                     showRenameDialog = true
@@ -2300,7 +2329,7 @@ private fun PlaylistsTab(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Удалить") },
+                                text = { Text(stringResource(R.string.btn_delete)) },
                                 onClick = {
                                     showPlaylistMenu = false
                                     showDeleteDialog = true
@@ -2318,7 +2347,7 @@ private fun PlaylistsTab(
                     viewModel = viewModel,
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
-                    emptyMessage = "Плейлист пуст",
+                    emptyMessage = stringResource(R.string.empty_playlist),
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedPlaylist.name,
@@ -2401,7 +2430,7 @@ private fun PlaylistItem(
                             .size(256, 256)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
-                        contentDescription = "Обложка плейлиста",
+                        contentDescription = stringResource(R.string.playlist_cover),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -2426,7 +2455,7 @@ private fun PlaylistItem(
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "${playlist.trackCount} ${if (playlist.trackCount == 1) "трек" else if (playlist.trackCount in 2..4) "трека" else "треков"}",
+                text = pluralStringResource(R.plurals.track_count, playlist.trackCount, playlist.trackCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -2472,7 +2501,7 @@ private fun CreatePlaylistCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Создать новый",
+                text = stringResource(R.string.create_new),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,

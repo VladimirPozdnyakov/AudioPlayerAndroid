@@ -9,7 +9,9 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.SettingsMenuButton
 
 /**
@@ -27,17 +29,17 @@ fun SettingsMenuSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SettingsMenuButton(
-            text = "Интерфейс",
+            text = stringResource(R.string.settings_interface),
             icon = Icons.Rounded.Palette,
             onClick = onNavigateToInterface
         )
         SettingsMenuButton(
-            text = "Папки",
+            text = stringResource(R.string.settings_folders),
             icon = Icons.Rounded.Folder,
             onClick = onNavigateToFolders
         )
         SettingsMenuButton(
-            text = "О приложении",
+            text = stringResource(R.string.settings_about),
             icon = Icons.Rounded.Info,
             onClick = onNavigateToAbout
         )

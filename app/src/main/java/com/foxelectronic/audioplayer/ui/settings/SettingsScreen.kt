@@ -35,13 +35,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.AppTheme
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.FontType
 import com.foxelectronic.audioplayer.SettingsUiState
 import com.foxelectronic.audioplayer.ui.settings.colorpicker.ColorPickerDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.FolderDeletionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.FontSelectionDialog
+import com.foxelectronic.audioplayer.ui.settings.dialogs.LanguageSelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.ThemeSelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.sections.AboutSection
 import com.foxelectronic.audioplayer.ui.settings.sections.FoldersSection
@@ -75,6 +79,7 @@ fun SettingsScreen(
     onThemeChange: (AppTheme) -> Unit,
     onAccentChange: (String) -> Unit,
     onFontTypeChange: (FontType) -> Unit,
+    onLanguageChange: (AppLanguage) -> Unit,
     onAddFolder: (String) -> Unit,
     onRemoveFolder: (String) -> Unit
 ) {
@@ -107,17 +112,19 @@ fun SettingsScreen(
                 val folderName = FolderUtils.getFolderDisplayName(it.toString())
                 snackbarMessage = SnackbarMessage.FolderAdded(folderName)
             } catch (e: Throwable) {
-                snackbarMessage = SnackbarMessage.Error("Не удалось добавить папку")
+                snackbarMessage = SnackbarMessage.Error(context.getString(R.string.folder_add_error))
             }
         }
     }
 
     // Обработка Snackbar сообщений
+    val folderAddedTemplate = stringResource(R.string.folder_added)
+    val folderRemovedTemplate = stringResource(R.string.folder_removed)
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let { message ->
             val text = when (message) {
-                is SnackbarMessage.FolderAdded -> "Папка \"${message.folderName}\" добавлена"
-                is SnackbarMessage.FolderRemoved -> "Папка \"${message.folderName}\" удалена"
+                is SnackbarMessage.FolderAdded -> folderAddedTemplate.replace("%1\$s", message.folderName)
+                is SnackbarMessage.FolderRemoved -> folderRemovedTemplate.replace("%1\$s", message.folderName)
                 is SnackbarMessage.Error -> message.message
             }
             scope.launch {
@@ -135,16 +142,22 @@ fun SettingsScreen(
         currentSection = SettingsSection.MENU
     }
 
+    val navSettingsTitle = stringResource(R.string.nav_settings)
+    val settingsInterfaceTitle = stringResource(R.string.settings_interface)
+    val settingsFoldersTitle = stringResource(R.string.settings_folders)
+    val settingsAboutTitle = stringResource(R.string.settings_about)
+    val backContentDesc = stringResource(R.string.back)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         when (currentSection) {
-                            SettingsSection.MENU -> "Настройки"
-                            SettingsSection.INTERFACE -> "Интерфейс"
-                            SettingsSection.FOLDERS -> "Папки"
-                            SettingsSection.ABOUT -> "О приложении"
+                            SettingsSection.MENU -> navSettingsTitle
+                            SettingsSection.INTERFACE -> settingsInterfaceTitle
+                            SettingsSection.FOLDERS -> settingsFoldersTitle
+                            SettingsSection.ABOUT -> settingsAboutTitle
                         }
                     )
                 },
@@ -153,7 +166,7 @@ fun SettingsScreen(
                         IconButton(onClick = { currentSection = SettingsSection.MENU }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "Назад"
+                                contentDescription = backContentDesc
                             )
                         }
                     }
@@ -192,6 +205,7 @@ fun SettingsScreen(
                             currentTheme = state.theme,
                             currentAccentHex = state.accentHex,
                             currentFont = state.fontType,
+                            currentLanguage = state.language,
                             onThemeClick = {
                                 dialogState = SettingsDialogState.ThemeSelection(state.theme)
                             },
@@ -200,6 +214,9 @@ fun SettingsScreen(
                             },
                             onFontClick = {
                                 dialogState = SettingsDialogState.FontSelection(state.fontType)
+                            },
+                            onLanguageClick = {
+                                dialogState = SettingsDialogState.LanguageSelection(state.language)
                             }
                         )
                     }
@@ -254,6 +271,17 @@ fun SettingsScreen(
                 onDismiss = { dialogState = SettingsDialogState.None },
                 onConfirm = { font ->
                     onFontTypeChange(font)
+                    dialogState = SettingsDialogState.None
+                }
+            )
+        }
+
+        is SettingsDialogState.LanguageSelection -> {
+            LanguageSelectionDialog(
+                currentLanguage = dialog.currentLanguage,
+                onDismiss = { dialogState = SettingsDialogState.None },
+                onConfirm = { language ->
+                    onLanguageChange(language)
                     dialogState = SettingsDialogState.None
                 }
             )

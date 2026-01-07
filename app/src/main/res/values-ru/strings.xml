@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AudioPlayer</string>
+
+    <!-- Навигация -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Вкладки -->
+    <string name="tab_all">Все</string>
+    <string name="tab_favorites">Любимые</string>
+    <string name="tab_artists">Исполнители</string>
+    <string name="tab_albums">Альбомы</string>
+    <string name="tab_playlists">Плейлисты</string>
+
+    <!-- Пустые состояния -->
+    <string name="empty_no_tracks">Нет треков (попробуйте добавить папки в настройках)</string>
+    <string name="empty_no_favorites">Нет избранных треков</string>
+    <string name="empty_no_artists">Нет исполнителей</string>
+    <string name="empty_no_albums">Нет альбомов</string>
+    <string name="empty_no_playlists">Нет плейлистов</string>
+    <string name="empty_playlist">Плейлист пуст</string>
+    <string name="empty_artist_tracks">Нет треков у этого исполнителя</string>
+    <string name="empty_album_tracks">Нет треков в этом альбоме</string>
+
+    <!-- Кнопки -->
+    <string name="btn_cancel">Отмена</string>
+    <string name="btn_save">Сохранить</string>
+    <string name="btn_create">Создать</string>
+    <string name="btn_delete">Удалить</string>
+    <string name="btn_done">Готово</string>
+    <string name="btn_select">Выбрать</string>
+    <string name="btn_rename">Переименовать</string>
+
+    <!-- Диалоги плейлиста -->
+    <string name="dialog_new_playlist">Новый плейлист</string>
+    <string name="dialog_rename_playlist">Переименовать плейлист</string>
+    <string name="dialog_delete_playlist">Удалить плейлист?</string>
+    <string name="dialog_add_to_playlist">Добавить в плейлист</string>
+    <string name="playlist_name_hint">Название</string>
+    <string name="create_new_playlist">Создать новый плейлист</string>
+    <string name="delete_playlist_confirm">Вы действительно хотите удалить плейлист \"%1$s\"? Треки не будут удалены с устройства.</string>
+    <string name="click_to_remove">Нажмите, чтобы удалить</string>
+    <string name="track_in_playlist">Трек уже в плейлисте</string>
+
+    <!-- Диалоги информации трека -->
+    <string name="dialog_edit_metadata">Редактировать информацию</string>
+    <string name="field_title">Название</string>
+    <string name="field_artist">Исполнитель</string>
+    <string name="field_album">Альбом</string>
+    <string name="field_cover">Обложка</string>
+    <string name="write_to_file">Записать в файл</string>
+    <string name="write_id3_tags">Изменить ID3 теги в самом файле</string>
+    <string name="unknown_artist">Неизвестный исполнитель</string>
+    <string name="unknown_album">Неизвестный альбом</string>
+
+    <!-- Настройки -->
+    <string name="settings_interface">Интерфейс</string>
+    <string name="settings_folders">Папки</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_accent">Акцентный цвет</string>
+    <string name="settings_font">Шрифт</string>
+
+    <!-- Темы -->
+    <string name="theme_system">Системная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="dialog_select_theme">Выберите тему</string>
+
+    <!-- Шрифты -->
+    <string name="font_system">Как в системе</string>
+    <string name="font_jetbrains">JetBrains Mono (по умолчанию)</string>
+    <string name="dialog_select_font">Выберите шрифт</string>
+
+    <!-- Язык -->
+    <string name="settings_language">Язык</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="dialog_select_language">Выберите язык</string>
+
+    <!-- Папки -->
+    <string name="default_music_folder">Папка музыки по умолчанию</string>
+    <string name="label_default">(по умолчанию)</string>
+    <string name="add_folder">Добавить папку</string>
+    <string name="delete_folder_title">Удалить папку?</string>
+    <string name="delete_folder_confirm">Вы действительно хотите удалить папку \"%1$s\" из списка? Файлы не будут удалены с устройства.</string>
+    <string name="folder_added">Папка \"%1$s\" добавлена</string>
+    <string name="folder_removed">Папка \"%1$s\" удалена</string>
+    <string name="folder_add_error">Не удалось добавить папку</string>
+    <string name="delete_folder_desc">Удалить папку %1$s</string>
+
+    <!-- Выбор цвета -->
+    <string name="dialog_select_color">Выберите цвет</string>
+    <string name="reset_to_default">Сбросить на стандартный</string>
+    <string name="color_picker_desc">Панель выбора цвета</string>
+    <string name="hue_slider_desc">Полоса выбора оттенка</string>
+    <string name="original_color">Исходный цвет</string>
+    <string name="new_color">Новый цвет</string>
+    <string name="accent_color_preview">Превью акцентного цвета</string>
+
+    <!-- Большой плеер -->
+    <string name="now_playing">Сейчас воспроизводится:</string>
+    <string name="menu">Меню</string>
+    <string name="back">Назад</string>
+    <string name="playlist_cover">Обложка плейлиста</string>
+
+    <!-- Контекстное меню -->
+    <string name="menu_add_to_playlist">Добавить в плейлист</string>
+    <string name="menu_edit">Редактировать</string>
+    <string name="menu_remove_from_playlist">Удалить из плейлиста</string>
+    <string name="menu_add_to_favorites">Добавить в избранное</string>
+    <string name="menu_remove_from_favorites">Удалить из избранного</string>
+
+    <!-- Сортировка -->
+    <string name="sort_az">По алфавиту (А-Я)</string>
+    <string name="sort_za">По алфавиту (Я-А)</string>
+
+    <!-- Поиск -->
+    <string name="clear_history">Очистить историю</string>
+    <string name="create_new">Создать новый</string>
+
+    <!-- О приложении -->
+    <string name="version_format">Версия: %1$s</string>
+    <string name="source_code">Исходный код</string>
+
+    <!-- Типы плейлистов -->
+    <string name="playlist_type_artist">Исполнитель</string>
+    <string name="playlist_type_album">Альбом</string>
+    <string name="playlist_type_playlist">Плейлист</string>
+    <string name="all_tracks">Все треки</string>
+
+    <!-- Кол-во треков -->
+    <plurals name="track_count">
+        <item quantity="one">%1$d трек</item>
+        <item quantity="few">%1$d трека</item>
+        <item quantity="many">%1$d треков</item>
+        <item quantity="other">%1$d треков</item>
+    </plurals>
+</resources>

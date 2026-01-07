@@ -19,9 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.settings.utils.ColorUtils
 
 /**
@@ -37,9 +39,14 @@ fun ColorPickerDialog(
     val initialColor = ColorUtils.parseColorSafe(currentAccentHex)
     val pickerState = rememberColorPickerState(initialColor)
 
+    val colorPickerDesc = stringResource(R.string.color_picker_desc)
+    val hueSliderDesc = stringResource(R.string.hue_slider_desc)
+    val originalColorDesc = stringResource(R.string.original_color)
+    val newColorDesc = stringResource(R.string.new_color)
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Выберите цвет") },
+        title = { Text(stringResource(R.string.dialog_select_color)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -57,7 +64,7 @@ fun ColorPickerDialog(
                         onChange = pickerState::updateSaturationValue,
                         modifier = Modifier
                             .size(180.dp)
-                            .semantics { contentDescription = "Панель выбора цвета" }
+                            .semantics { contentDescription = colorPickerDesc }
                     )
                     HueBar(
                         hue = pickerState.hue,
@@ -65,7 +72,7 @@ fun ColorPickerDialog(
                         modifier = Modifier
                             .height(180.dp)
                             .width(24.dp)
-                            .semantics { contentDescription = "Полоса выбора оттенка" }
+                            .semantics { contentDescription = hueSliderDesc }
                     )
                 }
 
@@ -80,7 +87,7 @@ fun ColorPickerDialog(
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(initialColor)
-                            .semantics { contentDescription = "Исходный цвет" }
+                            .semantics { contentDescription = originalColorDesc }
                     )
                     Text("→", style = MaterialTheme.typography.titleMedium)
                     Box(
@@ -88,7 +95,7 @@ fun ColorPickerDialog(
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(pickerState.currentColor)
-                            .semantics { contentDescription = "Новый цвет" }
+                            .semantics { contentDescription = newColorDesc }
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
@@ -103,7 +110,7 @@ fun ColorPickerDialog(
                     onClick = { pickerState.reset() },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Сбросить на стандартный")
+                    Text(stringResource(R.string.reset_to_default))
                 }
             }
         },
@@ -114,12 +121,12 @@ fun ColorPickerDialog(
                     onConfirm(hex)
                 }
             ) {
-                Text("OK")
+                Text(stringResource(R.string.btn_done))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

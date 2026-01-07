@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.R
 
@@ -40,7 +41,7 @@ fun AboutSection(
                 )
             },
             headlineContent = { Text("AudioPlayer") },
-            supportingContent = { Text("Версия: $versionName") }
+            supportingContent = { Text(stringResource(R.string.version_format, versionName)) }
         )
 
         ListItem(
@@ -57,7 +58,7 @@ fun AboutSection(
                     contentDescription = null
                 )
             },
-            headlineContent = { Text("Исходный код") },
+            headlineContent = { Text(stringResource(R.string.source_code)) },
             supportingContent = { Text("github.com/VladimirPozdnyakov/AudioPlayerAndroid") }
         )
     }

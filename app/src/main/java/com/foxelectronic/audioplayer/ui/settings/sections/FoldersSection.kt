@@ -17,7 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.SettingsListItem
 import com.foxelectronic.audioplayer.ui.settings.utils.FolderUtils
 
@@ -42,6 +44,7 @@ fun FoldersSection(
 
             if (!isDefault) {
                 // Обычная папка с кнопкой удаления
+                val deleteFolderDesc = stringResource(R.string.delete_folder_desc, displayName)
                 SettingsListItem(
                     title = displayName,
                     subtitle = "",
@@ -51,7 +54,7 @@ fun FoldersSection(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
-                                contentDescription = "Удалить папку $displayName"
+                                contentDescription = deleteFolderDesc
                             )
                         }
                     },
@@ -60,8 +63,8 @@ fun FoldersSection(
             } else {
                 // Дефолтная папка без кнопки удаления
                 SettingsListItem(
-                    title = "$displayName (по умолчанию)",
-                    subtitle = "Папка музыки по умолчанию",
+                    title = "$displayName ${stringResource(R.string.label_default)}",
+                    subtitle = stringResource(R.string.default_music_folder),
                     onClick = {}
                 )
             }
@@ -83,7 +86,7 @@ fun FoldersSection(
                     contentDescription = null
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Добавить папку")
+                Text(stringResource(R.string.add_folder))
             }
         }
     }

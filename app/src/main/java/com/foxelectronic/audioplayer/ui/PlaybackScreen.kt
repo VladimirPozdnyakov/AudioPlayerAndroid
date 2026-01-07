@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
+import com.foxelectronic.audioplayer.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -105,7 +107,7 @@ fun PlaybackScreen(
             IconButton(onClick = { showMenu = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Меню",
+                    contentDescription = stringResource(R.string.menu),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -115,7 +117,7 @@ fun PlaybackScreen(
                 onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Добавить в плейлист") },
+                    text = { Text(stringResource(R.string.menu_add_to_playlist)) },
                     onClick = {
                         showMenu = false
                         onAddToPlaylistClick()
@@ -129,7 +131,7 @@ fun PlaybackScreen(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Изменить информацию") },
+                    text = { Text(stringResource(R.string.dialog_edit_metadata)) },
                     onClick = {
                         showMenu = false
                         onEditInfoClick()
@@ -310,9 +312,9 @@ private fun TrackInfo(uiState: PlayerUiState) {
             uiState.playlistType == PlaylistType.ALBUM ||
             uiState.playlistType == PlaylistType.CUSTOM_PLAYLIST) {
             val prefix = when (uiState.playlistType) {
-                PlaylistType.ARTIST -> "Исполнитель"
-                PlaylistType.ALBUM -> "Альбом"
-                PlaylistType.CUSTOM_PLAYLIST -> "Плейлист"
+                PlaylistType.ARTIST -> stringResource(R.string.playlist_type_artist)
+                PlaylistType.ALBUM -> stringResource(R.string.playlist_type_album)
+                PlaylistType.CUSTOM_PLAYLIST -> stringResource(R.string.playlist_type_playlist)
                 else -> ""
             }
             Text(
@@ -352,7 +354,7 @@ private fun TrackInfo(uiState: PlayerUiState) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = currentTrack?.artist ?: "Неизвестный исполнитель",
+            text = currentTrack?.artist ?: stringResource(R.string.unknown_artist),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

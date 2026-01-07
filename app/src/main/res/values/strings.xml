@@ -1,5 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AudioPlayer</string>
-</resources>
 
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Tabs -->
+    <string name="tab_all">All</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_playlists">Playlists</string>
+
+    <!-- Empty states -->
+    <string name="empty_no_tracks">No tracks (try adding folders in settings)</string>
+    <string name="empty_no_favorites">No favorite tracks</string>
+    <string name="empty_no_artists">No artists</string>
+    <string name="empty_no_albums">No albums</string>
+    <string name="empty_no_playlists">No playlists</string>
+    <string name="empty_playlist">Playlist is empty</string>
+    <string name="empty_artist_tracks">No tracks by this artist</string>
+    <string name="empty_album_tracks">No tracks in this album</string>
+
+    <!-- Common buttons -->
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_done">Done</string>
+    <string name="btn_select">Select</string>
+    <string name="btn_rename">Rename</string>
+
+    <!-- Playlist dialogs -->
+    <string name="dialog_new_playlist">New playlist</string>
+    <string name="dialog_rename_playlist">Rename playlist</string>
+    <string name="dialog_delete_playlist">Delete playlist?</string>
+    <string name="dialog_add_to_playlist">Add to playlist</string>
+    <string name="playlist_name_hint">Name</string>
+    <string name="create_new_playlist">Create new playlist</string>
+    <string name="delete_playlist_confirm">Are you sure you want to delete playlist \"%1$s\"? Tracks will not be deleted from your device.</string>
+    <string name="click_to_remove">Click to remove</string>
+    <string name="track_in_playlist">Track already in playlist</string>
+
+    <!-- Metadata dialog -->
+    <string name="dialog_edit_metadata">Edit information</string>
+    <string name="field_title">Title</string>
+    <string name="field_artist">Artist</string>
+    <string name="field_album">Album</string>
+    <string name="field_cover">Cover</string>
+    <string name="write_to_file">Write to file</string>
+    <string name="write_id3_tags">Modify ID3 tags in the file itself</string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="unknown_album">Unknown album</string>
+
+    <!-- Settings -->
+    <string name="settings_interface">Interface</string>
+    <string name="settings_folders">Folders</string>
+    <string name="settings_about">About</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="settings_font">Font</string>
+
+    <!-- Theme options -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="dialog_select_theme">Select theme</string>
+
+    <!-- Font options -->
+    <string name="font_system">System default</string>
+    <string name="font_jetbrains">JetBrains Mono (default)</string>
+    <string name="dialog_select_font">Select font</string>
+
+    <!-- Language options -->
+    <string name="settings_language">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="dialog_select_language">Select language</string>
+
+    <!-- Folders -->
+    <string name="default_music_folder">Default music folder</string>
+    <string name="label_default">(default)</string>
+    <string name="add_folder">Add folder</string>
+    <string name="delete_folder_title">Delete folder?</string>
+    <string name="delete_folder_confirm">Are you sure you want to remove folder \"%1$s\" from the list? Files will not be deleted from your device.</string>
+    <string name="folder_added">Folder \"%1$s\" added</string>
+    <string name="folder_removed">Folder \"%1$s\" removed</string>
+    <string name="folder_add_error">Failed to add folder</string>
+    <string name="delete_folder_desc">Delete folder %1$s</string>
+
+    <!-- Color picker -->
+    <string name="dialog_select_color">Select color</string>
+    <string name="reset_to_default">Reset to default</string>
+    <string name="color_picker_desc">Color picker panel</string>
+    <string name="hue_slider_desc">Hue selection slider</string>
+    <string name="original_color">Original color</string>
+    <string name="new_color">New color</string>
+    <string name="accent_color_preview">Accent color preview</string>
+
+    <!-- Playback -->
+    <string name="now_playing">Now playing:</string>
+    <string name="menu">Menu</string>
+    <string name="back">Back</string>
+    <string name="playlist_cover">Playlist cover</string>
+
+    <!-- Context menu -->
+    <string name="menu_add_to_playlist">Add to playlist</string>
+    <string name="menu_edit">Edit</string>
+    <string name="menu_remove_from_playlist">Remove from playlist</string>
+    <string name="menu_add_to_favorites">Add to favorites</string>
+    <string name="menu_remove_from_favorites">Remove from favorites</string>
+
+    <!-- Sort -->
+    <string name="sort_az">Alphabetical (A-Z)</string>
+    <string name="sort_za">Alphabetical (Z-A)</string>
+
+    <!-- Search -->
+    <string name="clear_history">Clear history</string>
+    <string name="create_new">Create new</string>
+
+    <!-- About -->
+    <string name="version_format">Version: %1$s</string>
+    <string name="source_code">Source code</string>
+
+    <!-- Playlist type labels -->
+    <string name="playlist_type_artist">Artist</string>
+    <string name="playlist_type_album">Album</string>
+    <string name="playlist_type_playlist">Playlist</string>
+    <string name="all_tracks">All tracks</string>
+
+    <!-- Track count plurals -->
+    <plurals name="track_count">
+        <item quantity="one">%1$d track</item>
+        <item quantity="other">%1$d tracks</item>
+    </plurals>
+</resources>

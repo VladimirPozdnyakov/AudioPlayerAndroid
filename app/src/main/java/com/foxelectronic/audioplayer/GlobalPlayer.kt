@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -90,7 +91,7 @@ fun GlobalPlayerBar(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = track.artist ?: "Неизвестный исполнитель",
+                                text = track.artist ?: stringResource(R.string.unknown_artist),
                                 style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

@@ -4,6 +4,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.foxelectronic.audioplayer.R
 
 /**
  * НОВАЯ ФИЧА: Диалог подтверждения удаления папки
@@ -16,9 +18,9 @@ fun FolderDeletionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Удалить папку?") },
+        title = { Text(stringResource(R.string.delete_folder_title)) },
         text = {
-            Text("Вы действительно хотите удалить папку \"$folderName\" из списка? Файлы не будут удалены с устройства.")
+            Text(stringResource(R.string.delete_folder_confirm, folderName))
         },
         confirmButton = {
             TextButton(
@@ -27,12 +29,12 @@ fun FolderDeletionDialog(
                     onDismiss()
                 }
             ) {
-                Text("Удалить")
+                Text(stringResource(R.string.btn_delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

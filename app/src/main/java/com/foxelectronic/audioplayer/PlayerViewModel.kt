@@ -739,11 +739,11 @@ class PlayerViewModel : ViewModel() {
     }
 
     private fun groupTracksByArtist(tracks: List<Track>): Map<String, List<Track>> {
-        return tracks.groupBy { it.artist ?: "Неизвестный исполнитель" }
+        return tracks.groupBy { it.artist ?: UNKNOWN_ARTIST_KEY }
     }
 
     private fun groupTracksByAlbum(tracks: List<Track>): Map<String, List<Track>> {
-        return tracks.groupBy { it.album ?: "Неизвестный альбом" }
+        return tracks.groupBy { it.album ?: UNKNOWN_ALBUM_KEY }
     }
 
     private fun updateGroups() {
@@ -1067,6 +1067,9 @@ class PlayerViewModel : ViewModel() {
     }
 
     companion object {
+        const val UNKNOWN_ARTIST_KEY = "__unknown_artist__"
+        const val UNKNOWN_ALBUM_KEY = "__unknown_album__"
+
         @JvmStatic
         fun createExoPlayerInstance(context: android.content.Context): androidx.media3.exoplayer.ExoPlayer {
             return androidx.media3.exoplayer.ExoPlayer.Builder(context)

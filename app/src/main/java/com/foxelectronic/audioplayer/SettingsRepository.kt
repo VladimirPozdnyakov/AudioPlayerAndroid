@@ -12,10 +12,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.util.Locale
 
 enum class AppTheme { SYSTEM, LIGHT, DARK }
 
 enum class FontType { SYSTEM, JETBRAINS_MONO }
+
+enum class AppLanguage { ENGLISH, RUSSIAN }
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
@@ -27,6 +30,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_LAST_PLAYED_TRACK_ID = stringPreferencesKey("last_played_track_id")
         private val KEY_LAST_PLAYED_POSITION = longPreferencesKey("last_played_position")
         private val KEY_FONT_TYPE = stringPreferencesKey("font_type")
+        private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_SELECTED_TAB = intPreferencesKey("selected_tab")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
@@ -65,6 +69,19 @@ class SettingsRepository(private val context: Context) {
             when (prefs[KEY_FONT_TYPE]) {
                 FontType.SYSTEM.name -> FontType.SYSTEM
                 else -> FontType.JETBRAINS_MONO  // Default to JetBrains Mono font
+            }
+        }
+
+    val languageFlow: Flow<AppLanguage> = preferencesFlow
+        .map { prefs ->
+            when (prefs[KEY_LANGUAGE]) {
+                AppLanguage.ENGLISH.name -> AppLanguage.ENGLISH
+                AppLanguage.RUSSIAN.name -> AppLanguage.RUSSIAN
+                else -> {
+                    // По умолчанию определяем язык на основе системной локали
+                    val systemLocale = Locale.getDefault().language
+                    if (systemLocale == "ru") AppLanguage.RUSSIAN else AppLanguage.ENGLISH
+                }
             }
         }
 
@@ -115,6 +132,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun setFontType(fontType: FontType) {
         context.dataStore.edit { prefs ->
             prefs[KEY_FONT_TYPE] = fontType.name
+        }
+    }
+
+    suspend fun setLanguage(language: AppLanguage) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LANGUAGE] = language.name
         }
     }
 

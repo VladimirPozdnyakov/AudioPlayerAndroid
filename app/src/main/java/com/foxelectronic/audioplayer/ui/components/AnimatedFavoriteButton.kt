@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.foxelectronic.audioplayer.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -51,9 +53,13 @@ fun AnimatedFavoriteButton(
             label = "favoriteScaleAnimation"
         )
 
+        val contentDesc = if (isFavorite)
+            stringResource(R.string.menu_remove_from_favorites)
+        else
+            stringResource(R.string.menu_add_to_favorites)
         Icon(
             imageVector = if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-            contentDescription = if (isFavorite) "Удалить из избранного" else "Добавить в избранное",
+            contentDescription = contentDesc,
             tint = if (isFavorite) favoriteColor else unfavoriteColor,
             modifier = Modifier.size(iconSize).scale(currentScale)
         )
