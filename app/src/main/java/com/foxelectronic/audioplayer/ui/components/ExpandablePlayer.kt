@@ -63,7 +63,8 @@ fun ExpandablePlayer(
     modifier: Modifier = Modifier,
     onAddToPlaylistClick: () -> Unit = {},
     onEditInfoClick: () -> Unit = {},
-    onArtistClick: (String) -> Unit = {}
+    onArtistClick: (String) -> Unit = {},
+    onAlbumClick: (String) -> Unit = {}
 ) {
     if (uiState.currentIndex < 0 || uiState.tracks.isEmpty()) return
 
@@ -258,6 +259,10 @@ fun ExpandablePlayer(
                     animateToCollapsed()
                     onArtistClick(artist)
                 },
+                onAlbumClick = { album ->
+                    animateToCollapsed()
+                    onAlbumClick(album)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { backgroundHeight.toDp() })
@@ -421,7 +426,8 @@ private fun ExpandedPlayerContent(
     modifier: Modifier = Modifier,
     onAddToPlaylistClick: () -> Unit = {},
     onEditInfoClick: () -> Unit = {},
-    onArtistClick: (String) -> Unit = {}
+    onArtistClick: (String) -> Unit = {},
+    onAlbumClick: (String) -> Unit = {}
 ) {
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     var showFullscreenArt by remember { mutableStateOf(false) }
@@ -613,6 +619,42 @@ private fun ExpandedPlayerContent(
                         )
                     }
                 )
+                // Перейти к исполнителю
+                if (currentTrack?.artist != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.menu_go_to_artist)) },
+                        onClick = {
+                            showMenu = false
+                            if (artists.size > 1) {
+                                showArtistSelectionDialog = true
+                            } else if (artists.isNotEmpty()) {
+                                onArtistClick(artists.first())
+                            }
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                }
+                // Перейти к альбому
+                if (currentTrack?.album != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.menu_go_to_album)) },
+                        onClick = {
+                            showMenu = false
+                            onAlbumClick(currentTrack.album)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Album,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                }
             }
         }
     }

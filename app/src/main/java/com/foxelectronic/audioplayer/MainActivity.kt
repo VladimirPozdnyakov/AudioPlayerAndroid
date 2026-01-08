@@ -58,6 +58,8 @@ import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material3.*
 import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
@@ -232,8 +234,9 @@ fun MainScreen(
     var showEditMetadataDialogFromPlayer by remember { mutableStateOf(false) }
     var playlistsContainingTrack by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
-    // Состояние для навигации к исполнителю из плеера
+    // Состояние для навигации к исполнителю и альбому
     var artistToNavigate by remember { mutableStateOf<String?>(null) }
+    var albumToNavigate by remember { mutableStateOf<String?>(null) }
 
     // Offset для NavigationBar: уезжает вниз при раскрытии плеера
     // При свайпе вниз (expandProgress < 0) остаётся на месте
@@ -279,7 +282,11 @@ fun MainScreen(
                             }
                         },
                         navigateToArtist = artistToNavigate,
-                        onArtistNavigated = { artistToNavigate = null }
+                        onArtistNavigated = { artistToNavigate = null },
+                        navigateToAlbum = albumToNavigate,
+                        onAlbumNavigated = { albumToNavigate = null },
+                        onGoToArtist = { artist -> artistToNavigate = artist },
+                        onGoToAlbum = { album -> albumToNavigate = album }
                     )
                     1 -> SettingsScreen(
                         state = settings,
@@ -401,6 +408,12 @@ fun MainScreen(
                     selectedTab = 0
                     // Устанавливаем исполнителя для навигации
                     artistToNavigate = artist
+                },
+                onAlbumClick = { album ->
+                    // Переключаемся на главную вкладку (PlayerScreen)
+                    selectedTab = 0
+                    // Устанавливаем альбом для навигации
+                    albumToNavigate = album
                 }
             )
         }
@@ -500,7 +513,11 @@ fun PlayerScreen(
     expandProgress: Float = 0f,
     onTrackClick: (Track) -> Unit = {},
     navigateToArtist: String? = null,
-    onArtistNavigated: () -> Unit = {}
+    onArtistNavigated: () -> Unit = {},
+    navigateToAlbum: String? = null,
+    onAlbumNavigated: () -> Unit = {},
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
@@ -561,6 +578,18 @@ fun PlayerScreen(
             viewModel.selectArtist(navigateToArtist)
             // Сбрасываем флаг навигации
             onArtistNavigated()
+        }
+    }
+
+    // Обработка навигации к альбому
+    LaunchedEffect(navigateToAlbum) {
+        if (navigateToAlbum != null) {
+            // Переходим на вкладку альбомов
+            pagerState.animateScrollToPage(3)
+            // Выбираем альбом
+            viewModel.selectAlbum(navigateToAlbum)
+            // Сбрасываем флаг навигации
+            onAlbumNavigated()
         }
     }
 
@@ -1082,7 +1111,9 @@ fun PlayerScreen(
                         emptyMessage = stringResource(R.string.empty_no_tracks),
                         listState = allTracksListState,
                         expandProgress = expandProgress,
-                        playlistName = stringResource(R.string.all_tracks)
+                        playlistName = stringResource(R.string.all_tracks),
+                        onGoToArtist = onGoToArtist,
+                        onGoToAlbum = onGoToAlbum
                     )
                     1 -> TrackList(
                         tracks = favoriteTracks,
@@ -1094,7 +1125,9 @@ fun PlayerScreen(
                         listState = favoriteTracksListState,
                         expandProgress = expandProgress,
                         playlistName = stringResource(R.string.tab_favorites),
-                        playlistType = PlaylistType.FAVORITES
+                        playlistType = PlaylistType.FAVORITES,
+                        onGoToArtist = onGoToArtist,
+                        onGoToAlbum = onGoToAlbum
                     )
                     2 -> ArtistsTab(
                         artistGroups = filteredArtistGroups,
@@ -1103,7 +1136,9 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         onTrackClick = onTrackClick,
                         listState = artistsListState,
-                        expandProgress = expandProgress
+                        expandProgress = expandProgress,
+                        onGoToArtist = onGoToArtist,
+                        onGoToAlbum = onGoToAlbum
                     )
                     3 -> AlbumsTab(
                         albumGroups = filteredAlbumGroups,
@@ -1112,7 +1147,9 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         onTrackClick = onTrackClick,
                         listState = albumsListState,
-                        expandProgress = expandProgress
+                        expandProgress = expandProgress,
+                        onGoToArtist = onGoToArtist,
+                        onGoToAlbum = onGoToAlbum
                     )
                     4 -> PlaylistsTab(
                         playlists = uiState.customPlaylists,
@@ -1122,7 +1159,9 @@ fun PlayerScreen(
                         viewModel = viewModel,
                         onTrackClick = onTrackClick,
                         listState = playlistsListState,
-                        expandProgress = expandProgress
+                        expandProgress = expandProgress,
+                        onGoToArtist = onGoToArtist,
+                        onGoToAlbum = onGoToAlbum
                     )
                 }
             }
@@ -1197,7 +1236,9 @@ private fun TrackList(
     listState: LazyListState,
     expandProgress: Float = 0f,
     playlistName: String = "Все треки",
-    playlistType: PlaylistType = PlaylistType.ALL
+    playlistType: PlaylistType = PlaylistType.ALL,
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {}
 ) {
     // Состояния для диалогов
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
@@ -1340,6 +1381,8 @@ private fun TrackList(
                         }
                     },
                     showRemoveFromPlaylist = playlistType == PlaylistType.CUSTOM_PLAYLIST,
+                    onGoToArtist = onGoToArtist,
+                    onGoToAlbum = onGoToAlbum,
                     modifier = Modifier.animateItem(
                         fadeInSpec = tween(durationMillis = 200),
                         fadeOutSpec = tween(durationMillis = 200),
@@ -1367,9 +1410,22 @@ private fun TrackItem(
     onEditInfoClick: () -> Unit = {},
     onRemoveFromPlaylistClick: () -> Unit = {},
     showRemoveFromPlaylist: Boolean = false,
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var showArtistSelectionDialog by remember { mutableStateOf(false) }
+
+    // Парсинг исполнителей
+    val artists = remember(track.artist) {
+        track.artist?.let { artistString ->
+            artistString
+                .split(Regex("[,;]|\\s+feat\\.?\\s+|\\s+ft\\.?\\s+|\\s+&\\s+|\\s+and\\s+|\\s+featuring\\s+", RegexOption.IGNORE_CASE))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        } ?: emptyList()
+    }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1576,10 +1632,86 @@ private fun TrackItem(
                                 )
                             }
                         )
+                        // Перейти к исполнителю
+                        if (track.artist != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_go_to_artist)) },
+                                onClick = {
+                                    showMenu = false
+                                    if (artists.size > 1) {
+                                        showArtistSelectionDialog = true
+                                    } else if (artists.isNotEmpty()) {
+                                        onGoToArtist(artists.first())
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Person,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
+                        // Перейти к альбому
+                        if (track.album != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_go_to_album)) },
+                                onClick = {
+                                    showMenu = false
+                                    onGoToAlbum(track.album)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Album,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Диалог выбора исполнителя
+    if (showArtistSelectionDialog && artists.size > 1) {
+        AlertDialog(
+            onDismissRequest = { showArtistSelectionDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.dialog_select_artist),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+                Column {
+                    artists.forEach { artist ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showArtistSelectionDialog = false
+                                    onGoToArtist(artist)
+                                },
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Text(
+                                text = artist,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showArtistSelectionDialog = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
     }
 }
 
@@ -1692,7 +1824,9 @@ private fun ArtistsTab(
     viewModel: PlayerViewModel,
     onTrackClick: (Track) -> Unit,
     listState: LazyListState,
-    expandProgress: Float
+    expandProgress: Float,
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {}
 ) {
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
@@ -1809,7 +1943,9 @@ private fun ArtistsTab(
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedArtist,
-                    playlistType = PlaylistType.ARTIST
+                    playlistType = PlaylistType.ARTIST,
+                    onGoToArtist = onGoToArtist,
+                    onGoToAlbum = onGoToAlbum
                 )
             }
         }
@@ -1923,7 +2059,9 @@ private fun AlbumsTab(
     viewModel: PlayerViewModel,
     onTrackClick: (Track) -> Unit,
     listState: LazyListState,
-    expandProgress: Float
+    expandProgress: Float,
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {}
 ) {
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
@@ -2040,7 +2178,9 @@ private fun AlbumsTab(
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedAlbum,
-                    playlistType = PlaylistType.ALBUM
+                    playlistType = PlaylistType.ALBUM,
+                    onGoToArtist = onGoToArtist,
+                    onGoToAlbum = onGoToAlbum
                 )
             }
         }
@@ -2172,7 +2312,9 @@ private fun PlaylistsTab(
     viewModel: PlayerViewModel,
     onTrackClick: (Track) -> Unit,
     listState: LazyListState,
-    expandProgress: Float
+    expandProgress: Float,
+    onGoToArtist: (String) -> Unit = {},
+    onGoToAlbum: (String) -> Unit = {}
 ) {
     val swipeOffset = remember { androidx.compose.animation.core.Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
@@ -2376,7 +2518,9 @@ private fun PlaylistsTab(
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedPlaylist.name,
-                    playlistType = PlaylistType.CUSTOM_PLAYLIST
+                    playlistType = PlaylistType.CUSTOM_PLAYLIST,
+                    onGoToArtist = onGoToArtist,
+                    onGoToAlbum = onGoToAlbum
                 )
             }
         }

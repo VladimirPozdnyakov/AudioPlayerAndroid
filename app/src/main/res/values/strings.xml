@@ -111,6 +111,8 @@
     <string name="menu_remove_from_playlist">Remove from playlist</string>
     <string name="menu_add_to_favorites">Add to favorites</string>
     <string name="menu_remove_from_favorites">Remove from favorites</string>
+    <string name="menu_go_to_artist">Go to artist</string>
+    <string name="menu_go_to_album">Go to album</string>
 
     <!-- Sort -->
     <string name="sort_az">Alphabetical (A-Z)</string>

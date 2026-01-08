@@ -111,6 +111,8 @@
     <string name="menu_remove_from_playlist">Удалить из плейлиста</string>
     <string name="menu_add_to_favorites">Добавить в избранное</string>
     <string name="menu_remove_from_favorites">Удалить из избранного</string>
+    <string name="menu_go_to_artist">Перейти к исполнителю</string>
+    <string name="menu_go_to_album">Перейти к альбому</string>
 
     <!-- Сортировка -->
     <string name="sort_az">По алфавиту (А-Я)</string>
