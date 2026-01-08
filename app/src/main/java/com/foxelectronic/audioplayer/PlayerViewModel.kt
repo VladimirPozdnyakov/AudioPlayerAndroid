@@ -486,34 +486,24 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun next() {
-        val currentIndex = _uiState.value.currentIndex
-        val tracks = _uiState.value.tracks
-
-        if (currentIndex >= 0 && currentIndex < tracks.size - 1) {
-            val nextTrack = tracks[currentIndex + 1]
-            play(nextTrack)
-        } else if (currentIndex == tracks.size - 1 && _uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
+        val p = player ?: return
+        // Используем seekToNextMediaItem() для корректной работы с режимом перемешивания
+        if (p.hasNextMediaItem()) {
+            p.seekToNextMediaItem()
+        } else if (_uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
             // Если последний трек и включен повтор всех - переходим к первому
-            val firstTrack = tracks.firstOrNull()
-            if (firstTrack != null) {
-                play(firstTrack)
-            }
+            p.seekTo(0, 0)
         }
     }
 
     fun previous() {
-        val currentIndex = _uiState.value.currentIndex
-        val tracks = _uiState.value.tracks
-
-        if (currentIndex > 0 && tracks.isNotEmpty()) {
-            val previousTrack = tracks[currentIndex - 1]
-            play(previousTrack)
-        } else if (currentIndex == 0 && _uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
+        val p = player ?: return
+        // Используем seekToPreviousMediaItem() для корректной работы с режимом перемешивания
+        if (p.hasPreviousMediaItem()) {
+            p.seekToPreviousMediaItem()
+        } else if (_uiState.value.repeatMode == Player.REPEAT_MODE_ALL) {
             // Если первый трек и включен повтор всех - переходим к последнему
-            val lastTrack = tracks.lastOrNull()
-            if (lastTrack != null) {
-                play(lastTrack)
-            }
+            p.seekTo(p.mediaItemCount - 1, 0)
         }
     }
 
