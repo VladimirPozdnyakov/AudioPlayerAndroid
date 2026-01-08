@@ -482,7 +482,17 @@ class PlayerViewModel : ViewModel() {
         val p = player ?: return
         val newState = !p.shuffleModeEnabled
         p.shuffleModeEnabled = newState
-        _uiState.value = _uiState.value.copy(isShuffleModeEnabled = newState)
+
+        // Если включаем shuffle и был режим повтора одного трека - сбрасываем на повтор всех
+        if (newState && p.repeatMode == Player.REPEAT_MODE_ONE) {
+            p.repeatMode = Player.REPEAT_MODE_ALL
+            _uiState.value = _uiState.value.copy(
+                isShuffleModeEnabled = newState,
+                repeatMode = Player.REPEAT_MODE_ALL
+            )
+        } else {
+            _uiState.value = _uiState.value.copy(isShuffleModeEnabled = newState)
+        }
     }
 
     fun next() {

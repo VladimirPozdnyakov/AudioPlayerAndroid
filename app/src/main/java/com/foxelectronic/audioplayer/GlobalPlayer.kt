@@ -117,8 +117,7 @@ fun GlobalPlayerBar(
                 ) {
                     ShuffleModeButton(
                         isEnabled = uiState.isShuffleModeEnabled,
-                        onToggle = { viewModel.toggleShuffleMode() },
-                        enabled = uiState.repeatMode != Player.REPEAT_MODE_ONE
+                        onToggle = { viewModel.toggleShuffleMode() }
                     )
 
                     AnimatedSkipButton(
