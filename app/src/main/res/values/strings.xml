@@ -135,4 +135,10 @@
         <item quantity="one">%1$d track</item>
         <item quantity="other">%1$d tracks</item>
     </plurals>
+
+    <!-- Artist selection dialog -->
+    <string name="dialog_select_artist">Select artist</string>
+
+    <!-- Artist hint -->
+    <string name="artist_separator_hint">Separate artists with: comma, semicolon, feat., ft., or &amp;</string>
 </resources>

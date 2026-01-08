@@ -62,7 +62,8 @@ fun ExpandablePlayer(
     navBarHeight: Dp = 72.dp,
     modifier: Modifier = Modifier,
     onAddToPlaylistClick: () -> Unit = {},
-    onEditInfoClick: () -> Unit = {}
+    onEditInfoClick: () -> Unit = {},
+    onArtistClick: (String) -> Unit = {}
 ) {
     if (uiState.currentIndex < 0 || uiState.tracks.isEmpty()) return
 
@@ -253,6 +254,10 @@ fun ExpandablePlayer(
                 onCollapseClick = { animateToCollapsed() },
                 onAddToPlaylistClick = onAddToPlaylistClick,
                 onEditInfoClick = onEditInfoClick,
+                onArtistClick = { artist ->
+                    animateToCollapsed()
+                    onArtistClick(artist)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { backgroundHeight.toDp() })
@@ -415,11 +420,23 @@ private fun ExpandedPlayerContent(
     onCollapseClick: () -> Unit,
     modifier: Modifier = Modifier,
     onAddToPlaylistClick: () -> Unit = {},
-    onEditInfoClick: () -> Unit = {}
+    onEditInfoClick: () -> Unit = {},
+    onArtistClick: (String) -> Unit = {}
 ) {
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     var showFullscreenArt by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showArtistSelectionDialog by remember { mutableStateOf(false) }
+
+    // Парсинг исполнителей (разделители: запятая, точка с запятой, feat., ft., &, and, featuring)
+    val artists = remember(currentTrack?.artist) {
+        currentTrack?.artist?.let { artistString ->
+            artistString
+                .split(Regex("[,;]|\\s+feat\\.?\\s+|\\s+ft\\.?\\s+|\\s+&\\s+|\\s+and\\s+|\\s+featuring\\s+", RegexOption.IGNORE_CASE))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        } ?: emptyList()
+    }
 
     Box(
         modifier = modifier.alpha(alpha)
@@ -463,10 +480,24 @@ private fun ExpandedPlayerContent(
                 Text(
                     text = currentTrack?.artist ?: stringResource(R.string.unknown_artist),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (currentTrack?.artist != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .then(
+                            if (currentTrack?.artist != null) {
+                                Modifier.clickable {
+                                    if (artists.size > 1) {
+                                        showArtistSelectionDialog = true
+                                    } else if (artists.isNotEmpty()) {
+                                        onArtistClick(artists.first())
+                                    }
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
                 )
             }
         }
@@ -592,6 +623,59 @@ private fun ExpandedPlayerContent(
             onDismiss = { showFullscreenArt = false }
         )
     }
+
+    // Диалог выбора исполнителя (если несколько)
+    if (showArtistSelectionDialog && artists.size > 1) {
+        ArtistSelectionDialog(
+            artists = artists,
+            onDismiss = { showArtistSelectionDialog = false },
+            onArtistSelected = { artist ->
+                showArtistSelectionDialog = false
+                onArtistClick(artist)
+            }
+        )
+    }
+}
+
+@Composable
+private fun ArtistSelectionDialog(
+    artists: List<String>,
+    onDismiss: () -> Unit,
+    onArtistSelected: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.dialog_select_artist),
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column {
+                artists.forEach { artist ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onArtistSelected(artist) },
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Text(
+                            text = artist,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_cancel))
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)

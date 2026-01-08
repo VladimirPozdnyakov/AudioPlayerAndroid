@@ -232,6 +232,9 @@ fun MainScreen(
     var showEditMetadataDialogFromPlayer by remember { mutableStateOf(false) }
     var playlistsContainingTrack by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
+    // Состояние для навигации к исполнителю из плеера
+    var artistToNavigate by remember { mutableStateOf<String?>(null) }
+
     // Offset для NavigationBar: уезжает вниз при раскрытии плеера
     // При свайпе вниз (expandProgress < 0) остаётся на месте
     val navBarOffset = if (expandProgress > 0f) {
@@ -274,7 +277,9 @@ fun MainScreen(
                             } else if (playerUiState.currentIndex < 0) {
                                 viewModel.play(track)
                             }
-                        }
+                        },
+                        navigateToArtist = artistToNavigate,
+                        onArtistNavigated = { artistToNavigate = null }
                     )
                     1 -> SettingsScreen(
                         state = settings,
@@ -390,6 +395,12 @@ fun MainScreen(
                 },
                 onEditInfoClick = {
                     showEditMetadataDialogFromPlayer = true
+                },
+                onArtistClick = { artist ->
+                    // Переключаемся на главную вкладку (PlayerScreen)
+                    selectedTab = 0
+                    // Устанавливаем исполнителя для навигации
+                    artistToNavigate = artist
                 }
             )
         }
@@ -487,7 +498,9 @@ fun PlayerScreen(
     viewModel: PlayerViewModel,
     settingsRepository: SettingsRepository? = null,
     expandProgress: Float = 0f,
-    onTrackClick: (Track) -> Unit = {}
+    onTrackClick: (Track) -> Unit = {},
+    navigateToArtist: String? = null,
+    onArtistNavigated: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
@@ -536,6 +549,18 @@ fun PlayerScreen(
             uiState.selectedArtist != null -> viewModel.clearSelectedArtist()
             uiState.selectedAlbum != null -> viewModel.clearSelectedAlbum()
             uiState.selectedCustomPlaylist != null -> viewModel.clearSelectedCustomPlaylist()
+        }
+    }
+
+    // Обработка навигации к исполнителю из плеера
+    LaunchedEffect(navigateToArtist) {
+        if (navigateToArtist != null) {
+            // Переходим на вкладку исполнителей
+            pagerState.animateScrollToPage(2)
+            // Выбираем исполнителя
+            viewModel.selectArtist(navigateToArtist)
+            // Сбрасываем флаг навигации
+            onArtistNavigated()
         }
     }
 

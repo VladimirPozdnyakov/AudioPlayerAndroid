@@ -137,4 +137,10 @@
         <item quantity="many">%1$d треков</item>
         <item quantity="other">%1$d треков</item>
     </plurals>
+
+    <!-- Диалог выбора исполнителя -->
+    <string name="dialog_select_artist">Выберите исполнителя</string>
+
+    <!-- Подсказка по исполнителям -->
+    <string name="artist_separator_hint">Разделяйте исполнителей: запятой, точкой с запятой, feat., ft. или &amp;</string>
 </resources>

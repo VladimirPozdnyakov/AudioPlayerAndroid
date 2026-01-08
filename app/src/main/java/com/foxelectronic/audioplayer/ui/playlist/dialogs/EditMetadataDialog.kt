@@ -114,6 +114,13 @@ fun EditMetadataDialog(
                     value = artist,
                     onValueChange = { artist = it },
                     label = { Text(stringResource(R.string.field_artist)) },
+                    supportingText = {
+                        Text(
+                            text = stringResource(R.string.artist_separator_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

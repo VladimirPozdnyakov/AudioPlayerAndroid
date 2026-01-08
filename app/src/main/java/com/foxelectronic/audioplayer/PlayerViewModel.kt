@@ -728,8 +728,32 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Парсинг строки исполнителя на отдельных исполнителей
+     * Разделители: запятая, точка с запятой, feat., ft., &, and, featuring
+     */
+    private fun parseArtists(artistString: String?): List<String> {
+        if (artistString.isNullOrBlank()) return listOf(UNKNOWN_ARTIST_KEY)
+
+        val artists = artistString
+            .split(Regex("[,;]|\\s+feat\\.?\\s+|\\s+ft\\.?\\s+|\\s+&\\s+|\\s+and\\s+|\\s+featuring\\s+", RegexOption.IGNORE_CASE))
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        return if (artists.isEmpty()) listOf(UNKNOWN_ARTIST_KEY) else artists
+    }
+
     private fun groupTracksByArtist(tracks: List<Track>): Map<String, List<Track>> {
-        return tracks.groupBy { it.artist ?: UNKNOWN_ARTIST_KEY }
+        val result = mutableMapOf<String, MutableList<Track>>()
+
+        for (track in tracks) {
+            val artists = parseArtists(track.artist)
+            for (artist in artists) {
+                result.getOrPut(artist) { mutableListOf() }.add(track)
+            }
+        }
+
+        return result
     }
 
     private fun groupTracksByAlbum(tracks: List<Track>): Map<String, List<Track>> {
