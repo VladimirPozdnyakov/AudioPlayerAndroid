@@ -2,6 +2,8 @@ package com.foxelectronic.audioplayer.util
 
 import android.content.Context
 import android.net.Uri
+import android.provider.MediaStore
+import android.webkit.MimeTypeMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jaudiotagger.audio.AudioFileIO
@@ -12,10 +14,50 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 
 /**
- * Утилита для редактирования ID3 тегов аудиофайлов
+ * Утилита для редактирования метаданных аудиофайлов
+ * Поддерживает: MP3, FLAC, OGG, M4A, WAV, WMA, OPUS
  * Использует JAudioTagger + SAF для обхода ограничений Scoped Storage
  */
 object AudioFileEditor {
+
+    /**
+     * Определяет расширение файла по URI
+     */
+    private fun getFileExtension(context: Context, uri: Uri): String {
+        // Сначала пробуем получить из MIME type
+        val mimeType = context.contentResolver.getType(uri)
+        val extensionFromMime = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+        if (extensionFromMime != null) {
+            return extensionFromMime
+        }
+
+        // Пробуем получить из MediaStore
+        try {
+            val projection = arrayOf(MediaStore.Audio.Media.DISPLAY_NAME)
+            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val displayName = cursor.getString(0)
+                    val lastDot = displayName.lastIndexOf('.')
+                    if (lastDot > 0) {
+                        return displayName.substring(lastDot + 1)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Игнорируем
+        }
+
+        // Пробуем из пути URI
+        uri.path?.let { path ->
+            val lastDot = path.lastIndexOf('.')
+            if (lastDot > 0) {
+                return path.substring(lastDot + 1)
+            }
+        }
+
+        // По умолчанию возвращаем mp3
+        return "mp3"
+    }
 
     /**
      * Редактирование ID3 тегов аудиофайла
@@ -41,8 +83,9 @@ object AudioFileEditor {
                 ?: return@withContext Result.failure(Exception("Не удалось открыть файл для записи"))
 
             pfd.use { descriptor ->
-                // Создаем временный файл для JAudioTagger
-                val tempFile = File(context.cacheDir, "temp_audio_${System.currentTimeMillis()}.mp3")
+                // Создаем временный файл для JAudioTagger с правильным расширением
+                val extension = getFileExtension(context, uri)
+                val tempFile = File(context.cacheDir, "temp_audio_${System.currentTimeMillis()}.$extension")
 
                 try {
                     // Копируем содержимое в temp файл
@@ -101,7 +144,8 @@ object AudioFileEditor {
                 ?: return@withContext Result.failure(Exception("Не удалось открыть файл для чтения"))
 
             pfd.use { descriptor ->
-                val tempFile = File(context.cacheDir, "temp_read_${System.currentTimeMillis()}.mp3")
+                val extension = getFileExtension(context, uri)
+                val tempFile = File(context.cacheDir, "temp_read_${System.currentTimeMillis()}.$extension")
 
                 try {
                     FileInputStream(descriptor.fileDescriptor).use { input ->
