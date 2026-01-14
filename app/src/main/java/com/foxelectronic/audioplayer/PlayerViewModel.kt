@@ -452,6 +452,78 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Воспроизводит внешний аудиофайл, открытый через intent
+     */
+    fun playExternalFile(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Ждём инициализации плеера (максимум 3 секунды)
+                var attempts = 0
+                while (player == null && attempts < 30) {
+                    delay(100)
+                    attempts++
+                }
+
+                // Извлекаем метаданные из файла
+                val retriever = android.media.MediaMetadataRetriever()
+                retriever.setDataSource(context, uri)
+
+                val title = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    ?: uri.lastPathSegment?.substringBeforeLast(".") ?: "Unknown"
+                val artist = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                val album = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM)
+
+                retriever.release()
+
+                // Создаём временный трек для внешнего файла
+                val externalTrack = Track(
+                    id = uri.hashCode().toLong(),
+                    uri = uri,
+                    title = title,
+                    artist = artist,
+                    album = album
+                )
+
+                withContext(Dispatchers.Main) {
+                    val p = player
+                    if (p == null) {
+                        android.util.Log.e("PlayerViewModel", "Player not initialized")
+                        return@withContext
+                    }
+
+                    // Обновляем состояние с новым треком
+                    _uiState.value = _uiState.value.copy(
+                        tracks = listOf(externalTrack),
+                        currentIndex = 0,
+                        playlistName = title,
+                        playlistType = PlaylistType.ALL
+                    )
+
+                    // Подготавливаем и воспроизводим
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(uri)
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(title)
+                                .setArtist(artist)
+                                .build()
+                        )
+                        .build()
+
+                    p.setMediaItem(mediaItem)
+                    p.prepare()
+                    p.playWhenReady = true
+                    p.play()
+
+                    _uiState.value = _uiState.value.copy(isPlaying = true)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PlayerViewModel", "Error playing external file", e)
+            }
+        }
+    }
+
     fun seekTo(positionMs: Long) {
         val p = player ?: return
         // Сохраняем текущее состояние воспроизведения до seekTo

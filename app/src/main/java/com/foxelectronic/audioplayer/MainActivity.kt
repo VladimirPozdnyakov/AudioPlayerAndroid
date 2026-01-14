@@ -1,6 +1,7 @@
 package com.foxelectronic.audioplayer
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -149,6 +150,7 @@ import kotlinx.coroutines.delay
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: PlayerViewModel by viewModels()
+    private var pendingExternalUri: android.net.Uri? = null
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -167,7 +169,14 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         folders
                     }
-                    runOnUiThread { viewModel.loadTracks(this@MainActivity, settingsRepo, foldersToUse) }
+                    runOnUiThread {
+                        viewModel.loadTracks(this@MainActivity, settingsRepo, foldersToUse)
+                        // Воспроизводим отложенный внешний файл после инициализации плеера
+                        pendingExternalUri?.let { uri ->
+                            viewModel.playExternalFile(this@MainActivity, uri)
+                            pendingExternalUri = null
+                        }
+                    }
                 }
             }
         }
@@ -192,7 +201,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Сохраняем URI из intent для воспроизведения после инициализации
+        handleExternalAudioIntent(intent)
         ensurePermissionsAndLoad()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // При новом intent плеер уже инициализирован, воспроизводим сразу
+        if (intent.action == Intent.ACTION_VIEW) {
+            intent.data?.let { uri ->
+                viewModel.playExternalFile(this, uri)
+            }
+        }
+    }
+
+    private fun handleExternalAudioIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            pendingExternalUri = intent.data
+        }
     }
 
     private fun ensurePermissionsAndLoad() {
