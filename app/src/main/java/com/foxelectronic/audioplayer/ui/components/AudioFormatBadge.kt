@@ -1,5 +1,6 @@
 package com.foxelectronic.audioplayer.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -76,6 +77,8 @@ fun DetailedFormatInfo(
     trackArtist: String? = null,
     trackAlbum: String? = null,
     durationMs: Long = 0L,
+    onArtistClick: ((String) -> Unit)? = null,
+    onAlbumClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -92,17 +95,21 @@ fun DetailedFormatInfo(
             )
         }
 
-        trackArtist?.let {
+        trackArtist?.let { artist ->
             FormatDetailRow(
                 label = stringResource(R.string.field_artist),
-                value = it
+                value = artist,
+                isClickable = onArtistClick != null,
+                onClick = { onArtistClick?.invoke(artist) }
             )
         }
 
-        trackAlbum?.let {
+        trackAlbum?.let { album ->
             FormatDetailRow(
                 label = stringResource(R.string.field_album),
-                value = it
+                value = album,
+                isClickable = onAlbumClick != null,
+                onClick = { onAlbumClick?.invoke(album) }
             )
         }
 
@@ -222,10 +229,20 @@ fun DetailedFormatInfo(
 private fun FormatDetailRow(
     label: String,
     value: String,
+    isClickable: Boolean = false,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (isClickable) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -237,7 +254,7 @@ private fun FormatDetailRow(
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (isClickable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium
         )
     }

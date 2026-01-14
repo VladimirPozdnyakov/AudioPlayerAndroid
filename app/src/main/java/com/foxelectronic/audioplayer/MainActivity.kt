@@ -1757,7 +1757,17 @@ private fun TrackItem(
                     trackTitle = track.title,
                     trackArtist = track.artist,
                     trackAlbum = track.album,
-                    durationMs = trackDuration
+                    durationMs = trackDuration,
+                    onArtistClick = { artist ->
+                        showAudioInfoDialog = false
+                        onGoToArtist(artist)
+                    },
+                    onAlbumClick = track.album?.let { album ->
+                        { _: String ->
+                            showAudioInfoDialog = false
+                            onGoToAlbum(album)
+                        }
+                    }
                 )
             },
             confirmButton = {

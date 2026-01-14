@@ -719,7 +719,17 @@ private fun ExpandedPlayerContent(
                     trackTitle = currentTrack?.title,
                     trackArtist = currentTrack?.artist,
                     trackAlbum = currentTrack?.album,
-                    durationMs = uiState.durationMs
+                    durationMs = uiState.durationMs,
+                    onArtistClick = { artist ->
+                        showAudioInfoDialog = false
+                        onArtistClick(artist)
+                    },
+                    onAlbumClick = currentTrack?.album?.let { album ->
+                        { _: String ->
+                            showAudioInfoDialog = false
+                            onAlbumClick(album)
+                        }
+                    }
                 )
             },
             confirmButton = {
