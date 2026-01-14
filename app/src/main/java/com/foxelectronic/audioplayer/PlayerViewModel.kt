@@ -16,12 +16,16 @@ import androidx.media3.common.C
 import com.foxelectronic.audioplayer.data.model.Track
 import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.data.model.PlaylistWithTrackCount
+import com.foxelectronic.audioplayer.data.model.AudioFormat
 import com.foxelectronic.audioplayer.repository.TrackCacheRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryRepository
 import com.foxelectronic.audioplayer.repository.SearchHistoryItem
 import com.foxelectronic.audioplayer.repository.PlaylistRepository
 import com.foxelectronic.audioplayer.repository.MetadataRepository
+import com.foxelectronic.audioplayer.data.repository.AudioFormatRepository
 import com.foxelectronic.audioplayer.util.AudioFileEditor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -81,6 +85,7 @@ class PlayerViewModel : ViewModel() {
     private var searchHistoryRepository: SearchHistoryRepository? = null
     private var playlistRepository: PlaylistRepository? = null
     private var metadataRepository: MetadataRepository? = null
+    private var audioFormatRepository: AudioFormatRepository? = null
     private var applicationContext: Context? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
@@ -101,6 +106,7 @@ class PlayerViewModel : ViewModel() {
         this.searchHistoryRepository = SearchHistoryRepository(context)
         this.playlistRepository = PlaylistRepository(database.playlistDao(), database.trackMetadataDao())
         this.metadataRepository = MetadataRepository(database.trackMetadataDao(), context)
+        this.audioFormatRepository = AudioFormatRepository(database.audioFormatDao(), context)
 
         // Подписка на историю поиска
         viewModelScope.launch {
@@ -162,6 +168,15 @@ class PlayerViewModel : ViewModel() {
             // Update UI state first
             _uiState.value = _uiState.value.copy(allTracks = sortedFreshTracks, tracks = sortedFreshTracks, isLoading = false)
             updateGroups()
+
+            // Извлечение аудио форматов в фоне
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    audioFormatRepository?.bulkExtractFormats(sortedFreshTracks)
+                } catch (e: Exception) {
+                    android.util.Log.e("PlayerViewModel", "Error extracting audio formats", e)
+                }
+            }
 
             // Restore the last played track if it exists in the new track list
             if (lastPlayedTrackId != null) {
@@ -1088,6 +1103,13 @@ class PlayerViewModel : ViewModel() {
         viewModelScope.launch {
             metadataRepository?.deleteMetadataOverride(trackId)
         }
+    }
+
+    /**
+     * Получить информацию об аудио формате трека
+     */
+    fun getAudioFormat(trackId: Long): Flow<AudioFormat?> {
+        return audioFormatRepository?.getFormat(trackId) ?: flowOf(null)
     }
 
     companion object {

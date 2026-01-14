@@ -39,15 +39,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.AppTheme
+import com.foxelectronic.audioplayer.AudioQualityPreference
 import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.FontType
 import com.foxelectronic.audioplayer.SettingsUiState
 import com.foxelectronic.audioplayer.ui.settings.colorpicker.ColorPickerDialog
+import com.foxelectronic.audioplayer.ui.settings.dialogs.AudioQualitySelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.FolderDeletionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.FontSelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.LanguageSelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.dialogs.ThemeSelectionDialog
 import com.foxelectronic.audioplayer.ui.settings.sections.AboutSection
+import com.foxelectronic.audioplayer.ui.settings.sections.AudioSection
 import com.foxelectronic.audioplayer.ui.settings.sections.FoldersSection
 import com.foxelectronic.audioplayer.ui.settings.sections.InterfaceSection
 import com.foxelectronic.audioplayer.ui.settings.sections.SettingsMenuSection
@@ -58,7 +61,7 @@ import com.foxelectronic.audioplayer.ui.settings.utils.VersionUtils
 import kotlinx.coroutines.launch
 
 private enum class SettingsSection {
-    MENU, INTERFACE, FOLDERS, ABOUT
+    MENU, INTERFACE, AUDIO, FOLDERS, ABOUT
 }
 
 /**
@@ -80,6 +83,7 @@ fun SettingsScreen(
     onAccentChange: (String) -> Unit,
     onFontTypeChange: (FontType) -> Unit,
     onLanguageChange: (AppLanguage) -> Unit,
+    onAudioQualityChange: (AudioQualityPreference) -> Unit,
     onAddFolder: (String) -> Unit,
     onRemoveFolder: (String) -> Unit
 ) {
@@ -144,6 +148,7 @@ fun SettingsScreen(
 
     val navSettingsTitle = stringResource(R.string.nav_settings)
     val settingsInterfaceTitle = stringResource(R.string.settings_interface)
+    val settingsAudioTitle = stringResource(R.string.settings_audio)
     val settingsFoldersTitle = stringResource(R.string.settings_folders)
     val settingsAboutTitle = stringResource(R.string.settings_about)
     val backContentDesc = stringResource(R.string.back)
@@ -156,6 +161,7 @@ fun SettingsScreen(
                         when (currentSection) {
                             SettingsSection.MENU -> navSettingsTitle
                             SettingsSection.INTERFACE -> settingsInterfaceTitle
+                            SettingsSection.AUDIO -> settingsAudioTitle
                             SettingsSection.FOLDERS -> settingsFoldersTitle
                             SettingsSection.ABOUT -> settingsAboutTitle
                         }
@@ -195,6 +201,7 @@ fun SettingsScreen(
                     SettingsSection.MENU -> {
                         SettingsMenuSection(
                             onNavigateToInterface = { currentSection = SettingsSection.INTERFACE },
+                            onNavigateToAudio = { currentSection = SettingsSection.AUDIO },
                             onNavigateToFolders = { currentSection = SettingsSection.FOLDERS },
                             onNavigateToAbout = { currentSection = SettingsSection.ABOUT }
                         )
@@ -217,6 +224,15 @@ fun SettingsScreen(
                             },
                             onLanguageClick = {
                                 dialogState = SettingsDialogState.LanguageSelection(state.language)
+                            }
+                        )
+                    }
+
+                    SettingsSection.AUDIO -> {
+                        AudioSection(
+                            currentQuality = state.audioQuality,
+                            onQualityClick = {
+                                dialogState = SettingsDialogState.AudioQualitySelection(state.audioQuality)
                             }
                         )
                     }
@@ -294,6 +310,17 @@ fun SettingsScreen(
                 onConfirm = {
                     onRemoveFolder(dialog.folderUri)
                     snackbarMessage = SnackbarMessage.FolderRemoved(dialog.folderName)
+                    dialogState = SettingsDialogState.None
+                }
+            )
+        }
+
+        is SettingsDialogState.AudioQualitySelection -> {
+            AudioQualitySelectionDialog(
+                currentQuality = dialog.currentQuality,
+                onDismiss = { dialogState = SettingsDialogState.None },
+                onConfirm = { quality ->
+                    onAudioQualityChange(quality)
                     dialogState = SettingsDialogState.None
                 }
             )

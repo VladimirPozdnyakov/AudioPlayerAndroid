@@ -432,6 +432,7 @@ private fun ExpandedPlayerContent(
     var showFullscreenArt by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showArtistSelectionDialog by remember { mutableStateOf(false) }
+    var showAudioInfoDialog by remember { mutableStateOf(false) }
 
     // Парсинг исполнителей (разделители: запятая, точка с запятой, feat., ft., &, and, featuring)
     val artists = remember(currentTrack?.artist) {
@@ -504,6 +505,18 @@ private fun ExpandedPlayerContent(
                             }
                         )
                 )
+
+                // Audio Format Badge
+                currentTrack?.let { track ->
+                    val audioFormat by viewModel.getAudioFormat(track.id).collectAsState(initial = null)
+                    audioFormat?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        FormattedAudioInfo(
+                            format = it,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -654,6 +667,21 @@ private fun ExpandedPlayerContent(
                         }
                     )
                 }
+
+                // Информация об аудио
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.menu_audio_info)) },
+                    onClick = {
+                        showMenu = false
+                        showAudioInfoDialog = true
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Info,
+                            contentDescription = null
+                        )
+                    }
+                )
             }
         }
     }
@@ -673,6 +701,31 @@ private fun ExpandedPlayerContent(
             onArtistSelected = { artist ->
                 showArtistSelectionDialog = false
                 onArtistClick(artist)
+            }
+        )
+    }
+
+    // Диалог информации об аудио
+    if (showAudioInfoDialog) {
+        val audioFormat by viewModel.getAudioFormat(currentTrack?.id ?: 0L)
+            .collectAsState(initial = null)
+
+        AlertDialog(
+            onDismissRequest = { showAudioInfoDialog = false },
+            title = { Text(stringResource(R.string.audio_format_details)) },
+            text = {
+                DetailedFormatInfo(
+                    format = audioFormat,
+                    trackTitle = currentTrack?.title,
+                    trackArtist = currentTrack?.artist,
+                    trackAlbum = currentTrack?.album,
+                    durationMs = uiState.durationMs
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showAudioInfoDialog = false }) {
+                    Text(stringResource(R.string.btn_ok))
+                }
             }
         )
     }

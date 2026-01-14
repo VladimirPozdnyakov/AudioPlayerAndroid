@@ -145,4 +145,35 @@
 
     <!-- Подсказка по исполнителям -->
     <string name="artist_separator_hint">Разделяйте исполнителей: запятой, точкой с запятой, feat., ft. или &amp;</string>
+
+    <!-- Аудио формат -->
+    <string name="menu_audio_info">Информация об аудио</string>
+    <string name="audio_format_details">Детали аудио формата</string>
+    <string name="audio_format_codec">Кодек</string>
+    <string name="audio_format_sample_rate">Частота дискретизации</string>
+    <string name="audio_format_bit_depth">Битовая глубина</string>
+    <string name="audio_format_bitrate">Битрейт</string>
+    <string name="audio_format_duration">Длительность</string>
+    <string name="audio_format_channels_label">Каналы</string>
+    <string name="audio_format_channels">каналов</string>
+    <string name="audio_format_mono">Моно</string>
+    <string name="audio_format_stereo">Стерео</string>
+    <string name="audio_format_quality_type">Тип качества</string>
+    <string name="audio_format_lossless">Без потерь</string>
+    <string name="btn_ok">ОК</string>
+
+    <!-- Настройки аудио -->
+    <string name="settings_audio">Аудио</string>
+    <string name="settings_audio_output">Вывод аудио</string>
+    <string name="audio_quality_preference">Предпочтение качества аудио</string>
+    <string name="audio_quality_auto">Авто</string>
+    <string name="audio_quality_auto_desc">Автоматический выбор оптимального качества</string>
+    <string name="audio_quality_high">Приоритет качеству</string>
+    <string name="audio_quality_high_desc">Предпочитать высокое разрешение при наличии</string>
+    <string name="audio_quality_save">Экономия трафика</string>
+    <string name="audio_quality_save_desc">Предпочитать меньшие файлы для экономии места</string>
+    <string name="audio_quality_prioritize">Приоритет качеству</string>
+    <string name="audio_quality_save_bandwidth">Экономия трафика</string>
+    <string name="normalize_volume">Нормализация громкости</string>
+    <string name="normalize_volume_desc">Выравнивание громкости треков</string>
 </resources>

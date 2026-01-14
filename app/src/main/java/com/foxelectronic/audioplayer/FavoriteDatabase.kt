@@ -18,8 +18,10 @@ import kotlinx.coroutines.flow.Flow
 import com.foxelectronic.audioplayer.data.model.Playlist
 import com.foxelectronic.audioplayer.data.model.PlaylistTrackCrossRef
 import com.foxelectronic.audioplayer.data.model.TrackMetadataOverride
+import com.foxelectronic.audioplayer.data.model.AudioFormat
 import com.foxelectronic.audioplayer.data.dao.PlaylistDao
 import com.foxelectronic.audioplayer.data.dao.TrackMetadataDao
+import com.foxelectronic.audioplayer.data.dao.AudioFormatDao
 
 @Entity(tableName = "favorites")
 data class FavoriteTrack(
@@ -58,9 +60,10 @@ interface FavoriteDao {
         FavoriteTrack::class,
         Playlist::class,
         PlaylistTrackCrossRef::class,
-        TrackMetadataOverride::class
+        TrackMetadataOverride::class,
+        AudioFormat::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters
@@ -68,6 +71,7 @@ abstract class FavoriteDatabase : RoomDatabase() {
     abstract fun favoriteDao(): FavoriteDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun trackMetadataDao(): TrackMetadataDao
+    abstract fun audioFormatDao(): AudioFormatDao
 
     companion object {
         @Volatile
@@ -119,6 +123,25 @@ abstract class FavoriteDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Таблица аудио форматов
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS audio_formats (
+                        trackId INTEGER PRIMARY KEY NOT NULL,
+                        sampleRate INTEGER,
+                        bitrate INTEGER,
+                        bitDepth INTEGER,
+                        codec TEXT,
+                        channelCount INTEGER,
+                        isLossless INTEGER NOT NULL DEFAULT 0,
+                        lastUpdated INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_audio_formats_trackId ON audio_formats(trackId)")
+            }
+        }
+
         fun getDatabase(context: Context): FavoriteDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -126,7 +149,8 @@ abstract class FavoriteDatabase : RoomDatabase() {
                     FavoriteDatabase::class.java,
                     "favorite_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .fallbackToDestructiveMigration() // Если миграция не удалась, пересоздать БД
                 .build()
                 INSTANCE = instance
                 instance

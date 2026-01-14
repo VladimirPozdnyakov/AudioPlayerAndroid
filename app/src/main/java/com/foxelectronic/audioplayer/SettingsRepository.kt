@@ -20,6 +20,12 @@ enum class FontType { SYSTEM, JETBRAINS_MONO }
 
 enum class AppLanguage { ENGLISH, RUSSIAN }
 
+enum class AudioQualityPreference {
+    AUTO,               // Автоматический выбор
+    PRIORITIZE_QUALITY, // Приоритет качеству
+    SAVE_BANDWIDTH      // Экономия трафика
+}
+
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsRepository(private val context: Context) {
@@ -32,6 +38,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_FONT_TYPE = stringPreferencesKey("font_type")
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_SELECTED_TAB = intPreferencesKey("selected_tab")
+        private val KEY_AUDIO_QUALITY = stringPreferencesKey("audio_quality")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
@@ -149,6 +156,21 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSelectedTab(tab: Int) {
         context.dataStore.edit { prefs ->
             prefs[KEY_SELECTED_TAB] = tab
+        }
+    }
+
+    val audioQualityFlow: Flow<AudioQualityPreference> = preferencesFlow
+        .map { prefs ->
+            when (prefs[KEY_AUDIO_QUALITY]) {
+                AudioQualityPreference.PRIORITIZE_QUALITY.name -> AudioQualityPreference.PRIORITIZE_QUALITY
+                AudioQualityPreference.SAVE_BANDWIDTH.name -> AudioQualityPreference.SAVE_BANDWIDTH
+                else -> AudioQualityPreference.AUTO
+            }
+        }
+
+    suspend fun setAudioQuality(preference: AudioQualityPreference) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_AUDIO_QUALITY] = preference.name
         }
     }
 }

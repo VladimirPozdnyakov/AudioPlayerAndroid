@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Path
 import android.graphics.Paint
 import android.graphics.Path as AndroidPath
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Shuffle
@@ -68,6 +69,8 @@ import com.foxelectronic.audioplayer.ui.playlist.dialogs.AddToPlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.EditMetadataDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.DeletePlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.RenamePlaylistDialog
+import com.foxelectronic.audioplayer.ui.components.AudioFormatBadge
+import com.foxelectronic.audioplayer.ui.components.DetailedFormatInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -297,6 +300,7 @@ fun MainScreen(
                             settingsViewModel.setLanguage(language)
                             applyLanguage(language)
                         },
+                        onAudioQualityChange = settingsViewModel::setAudioQuality,
                         onAddFolder = { newFolder ->
                             val updated = (settings.folders + newFolder).distinct()
                             settingsViewModel.setFolders(updated)
@@ -1353,6 +1357,7 @@ private fun TrackList(
                     isCurrent = isCurrent,
                     isPlaying = isPlaying,
                     uiState = uiState,
+                    viewModel = viewModel,
                     onTrackClick = {
                         if (isCurrent) {
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
@@ -1403,6 +1408,7 @@ private fun TrackItem(
     isCurrent: Boolean,
     isPlaying: Boolean,
     uiState: PlayerUiState,
+    viewModel: PlayerViewModel,
     onTrackClick: () -> Unit,
     onPlayPauseClick: () -> Unit,
     onFavoriteClick: () -> Unit,
@@ -1416,6 +1422,7 @@ private fun TrackItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showArtistSelectionDialog by remember { mutableStateOf(false) }
+    var showAudioInfoDialog by remember { mutableStateOf(false) }
 
     // Парсинг исполнителей
     val artists = remember(track.artist) {
@@ -1554,7 +1561,7 @@ private fun TrackItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = track.title,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -1565,6 +1572,15 @@ private fun TrackItem(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // Compact Audio Format Badge
+                    val audioFormat by viewModel.getAudioFormat(track.id).collectAsState(initial = null)
+                    audioFormat?.let {
+                        AudioFormatBadge(
+                            format = it,
+                            compact = true,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
 
                 AnimatedFavoriteButton(
@@ -1668,6 +1684,20 @@ private fun TrackItem(
                                 }
                             )
                         }
+                        // Информация об аудио
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_audio_info)) },
+                            onClick = {
+                                showMenu = false
+                                showAudioInfoDialog = true
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = null
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -1709,6 +1739,30 @@ private fun TrackItem(
             dismissButton = {
                 TextButton(onClick = { showArtistSelectionDialog = false }) {
                     Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
+    }
+
+    // Диалог информации об аудио
+    if (showAudioInfoDialog) {
+        val audioFormat by viewModel.getAudioFormat(track.id).collectAsState(initial = null)
+        val trackDuration = if (isCurrent) uiState.durationMs else 0L
+        AlertDialog(
+            onDismissRequest = { showAudioInfoDialog = false },
+            title = { Text(stringResource(R.string.audio_format_details)) },
+            text = {
+                DetailedFormatInfo(
+                    format = audioFormat,
+                    trackTitle = track.title,
+                    trackArtist = track.artist,
+                    trackAlbum = track.album,
+                    durationMs = trackDuration
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showAudioInfoDialog = false }) {
+                    Text(stringResource(R.string.btn_ok))
                 }
             }
         )

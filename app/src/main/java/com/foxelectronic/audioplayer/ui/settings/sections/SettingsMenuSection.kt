@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import com.foxelectronic.audioplayer.ui.components.SettingsMenuButton
 @Composable
 fun SettingsMenuSection(
     onNavigateToInterface: () -> Unit,
+    onNavigateToAudio: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
@@ -32,6 +34,11 @@ fun SettingsMenuSection(
             text = stringResource(R.string.settings_interface),
             icon = Icons.Rounded.Palette,
             onClick = onNavigateToInterface
+        )
+        SettingsMenuButton(
+            text = stringResource(R.string.settings_audio),
+            icon = Icons.Rounded.Headphones,
+            onClick = onNavigateToAudio
         )
         SettingsMenuButton(
             text = stringResource(R.string.settings_folders),

@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.session.MediaSession
 import com.foxelectronic.audioplayer.MainActivity
 import com.foxelectronic.audioplayer.data.repository.PlaybackStateRepository
@@ -30,10 +31,17 @@ object PlayerModule {
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_NONE) // Предотвращение захвата для сохранения качества
                     .build(),
                 true
             )
             .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_LOCAL) // Поддержка процессора активным для плавного воспроизведения
+            .setRenderersFactory(
+                DefaultRenderersFactory(context).apply {
+                    setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                }
+            )
             .build()
     }
 

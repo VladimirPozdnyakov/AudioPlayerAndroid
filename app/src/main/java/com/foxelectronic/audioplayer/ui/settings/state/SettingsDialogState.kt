@@ -2,6 +2,7 @@ package com.foxelectronic.audioplayer.ui.settings.state
 
 import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.AppTheme
+import com.foxelectronic.audioplayer.AudioQualityPreference
 import com.foxelectronic.audioplayer.FontType
 
 /**
@@ -26,4 +27,7 @@ sealed class SettingsDialogState {
 
     /** Диалог подтверждения удаления папки */
     data class FolderDeletion(val folderUri: String, val folderName: String) : SettingsDialogState()
+
+    /** Диалог выбора качества аудио */
+    data class AudioQualitySelection(val currentQuality: AudioQualityPreference) : SettingsDialogState()
 }

@@ -143,4 +143,35 @@
 
     <!-- Artist hint -->
     <string name="artist_separator_hint">Separate artists with: comma, semicolon, feat., ft., or &amp;</string>
+
+    <!-- Audio format -->
+    <string name="menu_audio_info">Audio info</string>
+    <string name="audio_format_details">Audio format details</string>
+    <string name="audio_format_codec">Codec</string>
+    <string name="audio_format_sample_rate">Sample rate</string>
+    <string name="audio_format_bit_depth">Bit depth</string>
+    <string name="audio_format_bitrate">Bitrate</string>
+    <string name="audio_format_duration">Duration</string>
+    <string name="audio_format_channels_label">Channels</string>
+    <string name="audio_format_channels">channels</string>
+    <string name="audio_format_mono">Mono</string>
+    <string name="audio_format_stereo">Stereo</string>
+    <string name="audio_format_quality_type">Quality type</string>
+    <string name="audio_format_lossless">Lossless</string>
+    <string name="btn_ok">OK</string>
+
+    <!-- Audio settings -->
+    <string name="settings_audio">Audio</string>
+    <string name="settings_audio_output">Audio output</string>
+    <string name="audio_quality_preference">Audio quality preference</string>
+    <string name="audio_quality_auto">Auto</string>
+    <string name="audio_quality_auto_desc">Automatically select optimal quality</string>
+    <string name="audio_quality_high">Prioritize quality</string>
+    <string name="audio_quality_high_desc">Prefer high-resolution audio when available</string>
+    <string name="audio_quality_save">Save bandwidth</string>
+    <string name="audio_quality_save_desc">Prefer smaller files to save storage</string>
+    <string name="audio_quality_prioritize">Prioritize quality</string>
+    <string name="audio_quality_save_bandwidth">Save bandwidth</string>
+    <string name="normalize_volume">Volume normalization</string>
+    <string name="normalize_volume_desc">Equalize volume across tracks</string>
 </resources>
