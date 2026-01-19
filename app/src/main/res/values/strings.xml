@@ -64,13 +64,18 @@
 
     <!-- Theme options -->
     <string name="theme_system">System</string>
+    <string name="theme_system_desc">Follow system theme</string>
     <string name="theme_light">Light</string>
+    <string name="theme_light_desc">Always use light theme</string>
     <string name="theme_dark">Dark</string>
+    <string name="theme_dark_desc">Always use dark theme</string>
     <string name="dialog_select_theme">Select theme</string>
 
     <!-- Font options -->
     <string name="font_system">System default</string>
-    <string name="font_jetbrains">JetBrains Mono (default)</string>
+    <string name="font_system_desc">Use your device default font</string>
+    <string name="font_jetbrains">JetBrains Mono</string>
+    <string name="font_jetbrains_desc">Monospace font for developers</string>
     <string name="dialog_select_font">Select font</string>
 
     <!-- Language options -->
@@ -95,9 +100,12 @@
     <string name="reset_to_default">Reset to default</string>
     <string name="color_picker_desc">Color picker panel</string>
     <string name="hue_slider_desc">Hue selection slider</string>
-    <string name="original_color">Original color</string>
-    <string name="new_color">New color</string>
+    <string name="original_color">Original</string>
+    <string name="new_color">New</string>
     <string name="accent_color_preview">Accent color preview</string>
+    <string name="preset_colors">Preset colors</string>
+    <string name="custom_color">Custom color</string>
+    <string name="selected_color">Selected color</string>
 
     <!-- Playback -->
     <string name="now_playing">Now playing:</string>

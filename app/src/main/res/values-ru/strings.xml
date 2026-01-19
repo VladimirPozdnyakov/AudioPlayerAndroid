@@ -64,13 +64,18 @@
 
     <!-- Темы -->
     <string name="theme_system">Системная</string>
+    <string name="theme_system_desc">Следовать системной теме</string>
     <string name="theme_light">Светлая</string>
+    <string name="theme_light_desc">Всегда использовать светлую тему</string>
     <string name="theme_dark">Тёмная</string>
+    <string name="theme_dark_desc">Всегда использовать тёмную тему</string>
     <string name="dialog_select_theme">Выберите тему</string>
 
     <!-- Шрифты -->
-    <string name="font_system">Как в системе</string>
-    <string name="font_jetbrains">JetBrains Mono (по умолчанию)</string>
+    <string name="font_system">Системный</string>
+    <string name="font_system_desc">Использовать шрифт вашего устройства</string>
+    <string name="font_jetbrains">JetBrains Mono</string>
+    <string name="font_jetbrains_desc">Моноширинный шрифт для разработчиков</string>
     <string name="dialog_select_font">Выберите шрифт</string>
 
     <!-- Язык -->
@@ -84,7 +89,7 @@
     <string name="label_default">(по умолчанию)</string>
     <string name="add_folder">Добавить папку</string>
     <string name="delete_folder_title">Удалить папку?</string>
-    <string name="delete_folder_confirm">Вы действительно хотите удалить папку \"%1$s\" из списка? Файлы не будут удалены с устройства.</string>
+    <string name="delete_folder_confirm">Вы действительно хотите удалить папку «%1$s» из списка? Файлы не будут удалены с устройства.</string>
     <string name="folder_added">Папка \"%1$s\" добавлена</string>
     <string name="folder_removed">Папка \"%1$s\" удалена</string>
     <string name="folder_add_error">Не удалось добавить папку</string>
@@ -92,12 +97,15 @@
 
     <!-- Выбор цвета -->
     <string name="dialog_select_color">Выберите цвет</string>
-    <string name="reset_to_default">Сбросить на стандартный</string>
+    <string name="reset_to_default">Сбросить</string>
     <string name="color_picker_desc">Панель выбора цвета</string>
     <string name="hue_slider_desc">Полоса выбора оттенка</string>
-    <string name="original_color">Исходный цвет</string>
-    <string name="new_color">Новый цвет</string>
+    <string name="original_color">Исходный</string>
+    <string name="new_color">Новый</string>
     <string name="accent_color_preview">Превью акцентного цвета</string>
+    <string name="preset_colors">Готовые цвета</string>
+    <string name="custom_color">Свой цвет</string>
+    <string name="selected_color">Выбранный цвет</string>
 
     <!-- Большой плеер -->
     <string name="now_playing">Сейчас воспроизводится:</string>

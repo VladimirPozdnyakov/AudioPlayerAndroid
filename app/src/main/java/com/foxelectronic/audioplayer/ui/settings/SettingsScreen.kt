@@ -9,23 +9,30 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.AppLanguage
 import com.foxelectronic.audioplayer.AppTheme
@@ -154,17 +162,19 @@ fun SettingsScreen(
     val backContentDesc = stringResource(R.string.back)
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        when (currentSection) {
+                        text = when (currentSection) {
                             SettingsSection.MENU -> navSettingsTitle
                             SettingsSection.INTERFACE -> settingsInterfaceTitle
                             SettingsSection.AUDIO -> settingsAudioTitle
                             SettingsSection.FOLDERS -> settingsFoldersTitle
                             SettingsSection.ABOUT -> settingsAboutTitle
-                        }
+                        },
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 navigationIcon = {
@@ -176,7 +186,10 @@ fun SettingsScreen(
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -184,8 +197,10 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(8.dp))
 
@@ -193,8 +208,28 @@ fun SettingsScreen(
                 targetState = currentSection,
                 label = "settings_sections",
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(300)) togetherWith
-                            fadeOut(animationSpec = tween(300))
+                    // Slide анимация для навигации
+                    if (targetState != SettingsSection.MENU) {
+                        // Вход в секцию - слайд справа
+                        (slideInHorizontally(
+                            animationSpec = tween(300),
+                            initialOffsetX = { it / 3 }
+                        ) + fadeIn(animationSpec = tween(300))) togetherWith
+                        (slideOutHorizontally(
+                            animationSpec = tween(300),
+                            targetOffsetX = { -it / 3 }
+                        ) + fadeOut(animationSpec = tween(200)))
+                    } else {
+                        // Возврат в меню - слайд слева
+                        (slideInHorizontally(
+                            animationSpec = tween(300),
+                            initialOffsetX = { -it / 3 }
+                        ) + fadeIn(animationSpec = tween(300))) togetherWith
+                        (slideOutHorizontally(
+                            animationSpec = tween(300),
+                            targetOffsetX = { it / 3 }
+                        ) + fadeOut(animationSpec = tween(200)))
+                    }
                 }
             ) { section ->
                 when (section) {
@@ -242,7 +277,6 @@ fun SettingsScreen(
                             folders = state.folders,
                             onAddFolder = { folderPicker.launch(null) },
                             onRemoveFolder = { folderUri ->
-                                // НОВАЯ ФИЧА: Подтверждение удаления
                                 val folderName = FolderUtils.getFolderDisplayName(folderUri)
                                 dialogState = SettingsDialogState.FolderDeletion(folderUri, folderName)
                             }
@@ -254,6 +288,9 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            // Отступ внизу для комфортного скролла
+            Spacer(Modifier.height(24.dp))
         }
     }
 

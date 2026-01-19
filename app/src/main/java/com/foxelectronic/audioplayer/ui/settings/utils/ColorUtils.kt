@@ -43,6 +43,19 @@ object ColorUtils {
         AndroidColor.colorToHSV(color.toArgb(), hsv)
         return hsv
     }
+
+    /**
+     * Определяет, является ли цвет тёмным (для выбора контрастного текста/иконки)
+     */
+    fun isColorDark(color: Color): Boolean {
+        val argb = color.toArgb()
+        val r = (argb shr 16) and 0xFF
+        val g = (argb shr 8) and 0xFF
+        val b = argb and 0xFF
+        // Формула относительной яркости
+        val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance < 0.5
+    }
 }
 
 /**

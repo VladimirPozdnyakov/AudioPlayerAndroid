@@ -3,16 +3,18 @@ package com.foxelectronic.audioplayer.ui.settings.sections
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.AudioQualityPreference
 import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.SettingsListItem
+import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
 
 /**
- * Секция настроек аудио
+ * Секция настроек аудио с современным карточным дизайном
  */
 @Composable
 fun AudioSection(
@@ -20,9 +22,11 @@ fun AudioSection(
     onQualityClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dimens = AudioPlayerThemeExtended.dimens
+
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(dimens.itemSpacing)
     ) {
         // Настройка качества аудио
         val qualityLabel = when (currentQuality) {
@@ -33,6 +37,7 @@ fun AudioSection(
         SettingsListItem(
             title = stringResource(R.string.audio_quality_preference),
             subtitle = qualityLabel,
+            icon = Icons.Rounded.HighQuality,
             onClick = onQualityClick
         )
     }
