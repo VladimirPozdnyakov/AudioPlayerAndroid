@@ -98,6 +98,7 @@ import kotlin.math.roundToInt
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerTheme
 import com.foxelectronic.audioplayer.ui.components.ExpandablePlayer
 import com.foxelectronic.audioplayer.ui.settings.SettingsScreen
+import com.foxelectronic.audioplayer.ui.components.ModernNavigationBar
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.foxelectronic.audioplayer.SortMode
@@ -255,7 +256,7 @@ fun MainScreen(
     val playerUiState by viewModel.uiState.collectAsState()
     val hasCurrentTrack = playerUiState.currentIndex >= 0 && playerUiState.tracks.isNotEmpty()
 
-    val navBarHeight = 72.dp
+    val navBarHeight = 88.dp
     val density = LocalDensity.current
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
@@ -267,14 +268,6 @@ fun MainScreen(
     // Состояние для навигации к исполнителю и альбому
     var artistToNavigate by remember { mutableStateOf<String?>(null) }
     var albumToNavigate by remember { mutableStateOf<String?>(null) }
-
-    // Offset для NavigationBar: уезжает вниз при раскрытии плеера
-    // При свайпе вниз (expandProgress < 0) остаётся на месте
-    val navBarOffset = if (expandProgress > 0f) {
-        (expandProgress * navBarHeightPx).roundToInt()
-    } else {
-        0
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Основной контент
@@ -348,77 +341,14 @@ fun MainScreen(
             }
         }
 
-        // NavigationBar внизу с анимацией (zIndex выше когда плеер свёрнут)
-        NavigationBar(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .zIndex(if (expandProgress < 0.5f) 5f else 0f)
-                .height(navBarHeight)
-                .offset { IntOffset(0, navBarOffset) },
-            containerColor = MaterialTheme.colorScheme.surface,
-            windowInsets = WindowInsets(0)
-        ) {
-            NavigationBarItem(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Rounded.Home, contentDescription = stringResource(R.string.nav_home), modifier = Modifier.size(24.dp)) },
-                        label = { Text(stringResource(R.string.nav_home)) },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        )
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = {
-                            var rotationState by remember { mutableStateOf(0f) }
-
-                            // Trigger rotation only when navigating to settings (from 0 to 1)
-                            LaunchedEffect(selectedTab) {
-                                if (selectedTab == 1) {
-                                    rotationState += 360f
-                                }
-                            }
-
-                            val rotation by animateFloatAsState(
-                                targetValue = rotationState,
-                                animationSpec = tween(durationMillis = 500),
-                                label = "rotationAnimation"
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = stringResource(R.string.nav_settings),
-                                    modifier = Modifier
-                                        .graphicsLayer {
-                                            rotationZ = rotation
-                                        }
-                                        .fillMaxSize(),
-                                    tint = if (selectedTab == 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        label = { Text(stringResource(R.string.nav_settings)) },
-                        alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        )
-                    )
-                }
+        // Современная нижняя навигация
+        ModernNavigationBar(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it },
+            expandProgress = expandProgress,
+            navBarHeightPx = navBarHeightPx,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
 
         // ExpandablePlayer над NavigationBar (zIndex ниже когда свёрнут)
         if (hasCurrentTrack) {
