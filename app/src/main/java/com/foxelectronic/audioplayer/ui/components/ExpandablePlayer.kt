@@ -50,6 +50,15 @@ import coil.request.ImageRequest
 import com.foxelectronic.audioplayer.PlayerUiState
 import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlaylistType
+import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.StrokeCap
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -71,7 +80,7 @@ fun ExpandablePlayer(
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val screenHeightDp = configuration.screenHeightDp.dp
-    val collapsedHeightDp = 72.dp
+    val collapsedHeightDp = 120.dp // 80dp контент + 40dp padding (8dp сверху и 32dp снизу)
 
     val screenHeightPx = with(density) { screenHeightDp.toPx() }
     val collapsedHeightPx = with(density) { collapsedHeightDp.toPx() }
@@ -220,18 +229,36 @@ fun ExpandablePlayer(
             }
             .zIndex(if (expandProgress > 0.5f) 10f else 1f)
     ) {
-        // Фон (не покрывает область навбара когда свёрнут)
-        // Высота фона: от collapsedHeight до screenHeight
-        val backgroundHeight = collapsedHeightPx + (screenHeightPx - collapsedHeightPx) * expandProgress
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(with(density) { backgroundHeight.toDp() })
-                .align(Alignment.TopCenter)
-                .background(MaterialTheme.colorScheme.background)
-        )
+        // Развёрнутый плеер (появляется при развёртывании)
+        if (expandProgress > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                ExpandedPlayerContent(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    alpha = expandProgress.coerceIn(0f, 1f),
+                    onCollapseClick = { animateToCollapsed() },
+                    onAddToPlaylistClick = onAddToPlaylistClick,
+                    onEditInfoClick = onEditInfoClick,
+                    onArtistClick = { artist ->
+                        animateToCollapsed()
+                        onArtistClick(artist)
+                    },
+                    onAlbumClick = { album ->
+                        animateToCollapsed()
+                        onAlbumClick(album)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
 
-        // Мини-плеер
+        // Мини-плеер (поверх всего для взаимодействия)
         // expandProgress = 1: уезжает вверх, expandProgress = -1: уезжает вниз
         val miniPlayerOffset = -expandProgress * collapsedHeightPx
         CollapsedPlayerContent(
@@ -244,31 +271,8 @@ fun ExpandablePlayer(
                 .height(collapsedHeightDp)
                 .offset { IntOffset(0, miniPlayerOffset.roundToInt()) }
                 .align(Alignment.TopCenter)
+                .zIndex(2f)
         )
-
-        // Развёрнутый плеер (появляется при развёртывании)
-        if (expandProgress > 0.01f) {
-            ExpandedPlayerContent(
-                uiState = uiState,
-                viewModel = viewModel,
-                alpha = expandProgress.coerceIn(0f, 1f),
-                onCollapseClick = { animateToCollapsed() },
-                onAddToPlaylistClick = onAddToPlaylistClick,
-                onEditInfoClick = onEditInfoClick,
-                onArtistClick = { artist ->
-                    animateToCollapsed()
-                    onArtistClick(artist)
-                },
-                onAlbumClick = { album ->
-                    animateToCollapsed()
-                    onAlbumClick(album)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(with(density) { backgroundHeight.toDp() })
-                    .align(Alignment.TopCenter)
-            )
-        }
     }
 }
 
@@ -282,6 +286,9 @@ private fun CollapsedPlayerContent(
     modifier: Modifier = Modifier
 ) {
     if (alpha < 0.01f) return
+
+    val extendedColors = AudioPlayerThemeExtended.colors
+    val context = LocalContext.current
 
     val progress = if (uiState.durationMs > 0) {
         (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
@@ -302,116 +309,262 @@ private fun CollapsedPlayerContent(
         }
     }
 
-    Column(
+    // Анимация нажатия
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(100),
+        label = "miniPlayerScale"
+    )
+
+    Box(
         modifier = modifier
             .alpha(alpha)
-            .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { onExpandClick() })
-            }
+            .padding(horizontal = 16.dp)
+            .padding(top = 8.dp, bottom = 32.dp)
+            .scale(scale)
+            .clip(RoundedCornerShape(16.dp))
+            .background(extendedColors.cardBackground)
+            .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                onClick = onExpandClick
+            )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Анимированная информация о треке
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f),
-                userScrollEnabled = false
-            ) { page ->
-                val track = uiState.tracks.getOrNull(page)
-                val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-
-                Column(
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(start = 12.dp, end = 8.dp, top = 14.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Обложка альбома
+                val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer(
-                            alpha = 1f - (kotlin.math.abs(pageOffset) * 1.5f).coerceIn(0f, 1f),
-                            translationX = pageOffset * 50f
-                        ),
-                    verticalArrangement = Arrangement.Center
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(extendedColors.accentSoft),
+                    contentAlignment = Alignment.Center
                 ) {
-                    track?.let {
-                        Text(
-                            text = it.title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(currentTrack?.albumArtPath)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp)),
+                        loading = {
+                            Icon(
+                                imageVector = Icons.Rounded.MusicNote,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        },
+                        error = {
+                            Icon(
+                                imageVector = Icons.Rounded.MusicNote,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Анимированная информация о треке
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f),
+                    userScrollEnabled = false
+                ) { page ->
+                    val track = uiState.tracks.getOrNull(page)
+                    val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer(
+                                alpha = 1f - (kotlin.math.abs(pageOffset) * 1.5f).coerceIn(0f, 1f),
+                                translationX = pageOffset * 50f
+                            ),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        track?.let {
+                            Text(
+                                text = it.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = it.artist ?: stringResource(R.string.unknown_artist),
                                 style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = "${uiState.positionMs.toTimeString()} / ${uiState.durationMs.toTimeString()}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 8.dp)
+                                color = extendedColors.subtleText
                             )
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Кнопки управления
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Кнопка Previous
+                    MiniPlayerControlButton(
+                        icon = Icons.Rounded.SkipPrevious,
+                        contentDescription = "Previous",
+                        onClick = { viewModel.previous() }
+                    )
+
+                    // Кнопка Play/Pause
+                    MiniPlayerPlayPauseButton(
+                        isPlaying = uiState.isPlaying,
+                        onToggle = { if (uiState.isPlaying) viewModel.pause() else viewModel.resume() }
+                    )
+
+                    // Кнопка Next
+                    MiniPlayerControlButton(
+                        icon = Icons.Rounded.SkipNext,
+                        contentDescription = "Next",
+                        onClick = { viewModel.next() }
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ShuffleModeButton(
-                    isEnabled = uiState.isShuffleModeEnabled,
-                    onToggle = { viewModel.toggleShuffleMode() }
-                )
-
-                AnimatedSkipButton(
-                    direction = SkipDirection.Previous,
-                    onClick = { viewModel.previous() }
-                )
-
-                AnimatedPlayPauseButton(
-                    isPlaying = uiState.isPlaying,
-                    onToggle = { if (uiState.isPlaying) viewModel.pause() else viewModel.resume() },
-                    size = 40.dp,
-                    iconSize = 20.dp
-                )
-
-                AnimatedSkipButton(
-                    direction = SkipDirection.Next,
-                    onClick = { viewModel.next() }
-                )
-
-                RepeatModeButton(
-                    repeatMode = uiState.repeatMode,
-                    onToggle = { viewModel.toggleRepeatMode() }
-                )
-            }
+            // Современный прогресс-бар
+            MiniPlayerProgressBar(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(bottom = 8.dp)
+            )
         }
+    }
+}
 
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+@Composable
+private fun MiniPlayerControlButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1f,
+        animationSpec = tween(100),
+        label = "controlButtonScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .scale(scale)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(bounded = true, color = MaterialTheme.colorScheme.primary),
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(26.dp)
         )
+    }
+}
+
+@Composable
+private fun MiniPlayerPlayPauseButton(
+    isPlaying: Boolean,
+    onToggle: () -> Unit
+) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.9f else 1f,
+        animationSpec = tween(100),
+        label = "playPauseScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(50.dp)
+            .scale(scale)
+            .clip(RoundedCornerShape(14.dp))
+            .background(extendedColors.accentSoft)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(bounded = true, color = MaterialTheme.colorScheme.primary),
+                onClick = onToggle
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+            contentDescription = if (isPlaying) "Pause" else "Play",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}
+
+@Composable
+private fun MiniPlayerProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val trackColor = extendedColors.cardBorder
+
+    Canvas(
+        modifier = modifier
+            .height(4.dp)
+            .clip(RoundedCornerShape(2.dp))
+    ) {
+        val width = size.width
+        val height = size.height
+
+        // Фон трека
+        drawRoundRect(
+            color = trackColor,
+            size = size,
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(height / 2, height / 2)
+        )
+
+        // Прогресс
+        if (progress > 0f) {
+            drawRoundRect(
+                color = primaryColor,
+                size = size.copy(width = width * progress),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(height / 2, height / 2)
+            )
+        }
     }
 }
 

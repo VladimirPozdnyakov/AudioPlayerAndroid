@@ -256,7 +256,7 @@ fun MainScreen(
     val playerUiState by viewModel.uiState.collectAsState()
     val hasCurrentTrack = playerUiState.currentIndex >= 0 && playerUiState.tracks.isNotEmpty()
 
-    val navBarHeight = 88.dp
+    val navBarHeight = 80.dp
     val density = LocalDensity.current
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 

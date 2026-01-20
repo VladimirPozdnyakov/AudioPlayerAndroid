@@ -74,9 +74,9 @@ fun ModernNavigationBar(
             .fillMaxWidth()
             .zIndex(if (expandProgress < 0.5f) 5f else 0f)
             .offset { IntOffset(0, navBarOffset) }
-            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 8.dp)
     ) {
         Row(
             modifier = Modifier
