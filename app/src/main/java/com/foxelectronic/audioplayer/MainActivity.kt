@@ -720,7 +720,9 @@ fun PlayerScreen(
             Box(
                 modifier = Modifier.weight(1f)
             ) {
-                TextField(
+                val extendedColors = AudioPlayerThemeExtended.colors
+
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { newQuery ->
                         searchQuery = newQuery
@@ -733,17 +735,18 @@ fun PlayerScreen(
                             isSearchFocused = focusState.isFocused
                         },
                     singleLine = true,
-                    shape = RoundedCornerShape(24.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = extendedColors.cardBackground,
+                        unfocusedContainerColor = extendedColors.cardBackground,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = extendedColors.cardBorder
                     ),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.Search,
-                            contentDescription = "Search"
+                            contentDescription = "Search",
+                            tint = extendedColors.iconTint
                         )
                     },
                     trailingIcon = {
@@ -751,10 +754,18 @@ fun PlayerScreen(
                             IconButton(onClick = { searchQuery = "" }) {
                                 Icon(
                                     imageVector = Icons.Rounded.Clear,
-                                    contentDescription = "Clear"
+                                    contentDescription = "Clear",
+                                    tint = extendedColors.iconTint
                                 )
                             }
                         }
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.search_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = extendedColors.subtleText
+                        )
                     }
                 )
 
@@ -768,13 +779,16 @@ fun PlayerScreen(
                     modifier = Modifier
                         .fillMaxWidth(0.85f)
                         .heightIn(max = 300.dp)
+                        .background(extendedColors.cardBackground, RoundedCornerShape(12.dp))
                 ) {
                     // Элементы истории
                     searchHistory.forEach { historyItem ->
                         DropdownMenuItem(
                             text = {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -787,7 +801,7 @@ fun PlayerScreen(
                                             imageVector = Icons.Rounded.History,
                                             contentDescription = null,
                                             modifier = Modifier.size(20.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = extendedColors.iconTint
                                         )
                                         Text(
                                             text = historyItem.query,
@@ -806,7 +820,7 @@ fun PlayerScreen(
                                             imageVector = Icons.Rounded.Close,
                                             contentDescription = stringResource(R.string.btn_delete),
                                             modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = extendedColors.subtleText
                                         )
                                     }
                                 }
@@ -820,11 +834,16 @@ fun PlayerScreen(
 
                     // Разделитель перед кнопкой очистки
                     if (searchHistory.isNotEmpty()) {
-                        HorizontalDivider()
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = extendedColors.divider
+                        )
                         DropdownMenuItem(
                             text = {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {

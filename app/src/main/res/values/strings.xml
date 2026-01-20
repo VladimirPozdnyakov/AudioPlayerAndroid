@@ -127,6 +127,7 @@
     <string name="sort_za">Alphabetical (Z-A)</string>
 
     <!-- Search -->
+    <string name="search_hint">Search</string>
     <string name="clear_history">Clear history</string>
     <string name="create_new">Create new</string>
 

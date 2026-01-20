@@ -127,6 +127,7 @@
     <string name="sort_za">По алфавиту (Я-А)</string>
 
     <!-- Поиск -->
+    <string name="search_hint">Поиск</string>
     <string name="clear_history">Очистить историю</string>
     <string name="create_new">Создать новый</string>
 
