@@ -100,6 +100,11 @@ import com.foxelectronic.audioplayer.ui.components.ExpandablePlayer
 import com.foxelectronic.audioplayer.ui.settings.SettingsScreen
 import com.foxelectronic.audioplayer.ui.components.ModernNavigationBar
 import com.foxelectronic.audioplayer.ui.theme.ThemeMode
+import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.ui.draw.scale
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.foxelectronic.audioplayer.SortMode
 import kotlinx.coroutines.flow.first
@@ -1298,7 +1303,7 @@ private fun TrackList(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = bottomPadding)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = bottomPadding)
         ) {
             items(
                 items = tracks,
@@ -1390,14 +1395,29 @@ private fun TrackItem(
                 .filter { it.isNotEmpty() }
         } ?: emptyList()
     }
+
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    // Анимация нажатия
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(100),
+        label = "trackItemScale"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .height(100.dp)
-            .padding(vertical = 2.dp),
+            .padding(vertical = 4.dp)
+            .scale(scale),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-        )
+            containerColor = extendedColors.cardBackground
+        ),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (isCurrent) {
@@ -1416,7 +1436,11 @@ private fun TrackItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
-                    .clickable { onTrackClick() }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = onTrackClick
+                    )
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1435,7 +1459,7 @@ private fun TrackItem(
                         contentDescription = "Album Art",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(8.dp)),
+                            .clip(RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Crop,
                         loading = {
                             Box(
@@ -1520,13 +1544,13 @@ private fun TrackItem(
                         text = track.title,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         text = track.artist ?: stringResource(R.string.unknown_artist),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     // Compact Audio Format Badge
@@ -2009,15 +2033,31 @@ private fun ArtistGroupList(
 
 @Composable
 private fun ArtistGroupItem(artist: String, trackCount: Int, albumArtPath: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "artistCardScale"
+    )
+
     Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+        modifier = modifier.scale(scale),
+        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(8.dp),
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onClick
+                )
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SubcomposeAsyncImage(
@@ -2027,7 +2067,7 @@ private fun ArtistGroupItem(artist: String, trackCount: Int, albumArtPath: Strin
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop,
                 loading = {
                     Box(
@@ -2251,15 +2291,31 @@ private fun AlbumGroupList(
 
 @Composable
 private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, albumArtPath: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "albumCardScale"
+    )
+
     Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+        modifier = modifier.scale(scale),
+        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(8.dp),
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onClick
+                )
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SubcomposeAsyncImage(
@@ -2269,7 +2325,7 @@ private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, album
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop,
                 loading = {
                     Box(
@@ -2593,15 +2649,31 @@ private fun PlaylistItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "playlistCardScale"
+    )
+
     Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+        modifier = modifier.scale(scale),
+        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(8.dp),
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onClick
+                )
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Обложка плейлиста
@@ -2609,8 +2681,8 @@ private fun PlaylistItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(extendedColors.accentSoft),
                 contentAlignment = Alignment.Center
             ) {
                 if (playlist.coverImagePath != null) {
@@ -2662,15 +2734,31 @@ private fun CreatePlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "createPlaylistCardScale"
+    )
+
     Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+        modifier = modifier.scale(scale),
+        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(8.dp),
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onClick
+                )
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Плюс вместо обложки
@@ -2678,8 +2766,8 @@ private fun CreatePlaylistCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(extendedColors.accentSoft),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
