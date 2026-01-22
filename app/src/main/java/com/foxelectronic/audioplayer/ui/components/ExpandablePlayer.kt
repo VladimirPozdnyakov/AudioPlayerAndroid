@@ -900,39 +900,32 @@ private fun ArtistSelectionDialog(
     onDismiss: () -> Unit,
     onArtistSelected: (String) -> Unit
 ) {
-    AlertDialog(
+    ModernDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.dialog_select_artist),
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
-            Column {
-                artists.forEach { artist ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onArtistSelected(artist) },
-                        color = MaterialTheme.colorScheme.surface
-                    ) {
-                        Text(
-                            text = artist,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+        title = stringResource(R.string.dialog_select_artist),
+        dismissText = stringResource(R.string.btn_cancel),
+        onDismiss = onDismiss
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            artists.forEach { artist ->
+                ModernSelectionItem(
+                    title = artist,
+                    selected = false,
+                    onClick = { onArtistSelected(artist) },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.btn_cancel))
+                )
             }
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
