@@ -2651,6 +2651,9 @@ private fun PlaylistGroupList(
     }
 }
 
+/**
+ * Modern playlist card with card-based styling and animations
+ */
 @Composable
 private fun PlaylistItem(
     playlist: PlaylistWithTrackCount,
@@ -2658,30 +2661,36 @@ private fun PlaylistItem(
     modifier: Modifier = Modifier
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
+    val dimens = AudioPlayerThemeExtended.dimens
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = tween(100),
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 100),
         label = "playlistCardScale"
     )
 
-    Card(
-        modifier = modifier.scale(scale),
-        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
-        shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
+    Box(
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(dimens.cardCornerRadiusSmall))
+            .background(extendedColors.cardBackground)
+            .border(
+                width = 1.dp,
+                color = extendedColors.cardBorder,
+                shape = RoundedCornerShape(dimens.cardCornerRadiusSmall)
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
-                    onClick = onClick
-                )
-                .padding(12.dp),
+                .padding(dimens.cardPaddingSmall),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Обложка плейлиста
@@ -2689,7 +2698,7 @@ private fun PlaylistItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(extendedColors.accentSoft),
                 contentAlignment = Alignment.Center
             ) {
@@ -2705,7 +2714,6 @@ private fun PlaylistItem(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    @Suppress("DEPRECATION")
                     Icon(
                         imageVector = Icons.Rounded.QueueMusic,
                         contentDescription = null,
@@ -2720,14 +2728,15 @@ private fun PlaylistItem(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
                 text = pluralStringResource(R.plurals.track_count, playlist.trackCount, playlist.trackCount),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = extendedColors.subtleText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -2737,36 +2746,45 @@ private fun PlaylistItem(
     }
 }
 
+/**
+ * Modern create playlist card with card-based styling and animations
+ */
 @Composable
 private fun CreatePlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
+    val dimens = AudioPlayerThemeExtended.dimens
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = tween(100),
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 100),
         label = "createPlaylistCardScale"
     )
 
-    Card(
-        modifier = modifier.scale(scale),
-        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
-        shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
+    Box(
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(dimens.cardCornerRadiusSmall))
+            .background(extendedColors.cardBackground)
+            .border(
+                width = 1.dp,
+                color = extendedColors.cardBorder,
+                shape = RoundedCornerShape(dimens.cardCornerRadiusSmall)
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
-                    onClick = onClick
-                )
-                .padding(12.dp),
+                .padding(dimens.cardPaddingSmall),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Плюс вместо обложки
@@ -2774,7 +2792,7 @@ private fun CreatePlaylistCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(extendedColors.accentSoft),
                 contentAlignment = Alignment.Center
             ) {
@@ -2791,8 +2809,9 @@ private fun CreatePlaylistCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth()
             )
         }
