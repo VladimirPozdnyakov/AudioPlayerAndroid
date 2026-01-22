@@ -232,11 +232,7 @@ private fun FullscreenAlbumArt(
     uiState: PlayerUiState,
     onDismiss: () -> Unit
 ) {
-    val currentTrack = remember(uiState.currentIndex, uiState.tracks) {
-        if (uiState.currentIndex >= 0 && uiState.tracks.isNotEmpty()) {
-            uiState.tracks[uiState.currentIndex]
-        } else null
-    }
+    val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
     val context = LocalContext.current
 
     var scale by remember { mutableStateOf(1f) }
@@ -253,9 +249,7 @@ private fun FullscreenAlbumArt(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false
-        )
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
             modifier = Modifier
@@ -272,9 +266,7 @@ private fun FullscreenAlbumArt(
                             }
                         },
                         onTap = {
-                            if (scale == 1f) {
-                                onDismiss()
-                            }
+                            if (scale == 1f) onDismiss()
                         }
                     )
                 },
