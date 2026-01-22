@@ -40,6 +40,7 @@ import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
 import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
 import com.foxelectronic.audioplayer.ui.components.toTimeString
+import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
 
 @Composable
 @Suppress("UNUSED_PARAMETER")
@@ -167,6 +168,7 @@ private fun AlbumArt(
         } else null
     }
     val context = LocalContext.current
+    val extendedColors = AudioPlayerThemeExtended.colors
 
     Box(
         modifier = Modifier
@@ -178,10 +180,15 @@ private fun AlbumArt(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(16.dp))
                 .clickable { onArtClick() },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                containerColor = extendedColors.accentSoft
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
             )
         ) {
             SubcomposeAsyncImage(
@@ -202,10 +209,11 @@ private fun AlbumArt(
 
 @Composable
 private fun AlbumArtPlaceholder() {
+    val extendedColors = AudioPlayerThemeExtended.colors
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            .background(extendedColors.accentSoft),
         contentAlignment = Alignment.Center
     ) {
         Icon(
