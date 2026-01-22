@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-/**)",
+      "Write(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-/**)",
+      "Edit(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-/**)",
+      "Glob(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-/**)",
+      "Grep(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-/**)",
+      "Read(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-\\.auto-claude\\specs\\001-/**)",
+      "Write(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-\\.auto-claude\\specs\\001-/**)",
+      "Edit(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude\\worktrees\\tasks\\001-\\.auto-claude\\specs\\001-/**)",
+      "Read(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude/**)",
+      "Write(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude/**)",
+      "Edit(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude/**)",
+      "Glob(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude/**)",
+      "Grep(C:\\Users\\Vlad\\Documents\\MyProjects\\AudioPlayerAndroid\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

@@ -65,3 +65,6 @@ captures/
 *.bak
 *~
 /nul
+
+# Auto Claude data directory
+.auto-claude/
