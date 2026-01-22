@@ -72,6 +72,8 @@ import com.foxelectronic.audioplayer.ui.playlist.dialogs.DeletePlaylistDialog
 import com.foxelectronic.audioplayer.ui.playlist.dialogs.RenamePlaylistDialog
 import com.foxelectronic.audioplayer.ui.components.AudioFormatBadge
 import com.foxelectronic.audioplayer.ui.components.DetailedFormatInfo
+import com.foxelectronic.audioplayer.ui.components.ModernDialog
+import com.foxelectronic.audioplayer.ui.components.ModernSelectionItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -1706,42 +1708,35 @@ private fun TrackItem(
 
     // Диалог выбора исполнителя
     if (showArtistSelectionDialog && artists.size > 1) {
-        AlertDialog(
+        ModernDialog(
             onDismissRequest = { showArtistSelectionDialog = false },
-            title = {
-                Text(
-                    text = stringResource(R.string.dialog_select_artist),
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
-            text = {
-                Column {
-                    artists.forEach { artist ->
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showArtistSelectionDialog = false
-                                    onGoToArtist(artist)
-                                },
-                            color = MaterialTheme.colorScheme.surface
-                        ) {
-                            Text(
-                                text = artist,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+            title = stringResource(R.string.dialog_select_artist),
+            dismissText = stringResource(R.string.btn_cancel),
+            onDismiss = { showArtistSelectionDialog = false }
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                artists.forEach { artist ->
+                    ModernSelectionItem(
+                        title = artist,
+                        selected = false,
+                        onClick = {
+                            showArtistSelectionDialog = false
+                            onGoToArtist(artist)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showArtistSelectionDialog = false }) {
-                    Text(stringResource(R.string.btn_cancel))
+                    )
                 }
             }
-        )
+        }
     }
 
     // Диалог информации об аудио
