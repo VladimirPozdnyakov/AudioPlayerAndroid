@@ -874,9 +874,28 @@ fun PlayerScreen(
                 }
             }
 
-            IconButton(
-                onClick = { viewModel.toggleSortMode() },
-                modifier = Modifier.size(48.dp)
+            // Modern sort button with icon container styling
+            val sortInteractionSource = remember { MutableInteractionSource() }
+            val isSortPressed by sortInteractionSource.collectIsPressedAsState()
+            val sortScale by animateFloatAsState(
+                targetValue = if (isSortPressed) 0.92f else 1f,
+                animationSpec = tween(durationMillis = 100),
+                label = "sortButtonScale"
+            )
+            val sortExtendedColors = AudioPlayerThemeExtended.colors
+
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .scale(sortScale)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(sortExtendedColors.accentSoft)
+                    .clickable(
+                        interactionSource = sortInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { viewModel.toggleSortMode() }
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -885,7 +904,8 @@ fun PlayerScreen(
                     Icon(
                         imageVector = Icons.Rounded.SortByAlpha,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                     Icon(
                         imageVector = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) {
@@ -894,7 +914,8 @@ fun PlayerScreen(
                             Icons.Rounded.ArrowDropUp
                         },
                         contentDescription = if (uiState.sortMode == SortMode.ALPHABETICAL_AZ) stringResource(R.string.sort_az) else stringResource(R.string.sort_za),
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
