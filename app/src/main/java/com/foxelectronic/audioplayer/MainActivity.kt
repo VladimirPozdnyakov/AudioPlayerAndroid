@@ -1743,34 +1743,30 @@ private fun TrackItem(
     if (showAudioInfoDialog) {
         val audioFormat by viewModel.getAudioFormat(track.id).collectAsState(initial = null)
         val trackDuration = if (isCurrent) uiState.durationMs else 0L
-        AlertDialog(
+        ModernDialog(
             onDismissRequest = { showAudioInfoDialog = false },
-            title = { Text(stringResource(R.string.audio_format_details)) },
-            text = {
-                DetailedFormatInfo(
-                    format = audioFormat,
-                    trackTitle = track.title,
-                    trackArtist = track.artist,
-                    trackAlbum = track.album,
-                    durationMs = trackDuration,
-                    onArtistClick = { artist ->
+            title = stringResource(R.string.audio_format_details),
+            confirmText = stringResource(R.string.btn_ok),
+            onConfirm = { showAudioInfoDialog = false }
+        ) {
+            DetailedFormatInfo(
+                format = audioFormat,
+                trackTitle = track.title,
+                trackArtist = track.artist,
+                trackAlbum = track.album,
+                durationMs = trackDuration,
+                onArtistClick = { artist ->
+                    showAudioInfoDialog = false
+                    onGoToArtist(artist)
+                },
+                onAlbumClick = track.album?.let { album ->
+                    { _: String ->
                         showAudioInfoDialog = false
-                        onGoToArtist(artist)
-                    },
-                    onAlbumClick = track.album?.let { album ->
-                        { _: String ->
-                            showAudioInfoDialog = false
-                            onGoToAlbum(album)
-                        }
+                        onGoToAlbum(album)
                     }
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showAudioInfoDialog = false }) {
-                    Text(stringResource(R.string.btn_ok))
                 }
-            }
-        )
+            )
+        }
     }
 }
 
