@@ -3,7 +3,7 @@
   "spec": "001-",
   "state": "building",
   "subtasks": {
-    "completed": 7,
+    "completed": 8,
     "total": 24,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 8,
+    "number": 9,
     "started_at": "2026-01-22T16:44:45.686477"
   },
-  "last_update": "2026-01-22T17:03:52.770428"
+  "last_update": "2026-01-22T17:06:22.937455"
 }

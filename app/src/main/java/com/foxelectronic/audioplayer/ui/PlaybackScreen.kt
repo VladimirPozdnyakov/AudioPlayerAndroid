@@ -1,40 +1,40 @@
 package com.foxelectronic.audioplayer.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.res.stringResource
-import com.foxelectronic.audioplayer.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
-import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlayerUiState
+import com.foxelectronic.audioplayer.PlayerViewModel
 import com.foxelectronic.audioplayer.PlaylistType
+import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.AnimatedFavoriteButton
 import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
@@ -384,6 +384,8 @@ private fun ProgressSlider(
         } else 0f
     )
 
+    val interactionSource = remember { MutableInteractionSource() }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -394,8 +396,8 @@ private fun ProgressSlider(
                 .height(32.dp)
                 .padding(horizontal = 4.dp)
                 .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        val newProgress = (offset.x / size.width).coerceIn(0f, 1f)
+                    detectTapGestures { tapOffset ->
+                        val newProgress = (tapOffset.x / size.width).coerceIn(0f, 1f)
                         val newPosition = (newProgress * uiState.durationMs).toLong()
                         viewModel.seekTo(newPosition)
                     }
@@ -403,13 +405,10 @@ private fun ProgressSlider(
         ) {
             Slider(
                 value = progress * uiState.durationMs,
-                onValueChange = { newPosition ->
-                    viewModel.seekTo(newPosition.toLong())
-                },
+                onValueChange = { viewModel.seekTo(it.toLong()) },
                 valueRange = 0f..uiState.durationMs.toFloat(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(32.dp),
+                modifier = Modifier.fillMaxWidth().height(32.dp),
+                interactionSource = interactionSource,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -421,10 +420,7 @@ private fun ProgressSlider(
                             .size(width = 19.dp, height = 24.dp)
                             .padding(horizontal = 4.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .border(
-                                width = 2.5.dp,
-                                color = MaterialTheme.colorScheme.background
-                            ),
+                            .border(2.5.dp, MaterialTheme.colorScheme.background),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -449,7 +445,6 @@ private fun ProgressSlider(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
             Text(
                 text = uiState.durationMs.toTimeString(),
                 style = MaterialTheme.typography.bodySmall,
