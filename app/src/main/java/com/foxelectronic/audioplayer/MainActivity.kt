@@ -50,6 +50,7 @@ import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.History
@@ -73,6 +74,7 @@ import com.foxelectronic.audioplayer.ui.playlist.dialogs.RenamePlaylistDialog
 import com.foxelectronic.audioplayer.ui.components.AudioFormatBadge
 import com.foxelectronic.audioplayer.ui.components.DetailedFormatInfo
 import com.foxelectronic.audioplayer.ui.components.ModernDialog
+import com.foxelectronic.audioplayer.ui.components.ModernEmptyState
 import com.foxelectronic.audioplayer.ui.components.ModernSelectionItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
@@ -143,6 +145,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
 import androidx.compose.animation.core.Spring
@@ -1071,6 +1074,7 @@ fun PlayerScreen(
                         isPlaylistMode = false,
                         onTrackClick = onTrackClick,
                         emptyMessage = stringResource(R.string.empty_no_tracks),
+                        emptyIcon = Icons.Rounded.MusicNote,
                         listState = allTracksListState,
                         expandProgress = expandProgress,
                         playlistName = stringResource(R.string.all_tracks),
@@ -1084,6 +1088,7 @@ fun PlayerScreen(
                         isPlaylistMode = true,
                         onTrackClick = onTrackClick,
                         emptyMessage = stringResource(R.string.empty_no_favorites),
+                        emptyIcon = Icons.Rounded.FavoriteBorder,
                         listState = favoriteTracksListState,
                         expandProgress = expandProgress,
                         playlistName = stringResource(R.string.tab_favorites),
@@ -1195,6 +1200,7 @@ private fun TrackList(
     isPlaylistMode: Boolean,
     onTrackClick: (Track) -> Unit,
     emptyMessage: String,
+    emptyIcon: ImageVector = Icons.Rounded.MusicNote,
     listState: LazyListState,
     expandProgress: Float = 0f,
     playlistName: String = "Все треки",
@@ -1280,8 +1286,16 @@ private fun TrackList(
     }
 
     if (tracks.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(emptyMessage)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ModernEmptyState(
+                icon = emptyIcon,
+                title = emptyMessage
+            )
         }
     } else {
         // Анимированный padding в зависимости от expandProgress
@@ -1970,6 +1984,7 @@ private fun ArtistsTab(
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
                     emptyMessage = stringResource(R.string.empty_artist_tracks),
+                    emptyIcon = Icons.Rounded.Person,
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedArtist,
@@ -1991,8 +2006,16 @@ private fun ArtistGroupList(
     expandProgress: Float
 ) {
     if (artistGroups.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.empty_no_artists))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ModernEmptyState(
+                icon = Icons.Rounded.Person,
+                title = stringResource(R.string.empty_no_artists)
+            )
         }
     } else {
         val bottomPadding by animateDpAsState(
@@ -2238,6 +2261,7 @@ private fun AlbumsTab(
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
                     emptyMessage = stringResource(R.string.empty_album_tracks),
+                    emptyIcon = Icons.Rounded.Album,
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedAlbum,
@@ -2259,8 +2283,16 @@ private fun AlbumGroupList(
     expandProgress: Float
 ) {
     if (albumGroups.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.empty_no_albums))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ModernEmptyState(
+                icon = Icons.Rounded.Album,
+                title = stringResource(R.string.empty_no_albums)
+            )
         }
     } else {
         val bottomPadding by animateDpAsState(
@@ -2600,6 +2632,7 @@ private fun PlaylistsTab(
                     isPlaylistMode = true,
                     onTrackClick = onTrackClick,
                     emptyMessage = stringResource(R.string.empty_playlist),
+                    emptyIcon = Icons.AutoMirrored.Rounded.QueueMusic,
                     listState = listState,
                     expandProgress = expandProgress,
                     playlistName = selectedPlaylist.name,
