@@ -37,8 +37,10 @@ import com.foxelectronic.audioplayer.PlaylistType
 import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.AnimatedFavoriteButton
 import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
+import com.foxelectronic.audioplayer.ui.components.AnimatedSkipButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
 import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
+import com.foxelectronic.audioplayer.ui.components.SkipDirection
 import com.foxelectronic.audioplayer.ui.components.toTimeString
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
 
@@ -469,17 +471,13 @@ private fun PlaybackControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Previous Button
-            IconButton(
+            AnimatedSkipButton(
+                direction = SkipDirection.Previous,
                 onClick = { viewModel.previous() },
-                modifier = Modifier.size(72.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "Previous",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+                size = 72.dp,
+                iconSize = 36.dp,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
 
             // Play/Pause Button (main)
             AnimatedPlayPauseButton(
@@ -490,17 +488,13 @@ private fun PlaybackControls(
             )
 
             // Next Button
-            IconButton(
+            AnimatedSkipButton(
+                direction = SkipDirection.Next,
                 onClick = { viewModel.next() },
-                modifier = Modifier.size(72.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "Next",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+                size = 72.dp,
+                iconSize = 36.dp,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
 
         // Secondary controls row (Shuffle, Favorite, Repeat)
