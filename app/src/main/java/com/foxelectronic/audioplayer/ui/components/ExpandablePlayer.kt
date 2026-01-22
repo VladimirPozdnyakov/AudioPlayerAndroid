@@ -863,34 +863,30 @@ private fun ExpandedPlayerContent(
         val audioFormat by viewModel.getAudioFormat(currentTrack?.id ?: 0L)
             .collectAsState(initial = null)
 
-        AlertDialog(
+        ModernDialog(
             onDismissRequest = { showAudioInfoDialog = false },
-            title = { Text(stringResource(R.string.audio_format_details)) },
-            text = {
-                DetailedFormatInfo(
-                    format = audioFormat,
-                    trackTitle = currentTrack?.title,
-                    trackArtist = currentTrack?.artist,
-                    trackAlbum = currentTrack?.album,
-                    durationMs = uiState.durationMs,
-                    onArtistClick = { artist ->
+            title = stringResource(R.string.audio_format_details),
+            confirmText = stringResource(R.string.btn_ok),
+            onConfirm = { showAudioInfoDialog = false }
+        ) {
+            DetailedFormatInfo(
+                format = audioFormat,
+                trackTitle = currentTrack?.title,
+                trackArtist = currentTrack?.artist,
+                trackAlbum = currentTrack?.album,
+                durationMs = uiState.durationMs,
+                onArtistClick = { artist ->
+                    showAudioInfoDialog = false
+                    onArtistClick(artist)
+                },
+                onAlbumClick = currentTrack?.album?.let { album ->
+                    { _: String ->
                         showAudioInfoDialog = false
-                        onArtistClick(artist)
-                    },
-                    onAlbumClick = currentTrack?.album?.let { album ->
-                        { _: String ->
-                            showAudioInfoDialog = false
-                            onAlbumClick(album)
-                        }
+                        onAlbumClick(album)
                     }
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showAudioInfoDialog = false }) {
-                    Text(stringResource(R.string.btn_ok))
                 }
-            }
-        )
+            )
+        }
     }
 }
 
