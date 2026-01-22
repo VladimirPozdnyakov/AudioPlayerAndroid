@@ -1595,7 +1595,10 @@ private fun TrackItem(
 
                     DropdownMenu(
                         expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
+                        onDismissRequest = { showMenu = false },
+                        modifier = Modifier
+                            .background(extendedColors.cardBackground, RoundedCornerShape(12.dp))
+                            .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(12.dp))
                     ) {
                         if (showRemoveFromPlaylist) {
                             DropdownMenuItem(
@@ -1607,7 +1610,8 @@ private fun TrackItem(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Rounded.Close,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = extendedColors.iconTint
                                     )
                                 }
                             )
@@ -1622,7 +1626,8 @@ private fun TrackItem(
                                 @Suppress("DEPRECATION")
                                 Icon(
                                     imageVector = Icons.Rounded.PlaylistAdd,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = extendedColors.iconTint
                                 )
                             }
                         )
@@ -1635,7 +1640,8 @@ private fun TrackItem(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Edit,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = extendedColors.iconTint
                                 )
                             }
                         )
@@ -1654,7 +1660,8 @@ private fun TrackItem(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Rounded.Person,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = extendedColors.iconTint
                                     )
                                 }
                             )
@@ -1670,7 +1677,8 @@ private fun TrackItem(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Rounded.Album,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = extendedColors.iconTint
                                     )
                                 }
                             )
@@ -1685,7 +1693,8 @@ private fun TrackItem(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Info,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    tint = extendedColors.iconTint
                                 )
                             }
                         )
@@ -2445,6 +2454,8 @@ private fun PlaylistsTab(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
 
+    val extendedColors = AudioPlayerThemeExtended.colors
+
     // Анимация при изменении selectedPlaylist
     LaunchedEffect(selectedPlaylist) {
         if (selectedPlaylist != null && previousPlaylist == null) {
@@ -2600,7 +2611,10 @@ private fun PlaylistsTab(
                         }
                         DropdownMenu(
                             expanded = showPlaylistMenu,
-                            onDismissRequest = { showPlaylistMenu = false }
+                            onDismissRequest = { showPlaylistMenu = false },
+                            modifier = Modifier
+                                .background(extendedColors.cardBackground, RoundedCornerShape(12.dp))
+                                .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(12.dp))
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.btn_rename)) },
@@ -2609,7 +2623,7 @@ private fun PlaylistsTab(
                                     showRenameDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Rounded.Edit, null)
+                                    Icon(Icons.Rounded.Edit, null, tint = extendedColors.iconTint)
                                 }
                             )
                             DropdownMenuItem(
@@ -2619,7 +2633,7 @@ private fun PlaylistsTab(
                                     showDeleteDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Rounded.Close, null)
+                                    Icon(Icons.Rounded.Close, null, tint = extendedColors.iconTint)
                                 }
                             )
                         }
