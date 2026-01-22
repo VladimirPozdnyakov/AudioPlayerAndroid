@@ -134,7 +134,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.border
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.foundation.shape.CircleShape
@@ -898,177 +900,129 @@ fun PlayerScreen(
             }
         }
 
-        // Tabs with swipe support
-        ScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
+        // Modern card-based tabs with swipe support
+        val tabExtendedColors = AudioPlayerThemeExtended.colors
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            edgePadding = 16.dp,
-            indicator = { tabPositions ->
-                if (pagerState.currentPage < tabPositions.size) {
-                    val density = LocalDensity.current
-                    val currentTab = tabPositions[pagerState.currentPage]
-
-                    // Определяем целевую страницу и направление
-                    val targetPage = if (pagerState.currentPageOffsetFraction > 0) {
-                        (pagerState.currentPage + 1).coerceIn(0, tabPositions.size - 1)
-                    } else if (pagerState.currentPageOffsetFraction < 0) {
-                        (pagerState.currentPage - 1).coerceIn(0, tabPositions.size - 1)
-                    } else {
-                        pagerState.currentPage
-                    }
-                    val targetTab = tabPositions[targetPage]
-
-                    // Ширина текста в dp
-                    val currentTextWidth = with(density) {
-                        when (pagerState.currentPage) {
-                            0 -> tab0TextWidth.toDp()
-                            1 -> tab1TextWidth.toDp()
-                            2 -> tab2TextWidth.toDp()
-                            3 -> tab3TextWidth.toDp()
-                            else -> tab4TextWidth.toDp()
-                        }
-                    }
-                    val targetTextWidth = with(density) {
-                        when (targetPage) {
-                            0 -> tab0TextWidth.toDp()
-                            1 -> tab1TextWidth.toDp()
-                            2 -> tab2TextWidth.toDp()
-                            3 -> tab3TextWidth.toDp()
-                            else -> tab4TextWidth.toDp()
-                        }
-                    }
-
-                    val fraction = kotlin.math.abs(pagerState.currentPageOffsetFraction)
-
-                    // Центр текущей и целевой вкладок
-                    val currentTabCenter = currentTab.left + currentTab.width / 2
-                    val targetTabCenter = targetTab.left + targetTab.width / 2
-
-                    // Интерполяция центра и ширины (добавляем 16dp padding)
-                    val indicatorPadding = 16.dp
-                    val indicatorCenter = currentTabCenter + (targetTabCenter - currentTabCenter) * fraction
-                    val indicatorWidth: Dp = currentTextWidth + (targetTextWidth - currentTextWidth) * fraction + indicatorPadding
-                    val indicatorLeft = indicatorCenter - indicatorWidth / 2
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentSize(Alignment.BottomStart)
-                            .offset(x = indicatorLeft)
-                            .width(width = indicatorWidth)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                    )
-                }
-            },
-            divider = {
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
-                )
-            }
+                .padding(top = 8.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(tabExtendedColors.cardBackground)
+                .border(1.dp, tabExtendedColors.cardBorder, RoundedCornerShape(16.dp))
+                .padding(4.dp)
         ) {
-            Tab(
-                selected = pagerState.currentPage == 0,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(0)
+            ScrollableTabRow(
+                selectedTabIndex = pagerState.currentPage,
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                edgePadding = 8.dp,
+                indicator = { tabPositions ->
+                    if (pagerState.currentPage < tabPositions.size) {
+                        val density = LocalDensity.current
+                        val currentTab = tabPositions[pagerState.currentPage]
+
+                        // Определяем целевую страницу и направление
+                        val targetPage = if (pagerState.currentPageOffsetFraction > 0) {
+                            (pagerState.currentPage + 1).coerceIn(0, tabPositions.size - 1)
+                        } else if (pagerState.currentPageOffsetFraction < 0) {
+                            (pagerState.currentPage - 1).coerceIn(0, tabPositions.size - 1)
+                        } else {
+                            pagerState.currentPage
+                        }
+                        val targetTab = tabPositions[targetPage]
+
+                        // Ширина текста в dp
+                        val currentTextWidth = with(density) {
+                            when (pagerState.currentPage) {
+                                0 -> tab0TextWidth.toDp()
+                                1 -> tab1TextWidth.toDp()
+                                2 -> tab2TextWidth.toDp()
+                                3 -> tab3TextWidth.toDp()
+                                else -> tab4TextWidth.toDp()
+                            }
+                        }
+                        val targetTextWidth = with(density) {
+                            when (targetPage) {
+                                0 -> tab0TextWidth.toDp()
+                                1 -> tab1TextWidth.toDp()
+                                2 -> tab2TextWidth.toDp()
+                                3 -> tab3TextWidth.toDp()
+                                else -> tab4TextWidth.toDp()
+                            }
+                        }
+
+                        val fraction = kotlin.math.abs(pagerState.currentPageOffsetFraction)
+
+                        // Центр текущей и целевой вкладок
+                        val currentTabCenter = currentTab.left + currentTab.width / 2
+                        val targetTabCenter = targetTab.left + targetTab.width / 2
+
+                        // Интерполяция центра и ширины (добавляем 16dp padding)
+                        val indicatorPadding = 16.dp
+                        val indicatorCenter = currentTabCenter + (targetTabCenter - currentTabCenter) * fraction
+                        val indicatorWidth: Dp = currentTextWidth + (targetTextWidth - currentTextWidth) * fraction + indicatorPadding
+                        val indicatorLeft = indicatorCenter - indicatorWidth / 2
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentSize(Alignment.BottomStart)
+                                .offset(x = indicatorLeft)
+                                .width(width = indicatorWidth)
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
                     }
                 },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                divider = {}
             ) {
-                Text(
+                ModernTab(
                     text = tab0Text,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
-                )
-            }
-            Tab(
-                selected = pagerState.currentPage == 1,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(1)
+                    selected = pagerState.currentPage == 0,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(0)
+                        }
                     }
-                },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            ) {
-                Text(
+                )
+                ModernTab(
                     text = tab1Text,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
-                )
-            }
-            Tab(
-                selected = pagerState.currentPage == 2,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(2)
+                    selected = pagerState.currentPage == 1,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(1)
+                        }
                     }
-                },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            ) {
-                Text(
+                )
+                ModernTab(
                     text = tab2Text,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
-                )
-            }
-            Tab(
-                selected = pagerState.currentPage == 3,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(3)
+                    selected = pagerState.currentPage == 2,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(2)
+                        }
                     }
-                },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            ) {
-                Text(
+                )
+                ModernTab(
                     text = tab3Text,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
-                )
-            }
-            Tab(
-                selected = pagerState.currentPage == 4,
-                onClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(4)
+                    selected = pagerState.currentPage == 3,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(3)
+                        }
                     }
-                },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-            ) {
-                Text(
+                )
+                ModernTab(
                     text = tab4Text,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp)
+                    selected = pagerState.currentPage == 4,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(4)
+                        }
+                    }
                 )
             }
         }
@@ -2798,5 +2752,59 @@ private fun CreatePlaylistCard(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+/**
+ * Modern tab item with card-based styling and animations
+ */
+@Composable
+private fun ModernTab(
+    text: androidx.compose.ui.text.AnnotatedString,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "tabScale"
+    )
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) extendedColors.accentSoft else Color.Transparent,
+        animationSpec = tween(200),
+        label = "tabBg"
+    )
+
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else extendedColors.subtleText,
+        animationSpec = tween(200),
+        label = "tabContent"
+    )
+
+    Tab(
+        selected = selected,
+        onClick = onClick,
+        interactionSource = interactionSource,
+        selectedContentColor = MaterialTheme.colorScheme.primary,
+        unselectedContentColor = extendedColors.subtleText,
+        modifier = modifier
+            .padding(horizontal = 2.dp)
+            .scale(scale)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = contentColor,
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp)
+        )
     }
 }
