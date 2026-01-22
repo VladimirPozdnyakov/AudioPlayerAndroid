@@ -1,17 +1,25 @@
 package com.foxelectronic.audioplayer.ui.playlist.dialogs
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.R
+import com.foxelectronic.audioplayer.ui.components.ModernDialog
 
 /**
- * Диалог создания нового плейлиста
+ * Современный диалог создания нового плейлиста
  */
 @Composable
 fun CreatePlaylistDialog(
@@ -25,43 +33,34 @@ fun CreatePlaylistDialog(
         focusRequester.requestFocus()
     }
 
-    AlertDialog(
+    ModernDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.dialog_new_playlist)) },
-        text = {
-            OutlinedTextField(
-                value = playlistName,
-                onValueChange = { playlistName = it },
-                label = { Text(stringResource(R.string.playlist_name_hint)) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (playlistName.isNotBlank()) {
-                        onCreate(playlistName.trim())
-                        onDismiss()
-                    }
-                },
-                enabled = playlistName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.btn_create))
+        title = stringResource(R.string.dialog_new_playlist),
+        confirmText = stringResource(R.string.btn_create),
+        dismissText = stringResource(R.string.btn_cancel),
+        onConfirm = {
+            if (playlistName.isNotBlank()) {
+                onCreate(playlistName.trim())
+                onDismiss()
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.btn_cancel))
-            }
-        }
-    )
+        onDismiss = onDismiss,
+        confirmEnabled = playlistName.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = playlistName,
+            onValueChange = { playlistName = it },
+            label = { Text(stringResource(R.string.playlist_name_hint)) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+        )
+    }
 }
 
 /**
- * Диалог переименования плейлиста
+ * Современный диалог переименования плейлиста
  */
 @Composable
 fun RenamePlaylistDialog(
@@ -76,39 +75,30 @@ fun RenamePlaylistDialog(
         focusRequester.requestFocus()
     }
 
-    AlertDialog(
+    ModernDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.dialog_rename_playlist)) },
-        text = {
-            OutlinedTextField(
-                value = playlistName,
-                onValueChange = { playlistName = it },
-                label = { Text(stringResource(R.string.playlist_name_hint)) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (playlistName.isNotBlank()) {
-                        onRename(playlistName.trim())
-                        onDismiss()
-                    }
-                },
-                enabled = playlistName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.btn_save))
+        title = stringResource(R.string.dialog_rename_playlist),
+        confirmText = stringResource(R.string.btn_save),
+        dismissText = stringResource(R.string.btn_cancel),
+        onConfirm = {
+            if (playlistName.isNotBlank()) {
+                onRename(playlistName.trim())
+                onDismiss()
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.btn_cancel))
-            }
-        }
-    )
+        onDismiss = onDismiss,
+        confirmEnabled = playlistName.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = playlistName,
+            onValueChange = { playlistName = it },
+            label = { Text(stringResource(R.string.playlist_name_hint)) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+        )
+    }
 }
 
 /**
