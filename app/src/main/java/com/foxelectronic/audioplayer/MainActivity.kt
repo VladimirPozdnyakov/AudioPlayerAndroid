@@ -2792,7 +2792,7 @@ private fun CreatePlaylistCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(extendedColors.accentSoft),
                 contentAlignment = Alignment.Center
             ) {
