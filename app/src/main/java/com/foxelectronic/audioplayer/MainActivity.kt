@@ -2291,94 +2291,100 @@ private fun AlbumGroupList(
     }
 }
 
+/**
+ * Modern album card with soft press animation following SettingsMenuButton pattern
+ */
 @Composable
 private fun AlbumGroupItem(album: String, artist: String, trackCount: Int, albumArtPath: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val extendedColors = AudioPlayerThemeExtended.colors
+    val dimens = AudioPlayerThemeExtended.dimens
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = tween(100),
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 100),
         label = "albumCardScale"
     )
 
-    Card(
-        modifier = modifier.scale(scale),
-        colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground),
-        shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, extendedColors.cardBorder)
+    Column(
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(dimens.cardCornerRadiusSmall))
+            .background(extendedColors.cardBackground)
+            .border(
+                width = 1.dp,
+                color = extendedColors.cardBorder,
+                shape = RoundedCornerShape(dimens.cardCornerRadiusSmall)
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                onClick = onClick
+            )
+            .padding(dimens.cardPaddingSmall),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
+                .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
+            contentDescription = "Album Art",
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
-                    onClick = onClick
-                )
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(albumArtPath)
-                    .size(256, 256).memoryCachePolicy(CachePolicy.ENABLED).build(),
-                contentDescription = "Album Art",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                    }
-                },
-                error = {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                    }
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(dimens.cardCornerRadiusSmall)),
+            contentScale = ContentScale.Crop,
+            loading = {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(extendedColors.accentSoft),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
                 }
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = album,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = artist,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = pluralStringResource(R.plurals.track_count, trackCount, trackCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+            },
+            error = {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(extendedColors.accentSoft),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                }
+            }
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = album,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = artist,
+            style = MaterialTheme.typography.bodySmall,
+            color = extendedColors.subtleText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = pluralStringResource(R.plurals.track_count, trackCount, trackCount),
+            style = MaterialTheme.typography.bodySmall,
+            color = extendedColors.subtleText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
