@@ -31,16 +31,21 @@ class UpdateChecker @Inject constructor(
         repo: String
     ): GitHubRelease? {
         return try {
+            Log.d(TAG, "Начинаем проверку обновлений для репозитория: $owner/$repo")
+            Log.d(TAG, "Текущая версия приложения: $currentVersion")
+
             // Получаем информацию о последнем релизе из GitHub API
+            Log.d(TAG, "Выполняем запрос к GitHub API...")
             val latestRelease = gitHubApi.getLatestRelease(owner, repo)
 
             // Извлекаем версию из tag_name
             val latestVersion = latestRelease.tagName
 
-            Log.d(TAG, "Проверка обновлений: текущая=$currentVersion, последняя=$latestVersion")
+            Log.d(TAG, "Получена последняя версия с GitHub: $latestVersion")
 
             // Сравниваем версии
             val comparisonResult = VersionComparator.compareVersions(currentVersion, latestVersion)
+            Log.d(TAG, "Результат сравнения версий: $comparisonResult (0: равны, -1: текущая меньше, 1: текущая больше)")
 
             // Если текущая версия меньше последней (comparisonResult == -1), возвращаем релиз
             if (comparisonResult < 0) {
@@ -52,7 +57,8 @@ class UpdateChecker @Inject constructor(
             }
         } catch (e: Exception) {
             // Ошибки сети или API обрабатываются молча - не показываем пользователю
-            Log.w(TAG, "Ошибка при проверке обновлений: ${e.message}", e)
+            Log.e(TAG, "Ошибка при проверке обновлений: ${e.message}", e)
+            Log.e(TAG, "Подробная информация об ошибке:", e)
             null
         }
     }

@@ -279,6 +279,7 @@ class MainActivity : AppCompatActivity() {
     private fun checkForUpdates() {
         // Предотвращаем повторные проверки в рамках одной сессии
         if (updateCheckPerformed) {
+            android.util.Log.d("UpdateCheck", "Проверка обновлений уже выполнялась в этой сессии")
             return
         }
         updateCheckPerformed = true
@@ -289,25 +290,33 @@ class MainActivity : AppCompatActivity() {
                 val settingsRepo = SettingsRepository(this@MainActivity)
                 val checkEnabled = settingsRepo.checkUpdatesEnabledFlow.firstOrNull() ?: true
 
+                android.util.Log.d("UpdateCheck", "Статус проверки обновлений в настройках: $checkEnabled")
+
                 if (!checkEnabled) {
+                    android.util.Log.d("UpdateCheck", "Проверка обновлений отключена пользователем")
                     return@launch
                 }
 
                 // Выполняем проверку обновлений
-                // GitHub repo: foxelectronic/AudioPlayerAndroid
+                // GitHub repo: vladimirpozdnyakov/AudioPlayerAndroid
+                android.util.Log.d("UpdateCheck", "Начинаем проверку обновлений, текущая версия: ${BuildConfig.VERSION_NAME}")
+
                 val release = updateChecker.checkForUpdate(
                     currentVersion = BuildConfig.VERSION_NAME,
-                    owner = "foxelectronic",
+                    owner = "vladimirpozdnyakov",
                     repo = "AudioPlayerAndroid"
                 )
 
                 // Если доступно обновление, показываем диалог
                 if (release != null) {
+                    android.util.Log.d("UpdateCheck", "Найдено обновление: ${release.tagName}")
                     availableUpdateState.value = release
+                } else {
+                    android.util.Log.d("UpdateCheck", "Обновление не найдено или текущая версия актуальна")
                 }
             } catch (e: Exception) {
                 // Ошибки обрабатываются молча - не показываем пользователю
-                android.util.Log.w("MainActivity", "Ошибка при проверке обновлений: ${e.message}", e)
+                android.util.Log.e("UpdateCheck", "Ошибка при проверке обновлений: ${e.message}", e)
             }
         }
     }

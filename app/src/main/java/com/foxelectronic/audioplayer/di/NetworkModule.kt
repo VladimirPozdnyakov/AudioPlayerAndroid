@@ -1,5 +1,6 @@
 package com.foxelectronic.audioplayer.di
 
+import android.util.Log
 import com.foxelectronic.audioplayer.network.GitHubApi
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
@@ -29,13 +30,20 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            level = HttpLoggingInterceptor.Level.BODY // Увеличиваем уровень логирования до BODY
         }
 
         return OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .writeTimeout(10, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request()
+                android.util.Log.d("Network", "Запрос: ${request.method} ${request.url}")
+                val response = chain.proceed(request)
+                android.util.Log.d("Network", "Ответ: ${response.code}, ${response.message}")
+                response
+            }
             .addInterceptor(loggingInterceptor)
             .build()
     }

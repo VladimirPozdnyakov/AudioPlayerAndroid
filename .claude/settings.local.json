@@ -6,7 +6,11 @@
       "Bash(./gradlew installDebug:*)",
       "Bash(./gradlew:*)",
       "WebSearch",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(adb shell am start:*)",
+      "Bash(adb logcat:*)",
+      "Bash(where:*)",
+      "Bash(\"C:/Users/Vlad/AppData/Local/Android/sdk/platform-tools/adb.exe\" logcat -d)"
     ]
   }
 }
