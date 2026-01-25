@@ -158,12 +158,26 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import com.foxelectronic.audioplayer.update.UpdateChecker
+import com.foxelectronic.audioplayer.network.GitHubRelease
+import com.foxelectronic.audioplayer.ui.update.UpdateDialog
+import android.net.Uri
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: PlayerViewModel by viewModels()
     private var pendingExternalUri: android.net.Uri? = null
+
+    @Inject
+    lateinit var updateChecker: UpdateChecker
+
+    // Флаг для предотвращения повторных проверок обновлений в рамках одной сессии
+    private var updateCheckPerformed = false
+
+    // Состояние для доступного обновления
+    private val availableUpdateState = mutableStateOf<GitHubRelease?>(null)
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -205,11 +219,22 @@ class MainActivity : AppCompatActivity() {
                 AppTheme.LIGHT -> ThemeMode.LIGHT
                 AppTheme.DARK -> ThemeMode.DARK
             }
+
+            // Используем состояние обновления из activity
+            val availableUpdate by availableUpdateState
+
             AudioPlayerTheme(themeMode = themeMode, accentHex = settings.accentHex, fontType = settings.fontType) {
                 MainScreen(
                     viewModel = viewModel,
                     settings = settings,
-                    settingsViewModel = settingsViewModel
+                    settingsViewModel = settingsViewModel,
+                    availableUpdate = availableUpdate,
+                    onDismissUpdate = { availableUpdateState.value = null },
+                    onDownloadUpdate = { url ->
+                        // Открываем URL релиза в браузере
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(browserIntent)
+                    }
                 )
             }
         }
@@ -217,6 +242,9 @@ class MainActivity : AppCompatActivity() {
         // Сохраняем URI из intent для воспроизведения после инициализации
         handleExternalAudioIntent(intent)
         ensurePermissionsAndLoad()
+
+        // Проверка обновлений при первом запуске
+        checkForUpdates()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -245,6 +273,45 @@ class MainActivity : AppCompatActivity() {
         requestPermission.launch(permissions.toTypedArray())
     }
 
+    /**
+     * Проверяет наличие обновлений приложения при первом запуске
+     */
+    private fun checkForUpdates() {
+        // Предотвращаем повторные проверки в рамках одной сессии
+        if (updateCheckPerformed) {
+            return
+        }
+        updateCheckPerformed = true
+
+        lifecycleScope.launch {
+            try {
+                // Проверяем, включена ли проверка обновлений в настройках
+                val settingsRepo = SettingsRepository(this@MainActivity)
+                val checkEnabled = settingsRepo.checkUpdatesEnabledFlow.firstOrNull() ?: true
+
+                if (!checkEnabled) {
+                    return@launch
+                }
+
+                // Выполняем проверку обновлений
+                // GitHub repo: foxelectronic/AudioPlayerAndroid
+                val release = updateChecker.checkForUpdate(
+                    currentVersion = BuildConfig.VERSION_NAME,
+                    owner = "foxelectronic",
+                    repo = "AudioPlayerAndroid"
+                )
+
+                // Если доступно обновление, показываем диалог
+                if (release != null) {
+                    availableUpdateState.value = release
+                }
+            } catch (e: Exception) {
+                // Ошибки обрабатываются молча - не показываем пользователю
+                android.util.Log.w("MainActivity", "Ошибка при проверке обновлений: ${e.message}", e)
+            }
+        }
+    }
+
 }
 
 private fun applyLanguage(language: AppLanguage) {
@@ -260,7 +327,10 @@ private fun applyLanguage(language: AppLanguage) {
 fun MainScreen(
     viewModel: PlayerViewModel,
     settings: SettingsUiState,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    availableUpdate: GitHubRelease? = null,
+    onDismissUpdate: () -> Unit = {},
+    onDownloadUpdate: (String) -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) } // 0: Главная, 1: Настройки
     var expandProgress by remember { mutableFloatStateOf(-1f) }
@@ -445,6 +515,15 @@ fun MainScreen(
                     }
                 )
             }
+        )
+    }
+
+    // Диалог обновления приложения
+    if (availableUpdate != null) {
+        com.foxelectronic.audioplayer.ui.update.UpdateDialog(
+            release = availableUpdate,
+            onDownload = onDownloadUpdate,
+            onDismiss = onDismissUpdate
         )
     }
 }
