@@ -31,6 +31,7 @@
     <string name="btn_done">Готово</string>
     <string name="btn_select">Выбрать</string>
     <string name="btn_rename">Переименовать</string>
+    <string name="btn_download">Скачать</string>
 
     <!-- Диалоги плейлиста -->
     <string name="dialog_new_playlist">Новый плейлист</string>
@@ -135,6 +136,11 @@
     <!-- О приложении -->
     <string name="version_format">Версия: %1$s</string>
     <string name="source_code">Исходный код</string>
+
+    <!-- Диалог обновления -->
+    <string name="update_dialog_title">Доступно обновление</string>
+    <string name="update_dialog_version_label">Новая версия</string>
+    <string name="update_dialog_description">Доступна новая версия. Загрузить с GitHub?</string>
 
     <!-- Типы плейлистов -->
     <string name="playlist_type_artist">Исполнитель</string>

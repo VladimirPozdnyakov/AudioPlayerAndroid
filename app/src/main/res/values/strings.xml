@@ -31,6 +31,7 @@
     <string name="btn_done">Done</string>
     <string name="btn_select">Select</string>
     <string name="btn_rename">Rename</string>
+    <string name="btn_download">Download</string>
 
     <!-- Playlist dialogs -->
     <string name="dialog_new_playlist">New playlist</string>
@@ -135,6 +136,11 @@
     <!-- About -->
     <string name="version_format">Version: %1$s</string>
     <string name="source_code">Source code</string>
+
+    <!-- Update dialog -->
+    <string name="update_dialog_title">Update Available</string>
+    <string name="update_dialog_version_label">New version</string>
+    <string name="update_dialog_description">A new version is now available. Download from GitHub?</string>
 
     <!-- Playlist type labels -->
     <string name="playlist_type_artist">Artist</string>
