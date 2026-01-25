@@ -2,6 +2,7 @@ package com.foxelectronic.audioplayer
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -39,6 +40,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_SELECTED_TAB = intPreferencesKey("selected_tab")
         private val KEY_AUDIO_QUALITY = stringPreferencesKey("audio_quality")
+        private val KEY_CHECK_UPDATES_ENABLED = booleanPreferencesKey("check_updates_enabled")
         private const val DEFAULT_ACCENT = "#B498FF"
     }
 
@@ -171,6 +173,17 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAudioQuality(preference: AudioQualityPreference) {
         context.dataStore.edit { prefs ->
             prefs[KEY_AUDIO_QUALITY] = preference.name
+        }
+    }
+
+    val checkUpdatesEnabledFlow: Flow<Boolean> = preferencesFlow
+        .map { prefs ->
+            prefs[KEY_CHECK_UPDATES_ENABLED] ?: true
+        }
+
+    suspend fun setCheckUpdatesEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_CHECK_UPDATES_ENABLED] = enabled
         }
     }
 }
