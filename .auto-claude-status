@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "001-",
+  "spec": "011-",
   "state": "building",
   "subtasks": {
-    "completed": 20,
-    "total": 24,
+    "completed": 3,
+    "total": 14,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Integration and Final Polish",
+    "current": "Network Layer - GitHub API Client",
     "id": null,
-    "total": 4
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 2,
-    "started_at": "2026-01-22T23:08:13.129163"
+    "number": 4,
+    "started_at": "2026-01-25T15:52:50.572163"
   },
-  "last_update": "2026-01-22T23:16:42.235215"
+  "last_update": "2026-01-25T15:59:23.997319"
 }
