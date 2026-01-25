@@ -20,8 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
@@ -45,6 +47,8 @@ import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
 @Composable
 fun AboutSection(
     versionName: String,
+    checkUpdatesEnabled: Boolean,
+    onCheckUpdatesChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -97,6 +101,49 @@ fun AboutSection(
                     color = extendedColors.subtleText
                 )
             }
+        }
+
+        // Карточка с переключателем проверки обновлений
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(dimens.cardCornerRadiusSmall))
+                .background(extendedColors.cardBackground)
+                .border(
+                    width = 1.dp,
+                    color = extendedColors.cardBorder,
+                    shape = RoundedCornerShape(dimens.cardCornerRadiusSmall)
+                )
+                .padding(dimens.cardPaddingSmall),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(extendedColors.accentSoft),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Update,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.settings_check_updates),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Switch(
+                checked = checkUpdatesEnabled,
+                onCheckedChange = onCheckUpdatesChange
+            )
         }
 
         // Карточка с ссылкой на GitHub

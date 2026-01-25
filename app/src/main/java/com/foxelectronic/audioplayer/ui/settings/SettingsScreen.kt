@@ -93,7 +93,8 @@ fun SettingsScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     onAudioQualityChange: (AudioQualityPreference) -> Unit,
     onAddFolder: (String) -> Unit,
-    onRemoveFolder: (String) -> Unit
+    onRemoveFolder: (String) -> Unit,
+    onCheckUpdatesChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -284,7 +285,11 @@ fun SettingsScreen(
                     }
 
                     SettingsSection.ABOUT -> {
-                        AboutSection(versionName = versionName)
+                        AboutSection(
+                            versionName = versionName,
+                            checkUpdatesEnabled = state.checkUpdatesEnabled,
+                            onCheckUpdatesChange = onCheckUpdatesChange
+                        )
                     }
                 }
             }

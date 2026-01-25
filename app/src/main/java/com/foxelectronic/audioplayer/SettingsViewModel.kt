@@ -15,7 +15,8 @@ data class SettingsUiState(
     val accentHex: String = "#6750A4",
     val fontType: FontType = FontType.JETBRAINS_MONO,
     val language: AppLanguage = AppLanguage.ENGLISH,
-    val audioQuality: AudioQualityPreference = AudioQualityPreference.AUTO
+    val audioQuality: AudioQualityPreference = AudioQualityPreference.AUTO,
+    val checkUpdatesEnabled: Boolean = true
 )
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,9 +34,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         ) { theme, folders, accent, fontType, language ->
             SettingsUiState(theme, folders, accent, fontType, language)
         },
-        repo.audioQualityFlow
-    ) { state, audioQuality ->
-        state.copy(audioQuality = audioQuality)
+        repo.audioQualityFlow,
+        repo.checkUpdatesEnabledFlow
+    ) { state, audioQuality, checkUpdatesEnabled ->
+        state.copy(audioQuality = audioQuality, checkUpdatesEnabled = checkUpdatesEnabled)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SettingsUiState())
 
     fun setTheme(theme: AppTheme) {
@@ -60,5 +62,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setAudioQuality(quality: AudioQualityPreference) {
         viewModelScope.launch { repo.setAudioQuality(quality) }
+    }
+
+    fun setCheckUpdatesEnabled(enabled: Boolean) {
+        viewModelScope.launch { repo.setCheckUpdatesEnabled(enabled) }
     }
 }

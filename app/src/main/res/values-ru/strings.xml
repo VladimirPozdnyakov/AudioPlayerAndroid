@@ -58,6 +58,7 @@
     <string name="settings_interface">Интерфейс</string>
     <string name="settings_folders">Папки</string>
     <string name="settings_about">О приложении</string>
+    <string name="settings_check_updates">Проверять обновления</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_accent">Акцентный цвет</string>
     <string name="settings_font">Шрифт</string>

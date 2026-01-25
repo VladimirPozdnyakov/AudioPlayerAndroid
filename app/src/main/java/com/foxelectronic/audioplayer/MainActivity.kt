@@ -347,7 +347,8 @@ fun MainScreen(
                             }
                             settingsViewModel.setFolders(finalUpdated)
                             viewModel.loadTracks(ctx, settingsViewModel.settingsRepository, finalUpdated)
-                        }
+                        },
+                        onCheckUpdatesChange = settingsViewModel::setCheckUpdatesEnabled
                     )
                 }
             }
