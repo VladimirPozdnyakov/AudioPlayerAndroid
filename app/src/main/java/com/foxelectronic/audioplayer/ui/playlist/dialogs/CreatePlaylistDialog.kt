@@ -110,26 +110,19 @@ fun DeletePlaylistDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    AlertDialog(
+    ModernDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.dialog_delete_playlist)) },
-        text = {
-            Text(stringResource(R.string.delete_playlist_confirm, playlistName))
+        title = stringResource(R.string.dialog_delete_playlist),
+        subtitle = stringResource(R.string.delete_playlist_confirm, playlistName),
+        confirmText = stringResource(R.string.btn_delete),
+        dismissText = stringResource(R.string.btn_cancel),
+        onConfirm = {
+            onConfirm()
+            onDismiss()
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm()
-                    onDismiss()
-                }
-            ) {
-                Text(stringResource(R.string.btn_delete))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.btn_cancel))
-            }
-        }
-    )
+        onDismiss = onDismiss,
+        isDestructive = true
+    ) {
+        // Пустой контент, так как вся информация уже в заголовке и подзаголовке
+    }
 }
