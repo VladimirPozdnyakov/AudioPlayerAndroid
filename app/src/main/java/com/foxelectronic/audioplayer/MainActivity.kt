@@ -1140,21 +1140,79 @@ fun PlayerScreen(
             }
         }
 
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(50.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4.dp
-                )
-            }
-        } else {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f),
-                pageSpacing = 16.dp,
-                userScrollEnabled = !isViewingDetails
-            ) { page ->
+        // Определяем bottom padding в зависимости от expandProgress
+        val bottomPadding by animateDpAsState(
+            if (expandProgress >= 0f) 122.dp else 50.dp,
+            spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
+            label = "contentBottomPadding"
+        )
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f),
+            pageSpacing = 16.dp,
+            userScrollEnabled = !isViewingDetails
+        ) { page ->
+            if (uiState.isLoading) {
+                // Skeleton-анимации во время загрузки
+                when (page) {
+                    0, 1 -> {
+                        // Skeleton для списков треков (Все, Избранное)
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = bottomPadding),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(10) {
+                                com.foxelectronic.audioplayer.ui.components.TrackItemSkeleton()
+                            }
+                        }
+                    }
+                    2 -> {
+                        // Skeleton для артистов (сетка)
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(12) {
+                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
+                            }
+                        }
+                    }
+                    3 -> {
+                        // Skeleton для альбомов (сетка 3 колонки)
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(15) {
+                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
+                            }
+                        }
+                    }
+                    4 -> {
+                        // Skeleton для плейлистов (сетка 2 колонки)
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(10) {
+                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Основной контент
                 when (page) {
                     0 -> TrackList(
                         tracks = allTracks,
