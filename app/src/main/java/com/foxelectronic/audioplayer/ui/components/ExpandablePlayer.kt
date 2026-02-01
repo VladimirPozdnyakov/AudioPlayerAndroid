@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -724,17 +725,33 @@ private fun ExpandedPlayerContent(
         }
 
         // Кнопка «назад» поверх всего контента
-        IconButton(
-            onClick = onCollapseClick,
+        val backInteractionSource = remember { MutableInteractionSource() }
+        val isBackPressed by backInteractionSource.collectIsPressedAsState()
+        val backScale by animateFloatAsState(
+            targetValue = if (isBackPressed) 0.9f else 1f,
+            animationSpec = tween(100),
+            label = "backButtonScale"
+        )
+
+        Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(start = 16.dp)
                 .offset(y = (-4).dp)
+                .scale(backScale)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(
+                    interactionSource = backInteractionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onCollapseClick
+                )
+                .size(48.dp),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Rounded.ExpandMore,
                 contentDescription = stringResource(R.string.back),
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = extendedColors.iconTint,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -746,11 +763,32 @@ private fun ExpandedPlayerContent(
                 .padding(end = 8.dp)
                 .offset(y = (-4).dp)
         ) {
-            IconButton(onClick = { showMenu = true }) {
+            val menuInteractionSource = remember { MutableInteractionSource() }
+            val isMenuPressed by menuInteractionSource.collectIsPressedAsState()
+            val menuScale by animateFloatAsState(
+                targetValue = if (isMenuPressed) 0.9f else 1f,
+                animationSpec = tween(100),
+                label = "menuButtonScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .scale(menuScale)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(extendedColors.cardBackgroundElevated)
+                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(12.dp))
+                    .clickable(
+                        interactionSource = menuInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { showMenu = true }
+                    )
+                    .size(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(R.string.menu),
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = extendedColors.iconTint,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -847,55 +885,55 @@ private fun ExpandedPlayerContent(
                 )
             }
         }
-    }
 
-    if (showFullscreenArt) {
-        FullscreenAlbumArtDialog(
-            uiState = uiState,
-            onDismiss = { showFullscreenArt = false }
-        )
-    }
+        if (showFullscreenArt) {
+            FullscreenAlbumArtDialog(
+                uiState = uiState,
+                onDismiss = { showFullscreenArt = false }
+            )
+        }
 
-    // Диалог выбора исполнителя (если несколько)
-    if (showArtistSelectionDialog && artists.size > 1) {
-        ArtistSelectionDialog(
-            artists = artists,
-            onDismiss = { showArtistSelectionDialog = false },
-            onArtistSelected = { artist ->
-                showArtistSelectionDialog = false
-                onArtistClick(artist)
-            }
-        )
-    }
-
-    // Диалог информации об аудио
-    if (showAudioInfoDialog) {
-        val audioFormat by viewModel.getAudioFormat(currentTrack?.id ?: 0L)
-            .collectAsState(initial = null)
-
-        ModernDialog(
-            onDismissRequest = { showAudioInfoDialog = false },
-            title = stringResource(R.string.audio_format_details),
-            confirmText = stringResource(R.string.btn_ok),
-            onConfirm = { showAudioInfoDialog = false }
-        ) {
-            DetailedFormatInfo(
-                format = audioFormat,
-                trackTitle = currentTrack?.title,
-                trackArtist = currentTrack?.artist,
-                trackAlbum = currentTrack?.album,
-                durationMs = uiState.durationMs,
-                onArtistClick = { artist ->
-                    showAudioInfoDialog = false
+        // Диалог выбора исполнителя (если несколько)
+        if (showArtistSelectionDialog && artists.size > 1) {
+            ArtistSelectionDialog(
+                artists = artists,
+                onDismiss = { showArtistSelectionDialog = false },
+                onArtistSelected = { artist ->
+                    showArtistSelectionDialog = false
                     onArtistClick(artist)
-                },
-                onAlbumClick = currentTrack?.album?.let { album ->
-                    { _: String ->
-                        showAudioInfoDialog = false
-                        onAlbumClick(album)
-                    }
                 }
             )
+        }
+
+        // Диалог информации об аудио
+        if (showAudioInfoDialog) {
+            val audioFormat by viewModel.getAudioFormat(currentTrack?.id ?: 0L)
+                .collectAsState(initial = null)
+
+            ModernDialog(
+                onDismissRequest = { showAudioInfoDialog = false },
+                title = stringResource(R.string.audio_format_details),
+                confirmText = stringResource(R.string.btn_ok),
+                onConfirm = { showAudioInfoDialog = false }
+            ) {
+                DetailedFormatInfo(
+                    format = audioFormat,
+                    trackTitle = currentTrack?.title,
+                    trackArtist = currentTrack?.artist,
+                    trackAlbum = currentTrack?.album,
+                    durationMs = uiState.durationMs,
+                    onArtistClick = { artist ->
+                        showAudioInfoDialog = false
+                        onArtistClick(artist)
+                    },
+                    onAlbumClick = currentTrack?.album?.let { album ->
+                        { _: String ->
+                            showAudioInfoDialog = false
+                            onAlbumClick(album)
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -942,6 +980,7 @@ private fun ExpandedAlbumArt(
     onArtClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val extendedColors = AudioPlayerThemeExtended.colors
 
     if (uiState.tracks.isEmpty() || uiState.currentIndex < 0) return
 
@@ -1005,10 +1044,14 @@ private fun ExpandedAlbumArt(
                             onArtClick()
                         }
                     },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                )
+                    containerColor = extendedColors.accentSoft
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 4.dp
+                ),
+                border = BorderStroke(1.5.dp, extendedColors.cardBorder)
             ) {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
@@ -1029,16 +1072,18 @@ private fun ExpandedAlbumArt(
 
 @Composable
 private fun AlbumArtPlaceholder() {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            .background(extendedColors.accentSoft),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Rounded.MusicNote,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = extendedColors.iconTint,
             modifier = Modifier.size(80.dp)
         )
     }
@@ -1120,6 +1165,7 @@ private fun ExpandedProgressSlider(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
     val progress by rememberUpdatedState(
         if (uiState.durationMs > 0) {
             (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
@@ -1151,7 +1197,7 @@ private fun ExpandedProgressSlider(
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 ),
                 thumb = {
                     Box(
@@ -1182,12 +1228,12 @@ private fun ExpandedProgressSlider(
             Text(
                 text = uiState.positionMs.toTimeString(),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = extendedColors.subtleText
             )
             Text(
                 text = uiState.durationMs.toTimeString(),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = extendedColors.subtleText
             )
         }
     }
@@ -1198,6 +1244,7 @@ private fun ExpandedPlaybackControls(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1206,18 +1253,38 @@ private fun ExpandedPlaybackControls(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = { viewModel.previous() },
-                modifier = Modifier.size(72.dp)
+            // Previous button with modern card style
+            val prevInteractionSource = remember { MutableInteractionSource() }
+            val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
+            val prevScale by animateFloatAsState(
+                targetValue = if (isPrevPressed) 0.9f else 1f,
+                animationSpec = tween(100),
+                label = "prevButtonScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .scale(prevScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(extendedColors.cardBackgroundElevated)
+                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
+                    .clickable(
+                        interactionSource = prevInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { viewModel.previous() }
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
                     contentDescription = "Previous",
                     modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = extendedColors.iconTint
                 )
             }
 
+            // Play/Pause button (main)
             AnimatedPlayPauseButton(
                 isPlaying = uiState.isPlaying,
                 onToggle = { if (uiState.isPlaying) viewModel.pause() else viewModel.resume() },
@@ -1225,15 +1292,34 @@ private fun ExpandedPlaybackControls(
                 iconSize = 32.dp
             )
 
-            IconButton(
-                onClick = { viewModel.next() },
-                modifier = Modifier.size(72.dp)
+            // Next button with modern card style
+            val nextInteractionSource = remember { MutableInteractionSource() }
+            val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+            val nextScale by animateFloatAsState(
+                targetValue = if (isNextPressed) 0.9f else 1f,
+                animationSpec = tween(100),
+                label = "nextButtonScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .scale(nextScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(extendedColors.cardBackgroundElevated)
+                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
+                    .clickable(
+                        interactionSource = nextInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { viewModel.next() }
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "Next",
                     modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = extendedColors.iconTint
                 )
             }
         }

@@ -1558,19 +1558,20 @@ private fun TrackItem(
                         contentDescription = "Album Art",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp)),
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Crop,
                         loading = {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                    .background(extendedColors.accentSoft),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.MusicNote,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = extendedColors.iconTint,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -1579,13 +1580,13 @@ private fun TrackItem(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                    .background(extendedColors.accentSoft),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.MusicNote,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = extendedColors.iconTint,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -1610,7 +1611,8 @@ private fun TrackItem(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(cornerRadius.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                                    .background(extendedColors.accentSoft)
+                                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(cornerRadius.dp))
                                     .clickable { onPlayPauseClick() },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -1629,7 +1631,7 @@ private fun TrackItem(
                                     modifier = Modifier
                                         .size(20.dp)
                                         .scale(scale),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    tint = if (isPlaying) MaterialTheme.colorScheme.primary else extendedColors.iconTint
                                 )
                             }
                         }
@@ -1671,14 +1673,20 @@ private fun TrackItem(
 
                 // Кнопка меню
                 Box {
-                    IconButton(
-                        onClick = { showMenu = true },
-                        modifier = Modifier.size(32.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(extendedColors.cardBackgroundElevated)
+                            .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(8.dp))
+                            .clickable { showMenu = true },
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
                             contentDescription = stringResource(R.string.menu),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = extendedColors.iconTint,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 

@@ -1,14 +1,19 @@
 package com.foxelectronic.audioplayer.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -16,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -172,6 +178,14 @@ private fun AlbumArt(
     val context = LocalContext.current
     val extendedColors = AudioPlayerThemeExtended.colors
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(100),
+        label = "albumArtScale"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,16 +196,21 @@ private fun AlbumArt(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .scale(scale)
                 .clip(RoundedCornerShape(16.dp))
-                .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(16.dp))
-                .clickable { onArtClick() },
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                    onClick = onArtClick
+                ),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = extendedColors.accentSoft
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 4.dp
-            )
+            ),
+            border = BorderStroke(1.5.dp, extendedColors.cardBorder)
         ) {
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context)
@@ -221,7 +240,7 @@ private fun AlbumArtPlaceholder() {
         Icon(
             imageVector = Icons.Rounded.MusicNote,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = extendedColors.iconTint,
             modifier = Modifier.size(80.dp)
         )
     }
@@ -372,6 +391,7 @@ private fun ProgressSlider(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
     val progress by rememberUpdatedState(
         if (uiState.durationMs > 0) {
             (uiState.positionMs.toFloat() / uiState.durationMs.toFloat()).coerceIn(0f, 1f)
@@ -406,7 +426,7 @@ private fun ProgressSlider(
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 ),
                 thumb = {
                     Box(
@@ -437,12 +457,12 @@ private fun ProgressSlider(
             Text(
                 text = uiState.positionMs.toTimeString(),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = extendedColors.subtleText
             )
             Text(
                 text = uiState.durationMs.toTimeString(),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = extendedColors.subtleText
             )
         }
     }
@@ -453,6 +473,8 @@ private fun PlaybackControls(
     uiState: PlayerUiState,
     viewModel: PlayerViewModel
 ) {
+    val extendedColors = AudioPlayerThemeExtended.colors
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -462,14 +484,36 @@ private fun PlaybackControls(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Previous Button
-            AnimatedSkipButton(
-                direction = SkipDirection.Previous,
-                onClick = { viewModel.previous() },
-                size = 72.dp,
-                iconSize = 36.dp,
-                tint = MaterialTheme.colorScheme.onSurface
+            // Previous Button with modern card style
+            val prevInteractionSource = remember { MutableInteractionSource() }
+            val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
+            val prevScale by animateFloatAsState(
+                targetValue = if (isPrevPressed) 0.9f else 1f,
+                animationSpec = tween(100),
+                label = "prevButtonScale"
             )
+
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .scale(prevScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(extendedColors.cardBackgroundElevated)
+                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
+                    .clickable(
+                        interactionSource = prevInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { viewModel.previous() }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipPrevious,
+                    contentDescription = "Previous",
+                    modifier = Modifier.size(36.dp),
+                    tint = extendedColors.iconTint
+                )
+            }
 
             // Play/Pause Button (main)
             AnimatedPlayPauseButton(
@@ -479,14 +523,36 @@ private fun PlaybackControls(
                 iconSize = 32.dp
             )
 
-            // Next Button
-            AnimatedSkipButton(
-                direction = SkipDirection.Next,
-                onClick = { viewModel.next() },
-                size = 72.dp,
-                iconSize = 36.dp,
-                tint = MaterialTheme.colorScheme.onSurface
+            // Next Button with modern card style
+            val nextInteractionSource = remember { MutableInteractionSource() }
+            val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+            val nextScale by animateFloatAsState(
+                targetValue = if (isNextPressed) 0.9f else 1f,
+                animationSpec = tween(100),
+                label = "nextButtonScale"
             )
+
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .scale(nextScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(extendedColors.cardBackgroundElevated)
+                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
+                    .clickable(
+                        interactionSource = nextInteractionSource,
+                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
+                        onClick = { viewModel.next() }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipNext,
+                    contentDescription = "Next",
+                    modifier = Modifier.size(36.dp),
+                    tint = extendedColors.iconTint
+                )
+            }
         }
 
         // Secondary controls row (Shuffle, Favorite, Repeat)
