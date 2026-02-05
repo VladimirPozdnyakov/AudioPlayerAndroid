@@ -1,74 +1,81 @@
 package com.foxelectronic.audioplayer.ui.components
 
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-enum class SkipDirection { Previous, Next }
-
+/**
+ * Унифицированная кнопка Skip в стиле AnimatedPlayPauseButton
+ * Используется для Previous/Next кнопок в развёрнутом плеере
+ */
 @Composable
 fun AnimatedSkipButton(
-    direction: SkipDirection,
+    icon: ImageVector,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 36.dp,
-    iconSize: Dp = 20.dp,
-    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant
+    size: Dp = 72.dp,
+    iconSize: Dp = 36.dp,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    iconColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
-    val (isPressed, setPressed) = remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.8f else 1f,
-        animationSpec = tween(
-            durationMillis = 200,
-            easing = LinearEasing
-        ),
+        targetValue = if (isPressed) 0.9f else 1f,
+        animationSpec = tween(100),
         label = "skipButtonScale"
     )
 
-    IconButton(
-        onClick = onClick,
+    val cornerRadius by animateFloatAsState(
+        targetValue = size.value / 4f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = FastOutSlowInEasing
+        ),
+        label = "skipButtonCornerRadius"
+    )
+
+    Box(
         modifier = modifier
             .size(size)
             .scale(scale)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        setPressed(true)
-                        tryAwaitRelease()
-                        setPressed(false)
-                    }
-                )
-            }
+            .clip(RoundedCornerShape(cornerRadius.dp))
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(color = iconColor),
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = when (direction) {
-                SkipDirection.Previous -> Icons.Rounded.SkipPrevious
-                SkipDirection.Next -> Icons.Rounded.SkipNext
-            },
-            contentDescription = when (direction) {
-                SkipDirection.Previous -> "Предыдущий"
-                SkipDirection.Next -> "Следующий"
-            },
+            imageVector = icon,
+            contentDescription = contentDescription,
             modifier = Modifier.size(iconSize),
-            tint = tint
+            tint = iconColor
         )
     }
 }

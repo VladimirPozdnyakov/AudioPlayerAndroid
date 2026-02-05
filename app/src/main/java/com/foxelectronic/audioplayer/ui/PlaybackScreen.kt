@@ -43,10 +43,8 @@ import com.foxelectronic.audioplayer.PlaylistType
 import com.foxelectronic.audioplayer.R
 import com.foxelectronic.audioplayer.ui.components.AnimatedFavoriteButton
 import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
-import com.foxelectronic.audioplayer.ui.components.AnimatedSkipButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
 import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
-import com.foxelectronic.audioplayer.ui.components.SkipDirection
 import com.foxelectronic.audioplayer.ui.components.toTimeString
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
 

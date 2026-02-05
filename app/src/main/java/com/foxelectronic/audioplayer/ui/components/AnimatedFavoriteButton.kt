@@ -29,6 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.R
@@ -45,6 +47,7 @@ fun AnimatedFavoriteButton(
     unfavoriteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
+    val haptic = LocalHapticFeedback.current
     var scale by remember { mutableStateOf(1f) }
     val targetScale = 1f
     val interactionSource = remember { MutableInteractionSource() }
@@ -86,6 +89,7 @@ fun AnimatedFavoriteButton(
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = favoriteColor),
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onToggleFavorite()
                     scale = 1.2f
                 }

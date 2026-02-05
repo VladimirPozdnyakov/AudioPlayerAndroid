@@ -44,7 +44,7 @@ fun AudioFormatBadge(
     Surface(
         modifier = modifier,
         color = badgeColor.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(4.dp)
+        shape = RoundedCornerShape(8.dp)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),

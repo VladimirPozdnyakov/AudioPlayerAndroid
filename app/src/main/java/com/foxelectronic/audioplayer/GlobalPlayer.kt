@@ -5,6 +5,9 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
@@ -19,7 +22,6 @@ import com.foxelectronic.audioplayer.ui.components.AnimatedPlayPauseButton
 import com.foxelectronic.audioplayer.ui.components.AnimatedSkipButton
 import com.foxelectronic.audioplayer.ui.components.RepeatModeButton
 import com.foxelectronic.audioplayer.ui.components.ShuffleModeButton
-import com.foxelectronic.audioplayer.ui.components.SkipDirection
 import com.foxelectronic.audioplayer.ui.components.toTimeString
 import kotlin.math.absoluteValue
 
@@ -121,8 +123,11 @@ fun GlobalPlayerBar(
                     )
 
                     AnimatedSkipButton(
-                        direction = SkipDirection.Previous,
-                        onClick = { viewModel.previous() }
+                        icon = Icons.Rounded.SkipPrevious,
+                        contentDescription = "Previous",
+                        onClick = { viewModel.previous() },
+                        size = 36.dp,
+                        iconSize = 20.dp
                     )
 
                     AnimatedPlayPauseButton(
@@ -133,8 +138,11 @@ fun GlobalPlayerBar(
                     )
 
                     AnimatedSkipButton(
-                        direction = SkipDirection.Next,
-                        onClick = { viewModel.next() }
+                        icon = Icons.Rounded.SkipNext,
+                        contentDescription = "Next",
+                        onClick = { viewModel.next() },
+                        size = 36.dp,
+                        iconSize = 20.dp
                     )
 
                     RepeatModeButton(

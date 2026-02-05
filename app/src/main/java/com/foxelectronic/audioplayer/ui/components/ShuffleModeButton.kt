@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.foxelectronic.audioplayer.ui.theme.AudioPlayerThemeExtended
@@ -39,6 +41,7 @@ fun ShuffleModeButton(
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
+    val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -66,7 +69,10 @@ fun ShuffleModeButton(
                 enabled = enabled,
                 interactionSource = interactionSource,
                 indication = rememberRipple(color = activeColor),
-                onClick = onToggle
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onToggle()
+                }
             ),
         contentAlignment = Alignment.Center
     ) {

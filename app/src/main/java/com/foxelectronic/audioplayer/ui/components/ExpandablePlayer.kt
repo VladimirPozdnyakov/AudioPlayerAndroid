@@ -60,6 +60,8 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -451,9 +453,11 @@ private fun CollapsedPlayerContent(
                 }
             }
 
-            // Современный прогресс-бар
+            // Современный прогресс-бар с возможностью перемотки
             MiniPlayerProgressBar(
                 progress = progress,
+                durationMs = uiState.durationMs,
+                onSeek = { newPosition -> viewModel.seekTo(newPosition) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
@@ -537,16 +541,29 @@ private fun MiniPlayerPlayPauseButton(
 @Composable
 private fun MiniPlayerProgressBar(
     progress: Float,
+    durationMs: Long,
+    onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
     val primaryColor = MaterialTheme.colorScheme.primary
     val trackColor = extendedColors.cardBorder
+    val haptic = LocalHapticFeedback.current
 
     Canvas(
         modifier = modifier
-            .height(4.dp)
-            .clip(RoundedCornerShape(2.dp))
+            .height(8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .pointerInput(durationMs) {
+                detectTapGestures { tapOffset ->
+                    if (durationMs > 0) {
+                        val newProgress = (tapOffset.x / size.width).coerceIn(0f, 1f)
+                        val newPosition = (newProgress * durationMs).toLong()
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onSeek(newPosition)
+                    }
+                }
+            }
     ) {
         val width = size.width
         val height = size.height
@@ -736,10 +753,12 @@ private fun ExpandedPlayerContent(
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp)
+                .padding(start = 8.dp)
                 .offset(y = (-4).dp)
                 .scale(backScale)
                 .clip(RoundedCornerShape(12.dp))
+                .background(extendedColors.cardBackgroundElevated)
+                .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(12.dp))
                 .clickable(
                     interactionSource = backInteractionSource,
                     indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
@@ -752,7 +771,7 @@ private fun ExpandedPlayerContent(
                 imageVector = Icons.Rounded.ExpandMore,
                 contentDescription = stringResource(R.string.back),
                 tint = extendedColors.iconTint,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
@@ -1246,6 +1265,7 @@ private fun ExpandedPlaybackControls(
 ) {
     val extendedColors = AudioPlayerThemeExtended.colors
     val currentTrack = uiState.tracks.getOrNull(uiState.currentIndex)
+    val haptic = LocalHapticFeedback.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(
@@ -1253,75 +1273,36 @@ private fun ExpandedPlaybackControls(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Previous button with modern card style
-            val prevInteractionSource = remember { MutableInteractionSource() }
-            val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
-            val prevScale by animateFloatAsState(
-                targetValue = if (isPrevPressed) 0.9f else 1f,
-                animationSpec = tween(100),
-                label = "prevButtonScale"
+            // Previous button - unified style with Play/Pause
+            AnimatedSkipButton(
+                icon = Icons.Rounded.SkipPrevious,
+                contentDescription = "Previous",
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.previous()
+                }
             )
-
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .scale(prevScale)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(extendedColors.cardBackgroundElevated)
-                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
-                    .clickable(
-                        interactionSource = prevInteractionSource,
-                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
-                        onClick = { viewModel.previous() }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "Previous",
-                    modifier = Modifier.size(36.dp),
-                    tint = extendedColors.iconTint
-                )
-            }
 
             // Play/Pause button (main)
             AnimatedPlayPauseButton(
                 isPlaying = uiState.isPlaying,
-                onToggle = { if (uiState.isPlaying) viewModel.pause() else viewModel.resume() },
+                onToggle = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                },
                 size = 72.dp,
-                iconSize = 32.dp
+                iconSize = 36.dp
             )
 
-            // Next button with modern card style
-            val nextInteractionSource = remember { MutableInteractionSource() }
-            val isNextPressed by nextInteractionSource.collectIsPressedAsState()
-            val nextScale by animateFloatAsState(
-                targetValue = if (isNextPressed) 0.9f else 1f,
-                animationSpec = tween(100),
-                label = "nextButtonScale"
+            // Next button - unified style with Play/Pause
+            AnimatedSkipButton(
+                icon = Icons.Rounded.SkipNext,
+                contentDescription = "Next",
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.next()
+                }
             )
-
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .scale(nextScale)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(extendedColors.cardBackgroundElevated)
-                    .border(1.dp, extendedColors.cardBorder, RoundedCornerShape(20.dp))
-                    .clickable(
-                        interactionSource = nextInteractionSource,
-                        indication = rememberRipple(color = MaterialTheme.colorScheme.primary),
-                        onClick = { viewModel.next() }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "Next",
-                    modifier = Modifier.size(36.dp),
-                    tint = extendedColors.iconTint
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

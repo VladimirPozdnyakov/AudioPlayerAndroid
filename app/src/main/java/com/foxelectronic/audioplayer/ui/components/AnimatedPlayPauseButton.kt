@@ -31,7 +31,7 @@ fun AnimatedPlayPauseButton(
     size: Dp = 72.dp,
     iconSize: Dp = 32.dp,
     backgroundColor: Color = MaterialTheme.colorScheme.primary,
-    iconColor: Color = MaterialTheme.colorScheme.onSurface
+    iconColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     Box(
         modifier = modifier.size(size),

@@ -118,6 +118,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -1153,130 +1154,153 @@ fun PlayerScreen(
             pageSpacing = 16.dp,
             userScrollEnabled = !isViewingDetails
         ) { page ->
-            if (uiState.isLoading) {
-                // Skeleton-анимации во время загрузки
-                when (page) {
-                    0, 1 -> {
-                        // Skeleton для списков треков (Все, Избранное)
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = bottomPadding),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            items(10) {
-                                com.foxelectronic.audioplayer.ui.components.TrackItemSkeleton()
+            // Плавный переход от skeleton к контенту
+            Crossfade(
+                targetState = uiState.isLoading,
+                animationSpec = tween(durationMillis = 400),
+                label = "skeleton_to_content_$page"
+            ) { isLoading ->
+                if (isLoading) {
+                    // Skeleton-анимации во время загрузки
+                    when (page) {
+                        0, 1 -> {
+                            // Skeleton для списков треков (Все, Избранное)
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = bottomPadding),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                items(10) { index ->
+                                    val delay = index * 100
+                                    com.foxelectronic.audioplayer.ui.components.TrackItemSkeleton(
+                                        showPlayButton = index == 0,
+                                        delayMillis = delay
+                                    )
+                                }
+                            }
+                        }
+                        2 -> {
+                            // Skeleton для артистов (сетка)
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(12) { index ->
+                                    val delay = (index / 2) * 150
+                                    com.foxelectronic.audioplayer.ui.components.CardSkeleton(
+                                        showCountBadge = false,
+                                        delayMillis = delay
+                                    )
+                                }
+                            }
+                        }
+                        3 -> {
+                            // Skeleton для альбомов (сетка 3 колонки)
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(3),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(15) { index ->
+                                    val delay = (index / 3) * 150
+                                    com.foxelectronic.audioplayer.ui.components.CardSkeleton(
+                                        showCountBadge = true,
+                                        delayMillis = delay
+                                    )
+                                }
+                            }
+                        }
+                        4 -> {
+                            // Skeleton для плейлистов (сетка 2 колонки)
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(10) { index ->
+                                    val delay = (index / 2) * 150
+                                    com.foxelectronic.audioplayer.ui.components.CardSkeleton(
+                                        showCountBadge = true,
+                                        delayMillis = delay
+                                    )
+                                }
                             }
                         }
                     }
-                    2 -> {
-                        // Skeleton для артистов (сетка)
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(12) {
-                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
-                            }
-                        }
+                } else {
+                    // Основной контент
+                    when (page) {
+                        0 -> TrackList(
+                            tracks = allTracks,
+                            uiState = uiState,
+                            viewModel = viewModel,
+                            isPlaylistMode = false,
+                            onTrackClick = onTrackClick,
+                            emptyMessage = stringResource(R.string.empty_no_tracks),
+                            emptyIcon = Icons.Rounded.MusicNote,
+                            listState = allTracksListState,
+                            expandProgress = expandProgress,
+                            playlistName = stringResource(R.string.all_tracks),
+                            onGoToArtist = onGoToArtist,
+                            onGoToAlbum = onGoToAlbum
+                        )
+                        1 -> TrackList(
+                            tracks = favoriteTracks,
+                            uiState = uiState,
+                            viewModel = viewModel,
+                            isPlaylistMode = true,
+                            onTrackClick = onTrackClick,
+                            emptyMessage = stringResource(R.string.empty_no_favorites),
+                            emptyIcon = Icons.Rounded.FavoriteBorder,
+                            listState = favoriteTracksListState,
+                            expandProgress = expandProgress,
+                            playlistName = stringResource(R.string.tab_favorites),
+                            playlistType = PlaylistType.FAVORITES,
+                            onGoToArtist = onGoToArtist,
+                            onGoToAlbum = onGoToAlbum
+                        )
+                        2 -> ArtistsTab(
+                            artistGroups = filteredArtistGroups,
+                            selectedArtist = uiState.selectedArtist,
+                            uiState = uiState,
+                            viewModel = viewModel,
+                            onTrackClick = onTrackClick,
+                            listState = artistsListState,
+                            expandProgress = expandProgress,
+                            onGoToArtist = onGoToArtist,
+                            onGoToAlbum = onGoToAlbum
+                        )
+                        3 -> AlbumsTab(
+                            albumGroups = filteredAlbumGroups,
+                            selectedAlbum = uiState.selectedAlbum,
+                            uiState = uiState,
+                            viewModel = viewModel,
+                            onTrackClick = onTrackClick,
+                            listState = albumsListState,
+                            expandProgress = expandProgress,
+                            onGoToArtist = onGoToArtist,
+                            onGoToAlbum = onGoToAlbum
+                        )
+                        4 -> PlaylistsTab(
+                            playlists = uiState.customPlaylists,
+                            selectedPlaylist = uiState.selectedCustomPlaylist,
+                            playlistTracks = uiState.customPlaylistTracks,
+                            uiState = uiState,
+                            viewModel = viewModel,
+                            onTrackClick = onTrackClick,
+                            listState = playlistsListState,
+                            expandProgress = expandProgress,
+                            onGoToArtist = onGoToArtist,
+                            onGoToAlbum = onGoToAlbum
+                        )
                     }
-                    3 -> {
-                        // Skeleton для альбомов (сетка 3 колонки)
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(15) {
-                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
-                            }
-                        }
-                    }
-                    4 -> {
-                        // Skeleton для плейлистов (сетка 2 колонки)
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(8.dp, bottom = bottomPadding),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(10) {
-                                com.foxelectronic.audioplayer.ui.components.CardSkeleton()
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Основной контент
-                when (page) {
-                    0 -> TrackList(
-                        tracks = allTracks,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        isPlaylistMode = false,
-                        onTrackClick = onTrackClick,
-                        emptyMessage = stringResource(R.string.empty_no_tracks),
-                        emptyIcon = Icons.Rounded.MusicNote,
-                        listState = allTracksListState,
-                        expandProgress = expandProgress,
-                        playlistName = stringResource(R.string.all_tracks),
-                        onGoToArtist = onGoToArtist,
-                        onGoToAlbum = onGoToAlbum
-                    )
-                    1 -> TrackList(
-                        tracks = favoriteTracks,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        isPlaylistMode = true,
-                        onTrackClick = onTrackClick,
-                        emptyMessage = stringResource(R.string.empty_no_favorites),
-                        emptyIcon = Icons.Rounded.FavoriteBorder,
-                        listState = favoriteTracksListState,
-                        expandProgress = expandProgress,
-                        playlistName = stringResource(R.string.tab_favorites),
-                        playlistType = PlaylistType.FAVORITES,
-                        onGoToArtist = onGoToArtist,
-                        onGoToAlbum = onGoToAlbum
-                    )
-                    2 -> ArtistsTab(
-                        artistGroups = filteredArtistGroups,
-                        selectedArtist = uiState.selectedArtist,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        onTrackClick = onTrackClick,
-                        listState = artistsListState,
-                        expandProgress = expandProgress,
-                        onGoToArtist = onGoToArtist,
-                        onGoToAlbum = onGoToAlbum
-                    )
-                    3 -> AlbumsTab(
-                        albumGroups = filteredAlbumGroups,
-                        selectedAlbum = uiState.selectedAlbum,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        onTrackClick = onTrackClick,
-                        listState = albumsListState,
-                        expandProgress = expandProgress,
-                        onGoToArtist = onGoToArtist,
-                        onGoToAlbum = onGoToAlbum
-                    )
-                    4 -> PlaylistsTab(
-                        playlists = uiState.customPlaylists,
-                        selectedPlaylist = uiState.selectedCustomPlaylist,
-                        playlistTracks = uiState.customPlaylistTracks,
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        onTrackClick = onTrackClick,
-                        listState = playlistsListState,
-                        expandProgress = expandProgress,
-                        onGoToArtist = onGoToArtist,
-                        onGoToAlbum = onGoToAlbum
-                    )
                 }
             }
         }
