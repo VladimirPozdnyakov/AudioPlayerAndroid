@@ -88,8 +88,9 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-session:1.3.1")
 
-    // Accompanist permissions
+    // Accompanist
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.accompanist:accompanist-placeholder-material3:0.34.0")
 
     // Загрузка изображения
     implementation("io.coil-kt:coil-compose:2.6.0")
